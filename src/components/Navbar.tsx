@@ -147,6 +147,12 @@ export default function Navbar() {
             >
               ኮርሶች
             </Link>
+            <Link
+              href="/testimonials"
+              className="text-xs sm:text-sm text-[#0D3B4A] hover:text-[#00BCD4] transition-colors font-medium"
+            >
+              ምስክርነቶች
+            </Link>
 
             {user ? (
               /* ── Logged In: User Avatar ─────────────── */

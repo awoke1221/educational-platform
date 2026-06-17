@@ -96,6 +96,11 @@ function EmptyState() {
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string>("");
+
+  useEffect(() => {
+    setToken(localStorage.getItem("token") || "");
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -275,41 +280,17 @@ export default function CoursesPage() {
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
-                    <span className="font-bold text-[#FF1744] text-sm">
-                      {Number(course.price).toLocaleString()} ብር
-                    </span>
                   </div>
-                  <button
-                    onClick={async () => {
-                      const token = localStorage.getItem("token");
-                      if (!token) {
-                        window.location.href = "/auth/login";
-                        return;
-                      }
-                      try {
-                        const res = await fetch("/api/enrollments", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                          },
-                          body: JSON.stringify({ courseId: course.id }),
-                        });
-                        if (res.ok) {
-                          alert("በተሳካ ሁኔታ ተመዝግበዋል! ወደ ዳሽቦርድ ይሂዱ");
-                          window.location.href = "/dashboard";
-                        } else {
-                          const d = await res.json();
-                          alert(d.error || "መመዝገብ አልተሳካም");
-                        }
-                      } catch {
-                        alert("እባክዎ ደግመው ይሞክሩ");
-                      }
-                    }}
-                    className="mt-3 w-full bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white text-sm font-semibold py-2.5 rounded-xl hover:shadow-lg transition-all"
+                  <Link
+                    href={
+                      token
+                        ? `/courses/${course.id}`
+                        : `/auth/register?redirect=/courses/${course.id}`
+                    }
+                    className="mt-3 inline-flex w-full justify-center bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white text-sm font-semibold py-2.5 rounded-xl hover:shadow-lg transition-all"
                   >
-                    ይመዝገቡ እና ይማሩ
-                  </button>
+                    {token ? "Start learning" : "Register to take course"}
+                  </Link>
                 </div>
               </div>
             ))}

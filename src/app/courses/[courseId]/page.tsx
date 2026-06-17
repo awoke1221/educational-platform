@@ -37,77 +37,32 @@ export default function CourseDetailPage() {
     const t = localStorage.getItem("token") || "";
     setToken(t);
 
+    if (!t) {
+      router.push(`/auth/register?redirect=/courses/${courseId}`);
+      return;
+    }
+
     fetch(`/api/courses/${courseId}`)
       .then((r) => r.json())
       .then((d) => setCourse(d.data))
       .finally(() => setLoading(false));
 
-    // Check enrollment status (or auto-enroll for Cloudinary demo courses)
-    if (t) {
-      // Cloudinary courses are auto-available for logged-in users (demo mode)
-      if (courseId.startsWith("cloudinary-")) {
-        setIsEnrolled(true);
-      } else {
-        fetch("/api/enrollments", {
-          headers: { Authorization: `Bearer ${t}` },
-        })
-          .then((r) => r.json())
-          .then((enrData) => {
-            const enrollments = enrData.data?.data || [];
-            const enrolled = enrollments.some(
-              (e: any) => e.course?.id === courseId && e.status === "active",
-            );
-            setIsEnrolled(enrolled);
-          })
-          .catch(() => {});
-      }
-    }
-  }, [courseId]);
+    setIsEnrolled(true);
+  }, [courseId, router]);
 
   // Handle free enrollment or redirect to payment
-  const handleEnroll = useCallback(async () => {
+  const handleEnroll = useCallback(() => {
     if (!token) {
       router.push(`/auth/register?redirect=/courses/${courseId}`);
       return;
     }
     if (!course) return;
 
-    setEnrolling(true);
-    setEnrollError("");
-
-    // If course is free (price === 0), enroll directly
-    if (Number(course.price) === 0) {
-      try {
-        const res = await fetch("/api/payments", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            courseId: course.id,
-            amount: 0,
-            paymentType: "local",
-            paymentMethod: "bank_transfer",
-            transactionId: "free-enrollment",
-          }),
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          setIsEnrolled(true);
-        } else {
-          setEnrollError(data.error || "መመዝገብ አልተሳካም");
-        }
-      } catch {
-        setEnrollError("ስህተት ተከስቷል። እባክዎ ደግመው ይሞክሩ");
-      } finally {
-        setEnrolling(false);
-      }
+    const firstLecture = course.lectures?.[0];
+    if (firstLecture) {
+      router.push(`/courses/${courseId}/lectures/${firstLecture.id}`);
     } else {
-      // Paid course - redirect to payment page or show payment options
-      // Navigate to course page with payment modal
-      router.push(`/auth/register?redirect=/courses/${courseId}`);
+      router.push(`/courses/${courseId}`);
     }
   }, [token, course, courseId, router]);
 
@@ -140,10 +95,6 @@ export default function CourseDetailPage() {
             <span>{course.duration || 0} ደቂቃ</span>
             <span>{course.enrollmentCount} ተማሪዎች</span>
           </div>
-          <div className="mt-4 text-2xl font-bold text-white drop-shadow-lg">
-            {Number(course.price).toLocaleString()} ብር
-          </div>
-
           {/* CTA Button - changes based on enrollment & auth */}
           {isEnrolled ? (
             <Link
@@ -166,8 +117,8 @@ export default function CourseDetailPage() {
                 {enrolling
                   ? "በመመዝገብ ላይ..."
                   : isLoggedIn
-                    ? "አሁን ይመዝገቡ እና ይማሩ"
-                    : "ይመዝገቡ እና ይማሩ"}
+                    ? "Start learning"
+                    : "Register to take course"}
               </button>
               {!isLoggedIn && (
                 <Link

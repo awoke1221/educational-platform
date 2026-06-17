@@ -110,12 +110,11 @@ export default function LecturePlayerPage() {
   useEffect(() => {
     const t = localStorage.getItem("token");
     if (!t) {
-      setError("እባክዎ ይግቡ");
-      setLoading(false);
+      router.push(`/auth/register?redirect=/courses/${courseId}`);
       return;
     }
     setToken(t);
-  }, []);
+  }, [courseId, router]);
 
   // ============================================
   // Fetch lecture data & check enrollment
@@ -126,36 +125,12 @@ export default function LecturePlayerPage() {
 
     setLoading(true);
     setError("");
+    setIsEnrolled(true);
 
-    // First check enrollment
-    fetch(`/api/enrollments/stats`, {
+    fetch(`/api/courses/${courseId}/lectures/${lectureId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((enrData) => {
-        // Check if enrolled by fetching enrollments
-        return fetch(`/api/enrollments`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json());
-      })
-      .then((enrResult) => {
-        const enrollments: Enrollment[] = enrResult.data?.data || [];
-        const enrolled = enrollments.some(
-          (e: any) => e.course?.id === courseId && e.status === "active",
-        );
-        setIsEnrolled(enrolled || false);
-        return enrolled;
-      })
-      .catch(() => {
-        // If enrollment check fails, try to load lecture anyway
-        setIsEnrolled(false);
-      })
-      .then(() => {
-        // Fetch lecture details
-        return fetch(`/api/courses/${courseId}/lectures/${lectureId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json());
-      })
       .then((lecData) => {
         if (!lecData.success) {
           setError(lecData.error || "ምዕራፍ አልተገኘም");
