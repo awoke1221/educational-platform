@@ -1,0 +1,252 @@
+// prisma/schema.prisma
+// Enterprise-Grade Database Schema for Educational Platform
+// Supabase PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                    String            @id @default(cuid())
+  username              String            @unique
+  email                 String            @unique
+  fullName              String
+  phoneNumber           String
+  passwordHash          String
+  profileImage          String?
+  passwordChangedAt     DateTime?
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+  isActive              Boolean           @default(true)
+  isBanned              Boolean           @default(false)
+  role                  String            @default("user")
+  lastLogin             DateTime?
+  loginCount            Int               @default(0)
+
+  enrollments           Enrollment[]
+  payments              Payment[]
+  deviceSessions        DeviceSession[]
+  certificates          Certificate[]
+  userProgress          UserProgress[]
+  approvedPayments      Payment[]         @relation("ApprovedBy")
+  courses               Course[]          @relation("InstructorCourses")
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+
+  @@index([email])
+  @@index([username])
+  @@index([isActive])
+}
+
+model Course {
+  id                    String            @id @default(cuid())
+  title                 String
+  description           String
+  shortDescription      String?
+  coverImage            String
+  instructorId          String
+  instructor            User              @relation("InstructorCourses", fields: [instructorId], references: [id])
+  price                 Decimal           @db.Decimal(10, 2)
+  currency              String            @default("ETB")
+  level                 String            @default("beginner")
+  duration              Int?
+  videoCount            Int               @default(0)
+  enrollmentCount       Int               @default(0)
+  isPublished           Boolean           @default(false)
+  isArchived            Boolean           @default(false)
+  category              String?
+  tags                  String[]
+  totalModules          Int               @default(0)
+  completionRequirement Int               @default(100)
+
+  lectures              Lecture[]
+  enrollments           Enrollment[]
+  payments              Payment[]
+  certificates          Certificate[]
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+
+  @@index([isPublished])
+  @@index([instructorId])
+  @@index([category])
+}
+
+model Lecture {
+  id                    String            @id @default(cuid())
+  courseId              String
+  title                 String
+  description           String?
+  videoUrl              String
+  cloudinaryPublicId    String
+  duration              Int?
+  orderIndex            Int
+  isPublished           Boolean           @default(false)
+  videoSize            BigInt?
+  views                 Int               @default(0)
+  downloadableResources String[]
+
+  course                Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userProgress          UserProgress[]
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+
+  @@index([courseId])
+  @@index([courseId, orderIndex])
+}
+
+model Enrollment {
+  id                    String            @id @default(cuid())
+  userId                String
+  courseId              String
+  enrollmentDate        DateTime          @default(now())
+  completionDate        DateTime?
+  completionPercentage  Decimal           @default(0) @db.Decimal(5, 2)
+  status                String            @default("active")
+  certificateIssued     Boolean           @default(false)
+  certificateId         String?
+  certificateIssuedDate DateTime?
+  totalWatchTime        Int               @default(0)
+  lastAccessedAt        DateTime?
+
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course                Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  payment               Payment?
+  userProgress          UserProgress[]
+  certificate           Certificate?
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+}
+
+model UserProgress {
+  id                    String            @id @default(cuid())
+  enrollmentId          String
+  lectureId             String
+  userId                String
+  isCompleted           Boolean           @default(false)
+  completedAt           DateTime?
+  watchDuration         Int               @default(0)
+  watchPercentage       Decimal           @db.Decimal(5, 2)
+  lastWatchedAt         DateTime?
+
+  enrollment            Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lecture               Lecture           @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lectureId])
+  @@index([enrollmentId])
+  @@index([lectureId])
+  @@index([isCompleted])
+}
+
+model Payment {
+  id                    String            @id @default(cuid())
+  enrollmentId          String            @unique
+  userId                String
+  courseId              String
+  amount                Decimal           @db.Decimal(10, 2)
+  currency              String            @default("ETB")
+  paymentType           String
+  paymentMethod         String?
+  status                String            @default("pending")
+  transactionId         String?
+  receiptScreenshotUrl  String?
+  receiptScreenshotKey  String?
+
+  lakiPayTransactionId  String?
+  lakiPayStatus         String?
+  paymentGatewayResponse Json?
+
+  approvalNotes         String?
+  approvedBy            String?
+  approvedAt            DateTime?
+  rejectionReason       String?
+  rejectedAt            DateTime?
+
+  enrollment            Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course                Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  approvingUser         User?             @relation("ApprovedBy", fields: [approvedBy], references: [id])
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  expiresAt             DateTime?
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+  @@index([paymentType])
+  @@index([createdAt])
+}
+
+model Certificate {
+  id                    String            @id @default(cuid())
+  enrollmentId          String            @unique
+  userId                String
+  courseId              String
+  certificateNumber     String            @unique
+  issuedDate            DateTime          @default(now())
+  verificationCode      String            @unique
+  verificationUrl       String?
+  certificateUrl        String?
+  isValid               Boolean           @default(true)
+
+  enrollment            Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course                Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([certificateNumber])
+}
+
+model DeviceSession {
+  id                    String            @id @default(cuid())
+  userId                String
+  deviceId              String
+  deviceName            String?
+  deviceType            String            @default("unknown")
+  userAgent             String?
+  ipAddress             String?
+  lastActiveAt          DateTime          @default(now())
+  loginAt               DateTime          @default(now())
+  logoutAt              DateTime?
+  isActive              Boolean           @default(true)
+  sessionToken          String?
+
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+  @@index([isActive])
+}
+
+model AdminApprovalQueue {
+  id                    String            @id @default(cuid())
+  paymentId             String
+  userId                String
+  courseId              String
+  amount                Decimal           @db.Decimal(10, 2)
+  receiptScreenshotUrl  String
+  submittedAt           DateTime          @default(now())
+  viewedAt              DateTime?
+  isReviewed            Boolean           @default(false)
+
+  @@index([isReviewed])
+  @@index([submittedAt])
+}

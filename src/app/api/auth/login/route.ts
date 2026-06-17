@@ -1,0 +1,120 @@
+// src/app/api/auth/login/route.ts
+// User Login API Endpoint — Supabase REST API
+
+import { NextRequest, NextResponse } from "next/server";
+import { loginSchema } from "@/lib/validators/schemas";
+import { supabaseAdmin } from "@/lib/db/supabase";
+import { jwtService } from "@/lib/auth/jwt";
+import { passwordService } from "@/lib/auth/password";
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const validation = loginSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          errors: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { email, password } = validation.data;
+
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: "Database not configured" },
+        { status: 500 },
+      );
+    }
+
+    const { data: users, error: findError } = await supabaseAdmin
+      .from("User")
+      .select(
+        "id, email, username, fullName, passwordHash, role, isActive, isBanned, lastLogin, loginCount",
+      )
+      .eq("email", email.toLowerCase());
+
+    if (findError) {
+      console.error("[LOGIN FIND ERROR]", findError);
+      return NextResponse.json({ error: "Login failed" }, { status: 500 });
+    }
+
+    const user = users?.[0] || null;
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 },
+      );
+    }
+
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: "Account is inactive. Please contact support." },
+        { status: 403 },
+      );
+    }
+    if (user.isBanned) {
+      return NextResponse.json(
+        { error: "Account has been banned. Please contact support." },
+        { status: 403 },
+      );
+    }
+
+    const isPasswordValid = await passwordService.verifyPassword(
+      password,
+      user.passwordHash,
+    );
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 },
+      );
+    }
+
+    const tokenPair = jwtService.generateTokenPair({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Update last login via Supabase REST
+    await supabaseAdmin
+      .from("User")
+      .update({
+        lastLogin: new Date().toISOString(),
+        loginCount: (user.loginCount || 0) + 1,
+      })
+      .eq("id", user.id);
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Login successful",
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          fullName: user.fullName,
+          role: user.role,
+        },
+        tokens: tokenPair,
+      },
+      {
+        status: 200,
+        headers: {
+          "Set-Cookie": `refreshToken=${tokenPair.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`,
+        },
+      },
+    );
+  } catch (error) {
+    console.error("[LOGIN ERROR]", error);
+    return NextResponse.json(
+      { error: "Login failed. Please try again later." },
+      { status: 500 },
+    );
+  }
+}

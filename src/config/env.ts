@@ -1,0 +1,183 @@
+// src/config/env.ts
+// Environment Configuration with Validation
+
+// ============================================
+// Required Environment Variables
+// ============================================
+
+const requiredEnvVars = [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "DATABASE_URL",
+  "JWT_SECRET",
+];
+
+// ============================================
+// Environment Configuration Object
+// ============================================
+
+export const env = {
+  // ============================================
+  // Supabase Configuration
+  // ============================================
+  supabase: {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  },
+
+  // ============================================
+  // Database Configuration
+  // ============================================
+  database: {
+    url: process.env.DATABASE_URL || "",
+  },
+
+  // ============================================
+  // JWT Configuration
+  // ============================================
+  jwt: {
+    secret: process.env.JWT_SECRET || "",
+    accessTokenExpiry: parseInt(process.env.JWT_EXPIRATION || "900"), // 15 minutes
+    refreshTokenExpiry: parseInt(
+      process.env.REFRESH_TOKEN_EXPIRATION || "2592000",
+    ), // 30 days
+  },
+
+  // ============================================
+  // Cloudinary Configuration
+  // ============================================
+  cloudinary: {
+    cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "",
+    apiKey: process.env.CLOUDINARY_API_KEY || "",
+    apiSecret: process.env.CLOUDINARY_API_SECRET || "",
+    uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || "",
+  },
+
+  // ============================================
+  // Payment Gateway Configuration
+  // ============================================
+  payment: {
+    lakiPay: {
+      apiKey: process.env.LAKI_PAY_API_KEY || "",
+      apiSecret: process.env.LAKI_PAY_API_SECRET || "",
+      webhookSecret: process.env.LAKI_PAY_WEBHOOK_SECRET || "",
+      baseUrl: process.env.LAKI_PAY_BASE_URL || "https://api.lakipay.com",
+    },
+    telebirr: {
+      merchantCode: process.env.TELEBIRR_MERCHANT_CODE || "",
+      merchantKey: process.env.TELEBIRR_MERCHANT_KEY || "",
+    },
+  },
+
+  // ============================================
+  // Email Configuration
+  // ============================================
+  email: {
+    provider: process.env.EMAIL_PROVIDER || "sendgrid", // sendgrid, nodemailer
+    sendGrid: {
+      apiKey: process.env.SENDGRID_API_KEY || "",
+      fromEmail: process.env.SENDGRID_FROM_EMAIL || "",
+    },
+    nodemailer: {
+      host: process.env.SMTP_HOST || "",
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+      from: process.env.SMTP_FROM_EMAIL || "",
+    },
+  },
+
+  // ============================================
+  // Application Configuration
+  // ============================================
+  app: {
+    name: process.env.NEXT_PUBLIC_APP_NAME || "Educational Platform",
+    url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+    environment: process.env.NODE_ENV || "development",
+    debug: process.env.DEBUG === "true",
+  },
+
+  // ============================================
+  // CORS Configuration
+  // ============================================
+  cors: {
+    allowedOrigins: (
+      process.env.ALLOWED_ORIGINS || "http://localhost:3000"
+    ).split(","),
+  },
+
+  // ============================================
+  // Security Configuration
+  // ============================================
+  security: {
+    bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || "12"),
+    passwordMinLength: parseInt(process.env.PASSWORD_MIN_LENGTH || "12"),
+    passwordResetTokenExpiry: parseInt(
+      process.env.PASSWORD_RESET_TOKEN_EXPIRY || "3600",
+    ), // 1 hour
+    maxLoginAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS || "5"),
+    lockoutDuration: parseInt(process.env.LOCKOUT_DURATION || "900000"), // 15 minutes
+  },
+
+  // ============================================
+  // Rate Limiting
+  // ============================================
+  rateLimit: {
+    enabled: process.env.RATE_LIMIT_ENABLED !== "false",
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 minutes
+    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"),
+  },
+
+  // ============================================
+  // Monitoring & Logging
+  // ============================================
+  monitoring: {
+    sentry: {
+      dsn: process.env.SENTRY_DSN || "",
+      enabled: !!process.env.SENTRY_DSN,
+    },
+    datadog: {
+      apiKey: process.env.DATADOG_API_KEY || "",
+      enabled: !!process.env.DATADOG_API_KEY,
+    },
+  },
+};
+
+// ============================================
+// Validate Required Environment Variables
+// ============================================
+
+export function validateEnv() {
+  const missing: string[] = [];
+
+  requiredEnvVars.forEach((envVar) => {
+    if (!process.env[envVar]) {
+      missing.push(envVar);
+    }
+  });
+
+  if (missing.length > 0) {
+    console.warn(
+      `[CONFIG] Missing environment variables: ${missing.join(", ")}`,
+    );
+
+    // In development, continue with warnings
+    // In production, throw error
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        `Missing required environment variables: ${missing.join(", ")}`,
+      );
+    }
+  }
+
+  return true;
+}
+
+// ============================================
+// Export Environment Configuration
+// ============================================
+
+export default env;
