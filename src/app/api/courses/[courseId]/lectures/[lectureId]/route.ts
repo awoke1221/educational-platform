@@ -197,7 +197,7 @@ export async function PUT(
         select: { duration: true },
       });
       const totalDuration = allLectures.reduce(
-        (sum, l) => sum + (l.duration || 0),
+        (sum: number, l) => sum + (l.duration || 0),
         0,
       );
 
