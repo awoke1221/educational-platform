@@ -149,10 +149,12 @@ export async function POST(request: NextRequest) {
     });
 
     const totalWatchTime = allProgress.reduce(
-      (sum, p) => sum + p.watchDuration,
+      (sum: number, p: { watchDuration: number }) => sum + p.watchDuration,
       0,
     );
-    const completedCount = allProgress.filter((p) => p.isCompleted).length;
+    const completedCount = allProgress.filter(
+      (p: { isCompleted: boolean }) => p.isCompleted,
+    ).length;
 
     // Get total lecture count for the course
     const lectureCount = await prisma.lecture.count({
@@ -288,10 +290,12 @@ export async function PATCH(request: NextRequest) {
     });
 
     const totalWatchTime = allProgress.reduce(
-      (sum, p) => sum + p.watchDuration,
+      (sum: number, p: { watchDuration: number }) => sum + p.watchDuration,
       0,
     );
-    const completedCount = allProgress.filter((p) => p.isCompleted).length;
+    const completedCount = allProgress.filter(
+      (p: { isCompleted: boolean }) => p.isCompleted,
+    ).length;
     const lectureCount = await prisma.lecture.count({
       where: { courseId, isPublished: true },
     });

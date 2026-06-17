@@ -294,7 +294,8 @@ export async function DELETE(
       data: {
         videoCount: remainingLectures.length,
         duration: remainingLectures.reduce(
-          (sum, l) => sum + (l.duration || 0),
+          (sum: number, l: { duration: number | null }) =>
+            sum + (l.duration || 0),
           0,
         ),
       },
