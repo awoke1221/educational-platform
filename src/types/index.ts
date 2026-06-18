@@ -15,6 +15,7 @@ export interface User {
   profileImage?: string;
   role: "user" | "instructor" | "admin";
   isActive: boolean;
+  isApproved?: boolean;
   isBanned: boolean;
   lastLogin?: Date;
   loginCount: number;

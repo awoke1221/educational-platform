@@ -101,6 +101,15 @@ export const env = {
   },
 
   // ============================================
+  // Supabase Storage Configuration
+  // ============================================
+  storage: {
+    receiptsBucket: process.env.SUPABASE_STORAGE_RECEIPTS_BUCKET || "receipts",
+    maxFileSize: 5 * 1024 * 1024, // 5 MB
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+  },
+
+  // ============================================
   // CORS Configuration
   // ============================================
   cors: {

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const { data: users, error: findError } = await supabaseAdmin
       .from("User")
       .select(
-        "id, email, username, fullName, passwordHash, role, isActive, isBanned, lastLogin, loginCount",
+        "id, email, username, fullName, passwordHash, role, isActive, isBanned, isApproved, lastLogin, loginCount",
       )
       .eq("email", email.toLowerCase());
 
@@ -54,6 +54,13 @@ export async function POST(request: NextRequest) {
     if (!user.isActive) {
       return NextResponse.json(
         { error: "Account is inactive. Please contact support." },
+        { status: 403 },
+      );
+    }
+    // Require admin approval before allowing login
+    if (user.isApproved === false) {
+      return NextResponse.json(
+        { error: "Account awaiting admin approval" },
         { status: 403 },
       );
     }

@@ -160,11 +160,17 @@ function RegisterForm() {
           setFieldErrors(errors);
         }
       } else {
-        localStorage.setItem("token", data.tokens.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        if (data.tokens.refreshToken)
-          localStorage.setItem("refreshToken", data.tokens.refreshToken);
-        router.push(redirectTo);
+        // Registration is created as pre-registration. Redirect to payment page
+        const userId = data.user?.id;
+        if (userId) {
+          router.push(
+            `/auth/register/payment?userId=${userId}&redirect=${encodeURIComponent(
+              redirectTo,
+            )}`,
+          );
+        } else {
+          setError("Registration created but missing user id.");
+        }
       }
     } catch {
       setError("እባክዎ ደግመው ይሞክሩ");

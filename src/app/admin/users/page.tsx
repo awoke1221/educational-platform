@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
           href="/auth/login"
           className="bg-[#1B2A4A] text-white px-6 py-3 rounded-lg"
         >
-          ግባ
+          Login
         </Link>
       </div>
     );
@@ -105,14 +105,14 @@ export default function AdminUsersPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B2A4A]">ተጠቃሚዎች አስተዳደር</h1>
-          <p className="text-sm text-gray-500">{total} ተጠቃሚዎች ተገኝተዋል</p>
+          <h1 className="text-2xl font-bold text-[#1B2A4A]">User Management</h1>
+          <p className="text-sm text-gray-500">{total} users found</p>
         </div>
         <Link
           href="/admin"
           className="text-sm text-gray-500 hover:text-[#1B2A4A]"
         >
-          ← ወደ አስተዳደር ተመለስ
+          ← Back to Admin
         </Link>
       </div>
 
@@ -121,7 +121,7 @@ export default function AdminUsersPage() {
         <div className="flex flex-wrap gap-3">
           <input
             type="text"
-            placeholder="ተጠቃሚ ይፈልጉ..."
+            placeholder="Search users..."
             className="flex-1 min-w-[200px] border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9952A]/30"
             value={search}
             onChange={(e) => {
@@ -137,10 +137,10 @@ export default function AdminUsersPage() {
               setPage(1);
             }}
           >
-            <option value="all">ሁሉም ሚና</option>
-            <option value="user">ተጠቃሚ</option>
-            <option value="instructor">አስተማሪ</option>
-            <option value="admin">አስተዳዳሪ</option>
+            <option value="all">All Roles</option>
+            <option value="user">User</option>
+            <option value="instructor">Instructor</option>
+            <option value="admin">Admin</option>
           </select>
           <select
             className="border border-gray-200 rounded-lg p-2.5 text-sm"
@@ -150,19 +150,19 @@ export default function AdminUsersPage() {
               setPage(1);
             }}
           >
-            <option value="all">ሁሉም ሁኔታ</option>
-            <option value="active">ንቁ</option>
-            <option value="banned">ታግዷል</option>
-            <option value="inactive">እንቅስቃሴ የለም</option>
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="banned">Banned</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
       </div>
 
       {/* Users Table */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">በመጫን ላይ...</div>
+        <div className="text-center py-12 text-gray-500">Loading...</div>
       ) : users.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">ተጠቃሚ አልተገኘም</div>
+        <div className="text-center py-12 text-gray-500">No users found</div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
@@ -170,22 +170,22 @@ export default function AdminUsersPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="text-left p-3 font-medium text-gray-500">
-                    ተጠቃሚ
+                    User
                   </th>
                   <th className="text-left p-3 font-medium text-gray-500">
-                    ኢሜይል
+                    Email
                   </th>
                   <th className="text-left p-3 font-medium text-gray-500">
-                    ሚና
+                    Role
                   </th>
                   <th className="text-left p-3 font-medium text-gray-500">
-                    ሁኔታ
+                    Status
                   </th>
                   <th className="text-left p-3 font-medium text-gray-500">
-                    መግቢያ
+                    Login
                   </th>
                   <th className="text-left p-3 font-medium text-gray-500">
-                    ድርጊት
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -225,30 +225,30 @@ export default function AdminUsersPage() {
                               : "bg-gray-50 text-gray-600 border-gray-200"
                         }`}
                       >
-                        <option value="user">ተጠቃሚ</option>
-                        <option value="instructor">አስተማሪ</option>
-                        <option value="admin">አስተዳዳሪ</option>
+                        <option value="user">User</option>
+                        <option value="instructor">Instructor</option>
+                        <option value="admin">Admin</option>
                       </select>
                     </td>
                     <td className="p-3">
                       {user.isBanned ? (
                         <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
-                          ታግዷል
+                          Banned
                         </span>
                       ) : user.isActive ? (
                         <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
-                          ንቁ
+                          Active
                         </span>
                       ) : (
                         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
-                          እንቅስቃሴ የለም
+                          Inactive
                         </span>
                       )}
                     </td>
                     <td className="p-3 text-xs text-gray-400">
                       {user.lastLogin
                         ? new Date(user.lastLogin).toLocaleDateString()
-                        : "በፍጹም"}
+                        : "Never"}
                     </td>
                     <td className="p-3">
                       <div className="flex gap-1">
@@ -257,14 +257,14 @@ export default function AdminUsersPage() {
                             onClick={() => handleAction(user.id, "unban")}
                             className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded hover:bg-green-200"
                           >
-                            ክልክል አንሳ
+                            Unban
                           </button>
                         ) : (
                           <button
                             onClick={() => handleAction(user.id, "ban")}
                             className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded hover:bg-red-200"
                           >
-                            ከልክል
+                            Ban
                           </button>
                         )}
                         {!user.isActive && !user.isBanned && (
@@ -272,7 +272,7 @@ export default function AdminUsersPage() {
                             onClick={() => handleAction(user.id, "activate")}
                             className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded hover:bg-green-200"
                           >
-                            አንቃ
+                            Activate
                           </button>
                         )}
                       </div>
@@ -289,15 +289,15 @@ export default function AdminUsersPage() {
               onClick={() => setPage((p) => p - 1)}
               className="text-sm text-gray-500 hover:text-[#1B2A4A] disabled:opacity-30"
             >
-              ← ቀዳሚ
+              ← Previous
             </button>
-            <span className="text-sm text-gray-400">ገጽ {page}</span>
+            <span className="text-sm text-gray-400">Page {page}</span>
             <button
               disabled={page * limit >= total}
               onClick={() => setPage((p) => p + 1)}
               className="text-sm text-gray-500 hover:text-[#1B2A4A] disabled:opacity-30"
             >
-              ቀጣይ →
+              Next →
             </button>
           </div>
         </div>
@@ -309,15 +309,19 @@ export default function AdminUsersPage() {
           href="/admin/courses"
           className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
         >
-          <h3 className="font-semibold text-[#1B2A4A] mb-1">ኮርሶች አስተዳደር</h3>
-          <p className="text-sm text-gray-400">ኮርሶችን ይፍጠሩ፣ ያስተካክሉ እና ያትሙ</p>
+          <h3 className="font-semibold text-[#1B2A4A] mb-1">
+            Course Management
+          </h3>
+          <p className="text-sm text-gray-400">
+            Create, edit and publish courses
+          </p>
         </Link>
         <Link
           href="/admin"
           className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
         >
-          <h3 className="font-semibold text-[#1B2A4A] mb-1">ዳሽቦርድ</h3>
-          <p className="text-sm text-gray-400">የመድረክ አጠቃላይ እይታ</p>
+          <h3 className="font-semibold text-[#1B2A4A] mb-1">Dashboard</h3>
+          <p className="text-sm text-gray-400">Platform overview</p>
         </Link>
       </div>
     </div>

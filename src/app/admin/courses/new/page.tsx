@@ -45,7 +45,7 @@ export default function NewCoursePage() {
     if (field === "title") {
       const validation = validateCourseTitle(form.title);
       if (!validation.valid) {
-        errors.title = validation.message || "ልክ ያልሆነ ርዕስ";
+        errors.title = validation.message || "Invalid title";
       } else {
         delete errors.title;
       }
@@ -54,7 +54,7 @@ export default function NewCoursePage() {
     if (field === "description") {
       const validation = validateCourseDescription(form.description);
       if (!validation.valid) {
-        errors.description = validation.message || "ልክ ያልሆነ መግለጫ";
+        errors.description = validation.message || "Invalid description";
       } else {
         delete errors.description;
       }
@@ -62,7 +62,8 @@ export default function NewCoursePage() {
 
     if (field === "shortDescription" && form.shortDescription) {
       if (form.shortDescription.length > 200) {
-        errors.shortDescription = "አጭር መግለጫ ከ200 ቁምፊ መብለጥ የለበትም";
+        errors.shortDescription =
+          "Short description must not exceed 200 characters";
       } else {
         delete errors.shortDescription;
       }
@@ -71,7 +72,7 @@ export default function NewCoursePage() {
     if (field === "price") {
       const validation = validatePrice(form.price);
       if (!validation.valid) {
-        errors.price = validation.message || "ልክ ያልሆነ ዋጋ";
+        errors.price = validation.message || "Invalid price";
       } else {
         delete errors.price;
       }
@@ -80,14 +81,14 @@ export default function NewCoursePage() {
     if (field === "coverImage" && form.coverImage) {
       const validation = validateUrl(form.coverImage);
       if (!validation.valid) {
-        errors.coverImage = validation.message || "ልክ ያልሆነ ዩአርኤል";
+        errors.coverImage = validation.message || "Invalid URL";
       } else {
         delete errors.coverImage;
       }
     }
 
     if (field === "category" && form.category && form.category.length > 50) {
-      errors.category = "ምድብ ከ50 ቁምፊ መብለጥ የለበትም";
+      errors.category = "Category must not exceed 50 characters";
     } else {
       delete errors.category;
     }
@@ -124,7 +125,7 @@ export default function NewCoursePage() {
     if (!file || !token) return;
 
     if (!file.type.startsWith("video/")) {
-      alert("እባክዎ የቪዲዮ ፋይል ይምረጡ");
+      alert("Please select a video file");
       return;
     }
 
@@ -214,28 +215,28 @@ export default function NewCoursePage() {
 
     const titleValidation = validateCourseTitle(form.title);
     if (!titleValidation.valid) {
-      errors.title = titleValidation.message || "ልክ ያልሆነ ርዕስ";
+      errors.title = titleValidation.message || "Invalid title";
       hasErrors = true;
     }
 
     if (form.description) {
       const descValidation = validateCourseDescription(form.description);
       if (!descValidation.valid) {
-        errors.description = descValidation.message || "ልክ ያልሆነ መግለጫ";
+        errors.description = descValidation.message || "Invalid description";
         hasErrors = true;
       }
     }
 
     const priceValidation = validatePrice(form.price);
     if (!priceValidation.valid) {
-      errors.price = priceValidation.message || "ልክ ያልሆነ ዋጋ";
+      errors.price = priceValidation.message || "Invalid price";
       hasErrors = true;
     }
 
     if (form.coverImage) {
       const urlValidation = validateUrl(form.coverImage);
       if (!urlValidation.valid) {
-        errors.coverImage = urlValidation.message || "ልክ ያልሆነ ዩአርኤል";
+        errors.coverImage = urlValidation.message || "Invalid URL";
         hasErrors = true;
       }
     }
@@ -276,13 +277,13 @@ export default function NewCoursePage() {
 
       const data = await res.json();
       if (data.success) {
-        alert("ኮርስ በተሳካ ሁኔታ ተፈጥሯል!");
+        alert("Course created successfully!");
         router.push("/admin/courses");
       } else {
-        alert(data.error || "ኮርስ መፍጠር አልተሳካም");
+        alert(data.error || "Failed to create course");
       }
     } catch {
-      alert("ስህተት ተከስቷል");
+      alert("An error occurred");
     } finally {
       setLoading(false);
     }
@@ -312,14 +313,14 @@ export default function NewCoursePage() {
           </svg>
         </Link>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00BCD4] to-[#FF1744] bg-clip-text text-transparent">
-          አዲስ ኮርስ መፍጠር
+          Create New Course
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Cloudinary Video Upload */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E0F7FA]">
-          <h3 className="font-semibold text-[#0D3B4A] mb-4">🎬 ቪዲዮ ስቀል</h3>
+          <h3 className="font-semibold text-[#0D3B4A] mb-4">🎬 Upload Video</h3>
           <div className="border-2 border-dashed border-[#E0F7FA] rounded-xl p-8 text-center hover:border-[#00BCD4]/50 transition-colors">
             {uploading ? (
               <div>
@@ -330,7 +331,7 @@ export default function NewCoursePage() {
                   />
                 </div>
                 <p className="text-sm text-[#4A7278]">
-                  ቪዲዮ እየሰቀለ ነው... {uploadProgress}%
+                  Uploading video... {uploadProgress}%
                 </p>
               </div>
             ) : cloudinaryVideoUrl ? (
@@ -349,10 +350,10 @@ export default function NewCoursePage() {
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-green-600 mb-1">
-                  ቪዲዮ ተሰቅሏል!
+                  Video uploaded!
                 </p>
                 <p className="text-xs text-gray-400 mb-3">
-                  {videoDuration} ሰከንድ
+                  {videoDuration} seconds
                 </p>
                 <button
                   type="button"
@@ -362,7 +363,7 @@ export default function NewCoursePage() {
                   }}
                   className="text-xs text-red-500 hover:text-red-600"
                 >
-                  ሰርዝ
+                  Remove
                 </button>
               </div>
             ) : (
@@ -381,10 +382,10 @@ export default function NewCoursePage() {
                   />
                 </svg>
                 <p className="text-sm font-medium text-gray-600 mb-1">
-                  ቪዲዮ ለመስቀል ጠቅ ያድርጉ
+                  Click to upload video
                 </p>
                 <p className="text-xs text-gray-400">
-                  MP4, WebM, MOV (ከ 100MB በታች)
+                  MP4, WebM, MOV (under 100MB)
                 </p>
                 <input
                   type="file"
@@ -399,11 +400,13 @@ export default function NewCoursePage() {
 
         {/* Course Details */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E0F7FA] space-y-4">
-          <h3 className="font-semibold text-[#0D3B4A] mb-2">📝 የኮርስ ዝርዝሮች</h3>
+          <h3 className="font-semibold text-[#0D3B4A] mb-2">
+            📝 Course Details
+          </h3>
 
           <div>
             <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
-              የኮርስ ርዕስ *
+              Course Title *
             </label>
             <input
               name="title"
@@ -438,7 +441,7 @@ export default function NewCoursePage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
-                ዋጋ (ብር)
+                Price (ETB)
               </label>
               <input
                 name="price"
@@ -472,7 +475,7 @@ export default function NewCoursePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
-                ደረጃ
+                Level
               </label>
               <select
                 name="level"
@@ -480,23 +483,23 @@ export default function NewCoursePage() {
                 onChange={handleChange}
                 className="w-full border-2 border-[#E0F7FA] rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4] bg-[#F0FEFF]"
               >
-                <option value="beginner">ጀማሪ</option>
-                <option value="intermediate">መካከለኛ</option>
-                <option value="advanced">ከፍተኛ</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
               </select>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
-              ምድብ
+              Category
             </label>
             <input
               name="category"
               value={form.category}
               onChange={handleChange}
               onBlur={() => handleBlur("category")}
-              placeholder="ለምሳሌ: Science, Arts, Technology"
+              placeholder="e.g. Science, Arts, Technology"
               className={`w-full border-2 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 transition-all ${
                 touched.category && fieldErrors.category
                   ? "border-red-400 bg-red-50 focus:ring-red-300 focus:border-red-400"
@@ -523,7 +526,7 @@ export default function NewCoursePage() {
 
           <div>
             <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
-              አጭር መግለጫ
+              Short Description
             </label>
             <input
               name="shortDescription"
@@ -556,7 +559,7 @@ export default function NewCoursePage() {
 
           <div>
             <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
-              ዝርዝር መግለጫ
+              Detailed Description
             </label>
             <textarea
               name="description"
@@ -598,13 +601,13 @@ export default function NewCoursePage() {
             }
             className="flex-1 bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "በመፍጠር ላይ..." : "ኮርስ ፍጠር"}
+            {loading ? "Creating..." : "Create Course"}
           </button>
           <Link
             href="/admin/courses"
             className="px-6 py-3 border border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors"
           >
-            ሰርዝ
+            Cancel
           </Link>
         </div>
       </form>

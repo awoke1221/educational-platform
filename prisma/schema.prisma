@@ -22,10 +22,15 @@ model User {
   passwordResetToken    String?
   passwordResetExpires  DateTime?
   isActive              Boolean           @default(true)
+  isApproved            Boolean           @default(false)
   isBanned              Boolean           @default(false)
   role                  String            @default("user")
   lastLogin             DateTime?
   loginCount            Int               @default(0)
+  // Payment / registration helpers
+  pendingReceiptUrl     String?
+  paymentMethod         String?
+  paymentStatus         String?           @default("none")
 
   enrollments           Enrollment[]
   payments              Payment[]

@@ -124,61 +124,33 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 6: Generate JWT Token Pair
+    // STEP 6: Mark as awaiting admin approval and respond
+    // - Do NOT issue tokens or create a session until admin approves
+    // - This keeps the existing auth flow intact while enforcing approval
     // ============================================
-    const tokenPair = jwtService.generateTokenPair({
-      userId: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    });
 
-    // ============================================
-    // STEP 7: Create Initial Device Session
-    // ============================================
-    const deviceInfo = getDeviceInfo(request);
+    // update created user to explicitly set isApproved = false and initial payment status
+    await supabaseAdmin
+      .from("User")
+      .update({ isApproved: false, paymentStatus: "pending" })
+      .eq("id", newUser.id);
 
-    const { error: deviceError } = await supabaseAdmin
-      .from("DeviceSession")
-      .insert({
-        id: crypto.randomUUID(),
-        userId: newUser.id,
-        deviceId: deviceInfo.deviceId,
-        deviceName: deviceInfo.deviceName,
-        deviceType: deviceInfo.deviceType,
-        userAgent: deviceInfo.userAgent,
-        ipAddress: deviceInfo.ipAddress,
-        isActive: true,
-        loginAt: new Date().toISOString(),
-      });
-
-    if (deviceError) {
-      console.warn("[REGISTER DEVICE ERROR]", deviceError);
-      // Non-critical - continue even if device session fails
-    }
-
-    // ============================================
-    // STEP 8: Log User Activity (Audit Trail)
-    // ============================================
     console.log(
-      `[AUDIT] New user registered: ${newUser.id} (${newUser.email})`,
+      `[AUDIT] New pre-registration: ${newUser.id} (${newUser.email})`,
     );
 
-    // ============================================
-    // STEP 9: Return Success Response
-    // ============================================
     return NextResponse.json(
       {
         success: true,
-        message: "Registration successful",
-        user: newUser,
-        tokens: tokenPair,
-      },
-      {
-        status: 201,
-        headers: {
-          "Set-Cookie": `refreshToken=${tokenPair.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`,
+        message:
+          "Pre-registration created. Please complete payment to submit for review.",
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          username: newUser.username,
         },
       },
+      { status: 201 },
     );
   } catch (error) {
     console.error("[REGISTER ERROR]", error);

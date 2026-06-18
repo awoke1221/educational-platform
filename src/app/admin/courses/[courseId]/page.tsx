@@ -204,7 +204,7 @@ export default function AdminCourseDetailPage() {
           isUploading: false,
           progress: 0,
           lectureId: null,
-          error: "ቪዲዮው በጣም ትልቅ ነው። ከፍተኛው 5GB ነው።",
+          error: "Video is too large. Maximum size is 5GB.",
         });
         return;
       }
@@ -214,7 +214,7 @@ export default function AdminCourseDetailPage() {
           isUploading: false,
           progress: 0,
           lectureId: null,
-          error: "የተፈቀዱ ቅርፀቶች MP4, WebM, OGG ብቻ ናቸው።",
+          error: "Allowed formats: MP4, WebM, OGG only.",
         });
         return;
       }
@@ -332,7 +332,7 @@ export default function AdminCourseDetailPage() {
   // ============================================
 
   const handleDeleteLecture = async (lectureId: string) => {
-    if (!confirm("እርግጠኛ ነዎት? ይህ ምዕራፍ ይደመሰሳል።")) return;
+    if (!confirm("Are you sure? This lecture will be deleted.")) return;
 
     try {
       const res = await fetch(
@@ -362,7 +362,7 @@ export default function AdminCourseDetailPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-[#1B2A4A] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">በመጫን ላይ...</p>
+          <p className="text-gray-500 text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -371,12 +371,12 @@ export default function AdminCourseDetailPage() {
   if (!course) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <p className="text-gray-500 mb-4">ኮርስ አልተገኘም</p>
+        <p className="text-gray-500 mb-4">Course not found</p>
         <Link
           href="/admin/courses"
           className="text-[#1B2A4A] hover:underline text-sm"
         >
-          ← ወደ ኮርሶች ዝርዝር
+          ← Back to Courses
         </Link>
       </div>
     );
@@ -387,9 +387,9 @@ export default function AdminCourseDetailPage() {
   // ============================================
 
   const levelLabels: Record<string, string> = {
-    beginner: "ጀማሪ",
-    intermediate: "መካከለኛ",
-    advanced: "ከፍተኛ",
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
   };
 
   // ============================================
@@ -432,10 +432,10 @@ export default function AdminCourseDetailPage() {
                   : "bg-amber-100 text-amber-700"
               }`}
             >
-              {course.isPublished ? "የታተመ" : "ረቂቅ"}
+              {course.isPublished ? "Published" : "Draft"}
             </span>
             <span className="text-xs text-gray-400">
-              {course.instructor?.fullName || "ያልታወቀ አስተማሪ"}
+              {course.instructor?.fullName || "Unknown Instructor"}
             </span>
             <span className="text-xs text-gray-400">•</span>
             <span className="text-xs text-gray-400">
@@ -443,7 +443,7 @@ export default function AdminCourseDetailPage() {
             </span>
             <span className="text-xs text-gray-400">•</span>
             <span className="text-xs text-gray-400">
-              {Number(course.price).toLocaleString()} ብር
+              {Number(course.price).toLocaleString()} ETB
             </span>
           </div>
         </div>
@@ -452,7 +452,7 @@ export default function AdminCourseDetailPage() {
           className="text-sm text-[#1B2A4A] hover:underline"
           target="_blank"
         >
-          ክፈት →
+          Open →
         </Link>
       </div>
 
@@ -466,7 +466,7 @@ export default function AdminCourseDetailPage() {
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
-          ምዕራፎች ({lectures.length})
+          Lectures ({lectures.length})
         </button>
         <button
           onClick={() => setActiveTab("settings")}
@@ -476,7 +476,7 @@ export default function AdminCourseDetailPage() {
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
-          ቅንብሮች
+          Settings
         </button>
       </div>
 

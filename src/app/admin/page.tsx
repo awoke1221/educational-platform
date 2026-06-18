@@ -27,45 +27,45 @@ export default function AdminPage() {
           href="/auth/login"
           className="bg-[#1B2A4A] text-white px-6 py-3 rounded-lg"
         >
-          ግባ
+          Login
         </Link>
       </div>
     );
   if (loading)
-    return <div className="text-center py-20 text-gray-500">በመጫን ላይ...</div>;
+    return <div className="text-center py-20 text-gray-500">Loading...</div>;
 
   const sections = [
     {
-      title: "ተጠቃሚዎች",
+      title: "Users",
       items: [
-        { label: "ጠቅላላ", value: analytics?.users?.total },
-        { label: "ንቁ", value: analytics?.users?.active },
-        { label: "አስተማሪዎች", value: analytics?.users?.instructors },
+        { label: "Total", value: analytics?.users?.total },
+        { label: "Active", value: analytics?.users?.active },
+        { label: "Instructors", value: analytics?.users?.instructors },
       ],
     },
     {
-      title: "ኮርሶች",
+      title: "Courses",
       items: [
-        { label: "ጠቅላላ", value: analytics?.courses?.total },
-        { label: "የታተሙ", value: analytics?.courses?.published },
-        { label: "ረቂቅ", value: analytics?.courses?.draft },
+        { label: "Total", value: analytics?.courses?.total },
+        { label: "Published", value: analytics?.courses?.published },
+        { label: "Draft", value: analytics?.courses?.draft },
       ],
     },
     {
-      title: "ክፍያ",
+      title: "Payments",
       items: [
-        { label: "በመጠባበቅ ላይ", value: analytics?.payments?.pending },
-        { label: "ጸድቋል", value: analytics?.payments?.approved },
-        { label: "ተቀባይነት አላገኘም", value: analytics?.payments?.rejected },
+        { label: "Pending", value: analytics?.payments?.pending },
+        { label: "Approved", value: analytics?.payments?.approved },
+        { label: "Rejected", value: analytics?.payments?.rejected },
       ],
     },
     {
-      title: "ሌላ",
+      title: "Other",
       items: [
-        { label: "የምስክር ወረቀት", value: analytics?.certificates?.total },
+        { label: "Certificates", value: analytics?.certificates?.total },
         {
-          label: "ገቢ",
-          value: `${Number(analytics?.revenue?.total || 0).toLocaleString()} ብር`,
+          label: "Revenue",
+          value: `${Number(analytics?.revenue?.total || 0).toLocaleString()} ETB`,
         },
       ],
     },
@@ -75,27 +75,35 @@ export default function AdminPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B2A4A]">አስተዳደር</h1>
-          <p className="text-gray-500 text-sm">የመድረክ አስተዳደር ማዕከል</p>
+          <h1 className="text-2xl font-bold text-[#1B2A4A]">Admin Dashboard</h1>
+          <p className="text-gray-500 text-sm">
+            Platform Administration Center
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             href="/admin/users"
             className="text-sm bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200"
           >
-            👥 ተጠቃሚዎች
+            👥 Users
+          </Link>
+          <Link
+            href="/admin/registrations"
+            className="text-sm bg-orange-100 text-orange-700 px-4 py-2 rounded-lg hover:bg-orange-200"
+          >
+            📝 Pending Registrations
           </Link>
           <Link
             href="/admin/courses"
             className="text-sm bg-[#1B2A4A] text-white px-4 py-2 rounded-lg hover:bg-[#2C3E6B] transition-colors"
           >
-            📚 ኮርሶች አስተዳደር
+            📚 Courses
           </Link>
           <Link
             href="/admin/courses/new"
             className="text-sm bg-[#C9952A] text-white px-4 py-2 rounded-lg hover:bg-[#b8862a] transition-colors"
           >
-            ➕ አዲስ ኮርስ
+            ➕ New Course
           </Link>
         </div>
       </div>
@@ -121,7 +129,7 @@ export default function AdminPage() {
       {/* Recent Activity */}
       {analytics?.recentActivity && (
         <div className="mt-8 bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="font-semibold text-[#1B2A4A] mb-4">የቅርብ ጊዜ እንቅስቃሴ</h3>
+          <h3 className="font-semibold text-[#1B2A4A] mb-4">Recent Activity</h3>
           {analytics.recentActivity.users?.slice(0, 5).map((u: any) => (
             <div
               key={u.id}
@@ -134,7 +142,7 @@ export default function AdminPage() {
               <span
                 className={`text-xs px-2 py-1 rounded ${u.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
               >
-                {u.isActive ? "ንቁ" : "ሰነፍ"}
+                {u.isActive ? "Active" : "Inactive"}
               </span>
             </div>
           ))}

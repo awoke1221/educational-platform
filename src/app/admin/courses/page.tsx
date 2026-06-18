@@ -227,27 +227,27 @@ export default function AdminCoursesPage() {
   // ============================================
 
   const levelLabels: Record<string, string> = {
-    beginner: "ጀማሪ",
-    intermediate: "መካከለኛ",
-    advanced: "ከፍተኛ",
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
   };
 
   const statusBadge = (course: Course) => {
     if (course.isArchived)
       return (
         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-          ማህደር
+          Archived
         </span>
       );
     if (course.isPublished)
       return (
         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-          የታተመ
+          Published
         </span>
       );
     return (
       <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-        ረቂቅ
+        Draft
       </span>
     );
   };
@@ -283,31 +283,39 @@ export default function AdminCoursesPage() {
               </svg>
             </Link>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00BCD4] to-[#FF1744] bg-clip-text text-transparent">
-              ኮርሶች አስተዳደር
+              Course Management
             </h1>
           </div>
           <p className="text-gray-500 text-sm mt-1">
-            ሁሉንም ኮርሶች ያስተዳድሩ፣ ያትሙ እና ይቆጣጠሩ
+            Manage, publish and monitor all courses
           </p>
         </div>
         <Link
           href="/admin"
           className="text-sm text-gray-500 hover:text-[#00BCD4] transition-colors"
         >
-          ← ወደ ዳሽቦርድ
+          ← Back to Dashboard
         </Link>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatCard
-          label="ጠቅላላ"
+          label="Total"
           value={stats.total || total}
           color="text-[#0D3B4A]"
         />
-        <StatCard label="የታተሙ" value={stats.published} color="text-green-600" />
-        <StatCard label="ረቂቅ" value={stats.draft} color="text-amber-600" />
-        <StatCard label="ማህደር" value={stats.archived} color="text-gray-600" />
+        <StatCard
+          label="Published"
+          value={stats.published}
+          color="text-green-600"
+        />
+        <StatCard label="Draft" value={stats.draft} color="text-amber-600" />
+        <StatCard
+          label="Archived"
+          value={stats.archived}
+          color="text-gray-600"
+        />
       </div>
 
       {/* Search & Filter Bar */}
@@ -333,7 +341,7 @@ export default function AdminCoursesPage() {
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="በርዕስ ወይም በምድብ ይፈልጉ..."
+                placeholder="Search by title or category..."
                 className="w-full pl-9 pr-3 py-2 border-2 border-[#E0F7FA] rounded-lg text-sm focus:ring-2 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4] outline-none bg-[#F0FEFF]"
               />
             </div>
@@ -341,17 +349,17 @@ export default function AdminCoursesPage() {
               type="submit"
               className="bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all"
             >
-              ፈልግ
+              Search
             </button>
           </form>
 
           {/* Status Filter */}
           <div className="flex gap-1.5">
             {[
-              { value: "all", label: "ሁሉም" },
-              { value: "published", label: "የታተሙ" },
-              { value: "draft", label: "ረቂቅ" },
-              { value: "archived", label: "ማህደር" },
+              { value: "all", label: "All" },
+              { value: "published", label: "Published" },
+              { value: "draft", label: "Draft" },
+              { value: "archived", label: "Archived" },
             ].map((f) => (
               <button
                 key={f.value}
@@ -377,7 +385,7 @@ export default function AdminCoursesPage() {
         {loading ? (
           <div className="p-12 text-center">
             <div className="w-8 h-8 border-4 border-[#00BCD4] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">በመጫን ላይ...</p>
+            <p className="text-gray-500 text-sm">Loading...</p>
           </div>
         ) : courses.length === 0 ? (
           <div className="p-12 text-center">
@@ -394,19 +402,19 @@ export default function AdminCoursesPage() {
                 d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
               />
             </svg>
-            <p className="text-gray-500 text-sm">ምንም ኮርሶች አልተገኙም</p>
+            <p className="text-gray-500 text-sm">No courses found</p>
           </div>
         ) : (
           <>
             {/* Table Header - Desktop */}
             <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <div className="col-span-4">ኮርስ</div>
-              <div className="col-span-2">አስተማሪ</div>
-              <div className="col-span-1 text-center">ደረጃ</div>
-              <div className="col-span-1 text-center">ምዕራፍ</div>
-              <div className="col-span-1 text-center">ተማሪዎች</div>
-              <div className="col-span-1 text-center">ሁኔታ</div>
-              <div className="col-span-2 text-right">ተግባር</div>
+              <div className="col-span-4">Course</div>
+              <div className="col-span-2">Instructor</div>
+              <div className="col-span-1 text-center">Level</div>
+              <div className="col-span-1 text-center">Lectures</div>
+              <div className="col-span-1 text-center">Students</div>
+              <div className="col-span-1 text-center">Status</div>
+              <div className="col-span-2 text-right">Actions</div>
             </div>
 
             {/* Table Rows */}
@@ -425,11 +433,11 @@ export default function AdminCoursesPage() {
                   </Link>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-400">
-                      {Number(course.price).toLocaleString()} ብር
+                      {Number(course.price).toLocaleString()} ETB
                     </span>
                     <span className="text-gray-300">•</span>
                     <span className="text-xs text-gray-400">
-                      {course.category || "ሌላ"}
+                      {course.category || "Other"}
                     </span>
                   </div>
                   {/* Mobile status */}
@@ -439,7 +447,7 @@ export default function AdminCoursesPage() {
                 {/* Instructor */}
                 <div className="hidden md:block md:col-span-2">
                   <p className="text-sm text-gray-700 truncate">
-                    {course.instructor?.fullName || "የለም"}
+                    {course.instructor?.fullName || "N/A"}
                   </p>
                   <p className="text-xs text-gray-400 truncate">
                     {course.instructor?.email || ""}
@@ -477,7 +485,7 @@ export default function AdminCoursesPage() {
                   <Link
                     href={`/admin/courses/${course.id}`}
                     className="p-1.5 text-gray-400 hover:text-[#FF1744] transition-colors"
-                    title="አስተዳድር"
+                    title="Manage"
                   >
                     <svg
                       className="w-4 h-4"
@@ -504,7 +512,7 @@ export default function AdminCoursesPage() {
                     <button
                       onClick={() => handleAction(course.id, "restore")}
                       className="p-1.5 text-gray-400 hover:text-green-600 transition-colors"
-                      title="ወደነበረበት መልስ"
+                      title="Restore"
                     >
                       <svg
                         className="w-4 h-4"
@@ -524,7 +532,7 @@ export default function AdminCoursesPage() {
                     <button
                       onClick={() => handleAction(course.id, "unpublish")}
                       className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"
-                      title="ከህትመት አውርድ"
+                      title="Unpublish"
                     >
                       <svg
                         className="w-4 h-4"
@@ -544,7 +552,7 @@ export default function AdminCoursesPage() {
                     <button
                       onClick={() => handleAction(course.id, "publish")}
                       className="p-1.5 text-gray-400 hover:text-green-600 transition-colors"
-                      title="አትም"
+                      title="Publish"
                     >
                       <svg
                         className="w-4 h-4"
@@ -566,7 +574,7 @@ export default function AdminCoursesPage() {
                     <button
                       onClick={() => handleAction(course.id, "archive")}
                       className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
-                      title="ወደ ማህደር"
+                      title="Archive"
                     >
                       <svg
                         className="w-4 h-4"
@@ -594,7 +602,7 @@ export default function AdminCoursesPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-gray-500">
-            ጠቅላላ {total} ኮርሶች • ገጽ {page} / {totalPages}
+            Total {total} courses • Page {page} / {totalPages}
           </p>
           <div className="flex gap-2">
             <button
@@ -602,14 +610,14 @@ export default function AdminCoursesPage() {
               disabled={page <= 1}
               className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 transition-colors"
             >
-              ← ቀዳሚ
+              ← Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
               className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 transition-colors"
             >
-              ቀጣይ →
+              Next →
             </button>
           </div>
         </div>
