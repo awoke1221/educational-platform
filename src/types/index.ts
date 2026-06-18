@@ -208,7 +208,7 @@ export interface CreateCourseRequest {
 }
 
 // ============================================
-// Database Models from Prisma
+// Database Models
 // ============================================
 
 export type UserModel = User;

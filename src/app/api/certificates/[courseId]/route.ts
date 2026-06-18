@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import CertificateService from "@/lib/certificate";
 import {
   successResponse,
@@ -36,20 +36,14 @@ export async function GET(
 
     if (!certificate) {
       // Check if user is enrolled but course not yet completed
-      const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: {
-            userId: auth.userId,
-            courseId,
-          },
-        },
-        select: {
-          status: true,
-          completionPercentage: true,
-        },
-      });
+      const { data: enrollment, error: enrollErr } = await supabaseAdmin!
+        .from("Enrollment")
+        .select("status, completionPercentage")
+        .eq("userId", auth.userId)
+        .eq("courseId", courseId)
+        .maybeSingle();
 
-      if (!enrollment) {
+      if (enrollErr || !enrollment) {
         return errorResponse("You are not enrolled in this course", 404);
       }
 

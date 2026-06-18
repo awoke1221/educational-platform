@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
 import { updateProfileSchema } from "@/lib/validators/schemas";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -18,7 +18,6 @@ import { validateRequest } from "@/lib/utils/request";
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify authentication
     const authError = await requireAuth(request);
     if (authError) return authError;
 
@@ -27,25 +26,15 @@ export async function GET(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    // Fetch user profile
-    const user = await prisma.user.findUnique({
-      where: { id: auth.userId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        fullName: true,
-        phoneNumber: true,
-        profileImage: true,
-        role: true,
-        isActive: true,
-        lastLogin: true,
-        loginCount: true,
-        createdAt: true,
-      },
-    });
+    const { data: user, error } = await supabaseAdmin!
+      .from("User")
+      .select(
+        "id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt",
+      )
+      .eq("id", auth.userId)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       return errorResponse("User not found", 404);
     }
 
@@ -62,7 +51,6 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    // Verify authentication
     const authError = await requireAuth(request);
     if (authError) return authError;
 
@@ -71,7 +59,6 @@ export async function PUT(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    // Validate request body
     const validation = await validateRequest<Record<string, any>>(
       request,
       updateProfileSchema,
@@ -90,14 +77,13 @@ export async function PUT(request: NextRequest) {
 
     const updates = validation.data;
 
-    // Check if username is being updated and ensure it's unique
     if (updates.username) {
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          username: updates.username.toLowerCase(),
-          NOT: { id: auth.userId },
-        },
-      });
+      const { data: existingUser } = await supabaseAdmin!
+        .from("User")
+        .select("id")
+        .eq("username", updates.username.toLowerCase())
+        .neq("id", auth.userId)
+        .maybeSingle();
 
       if (existingUser) {
         return errorResponse("Username already in use", 409);
@@ -106,23 +92,19 @@ export async function PUT(request: NextRequest) {
       updates.username = updates.username.toLowerCase();
     }
 
-    // Update user profile
-    const updatedUser = await prisma.user.update({
-      where: { id: auth.userId },
-      data: {
+    const { data: updatedUser, error: updateErr } = await supabaseAdmin!
+      .from("User")
+      .update({
         ...updates,
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        fullName: true,
-        phoneNumber: true,
-        profileImage: true,
-        role: true,
-        updatedAt: true,
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .eq("id", auth.userId)
+      .select(
+        "id, username, email, fullName, phoneNumber, profileImage, role, updatedAt",
+      )
+      .single();
+
+    if (updateErr) throw updateErr;
 
     console.log(`[AUDIT] User ${auth.userId} updated profile`);
 

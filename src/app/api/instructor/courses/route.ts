@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -44,40 +44,32 @@ export async function GET(request: NextRequest) {
       where.isArchived = true;
     }
 
-    const [courses, total] = await Promise.all([
-      prisma.course.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { updatedAt: "desc" },
-        select: {
-          id: true,
-          title: true,
-          coverImage: true,
-          price: true,
-          currency: true,
-          level: true,
-          category: true,
-          isPublished: true,
-          isArchived: true,
-          videoCount: true,
-          enrollmentCount: true,
-          createdAt: true,
-          updatedAt: true,
-          _count: {
-            select: {
-              lectures: true,
-              enrollments: true,
-            },
-          },
-        },
-      }),
-      prisma.course.count({ where }),
-    ]);
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    let query = supabaseAdmin!
+      .from("Course")
+      .select("*", { count: "exact" })
+      .eq("instructorId", auth.userId);
+
+    if (status === "published") {
+      query = query.eq("isPublished", true).eq("isArchived", false);
+    } else if (status === "draft") {
+      query = query.eq("isPublished", false).eq("isArchived", false);
+    } else if (status === "archived") {
+      query = query.eq("isArchived", true);
+    }
+
+    const {
+      data: courses,
+      count,
+      error,
+    } = await query.order("updatedAt", { ascending: false }).range(from, to);
+
+    if (error) throw error;
 
     return paginatedResponse(
-      courses,
-      total,
+      courses || [],
+      count || 0,
       page,
       limit,
       "Courses retrieved successfully",

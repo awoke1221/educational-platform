@@ -4,7 +4,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
 import { updateProgressSchema } from "@/lib/validators/schemas";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -41,35 +41,27 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 1: Verify lecture exists
     // ============================================
-    const lecture = await prisma.lecture.findUnique({
-      where: { id: lectureId },
-      select: {
-        id: true,
-        courseId: true,
-        duration: true,
-        course: {
-          select: { id: true, title: true },
-        },
-      },
-    });
+    const { data: lecture, error: lecErr } = await supabaseAdmin!
+      .from("Lecture")
+      .select("id, courseId, duration")
+      .eq("id", lectureId)
+      .maybeSingle();
 
-    if (!lecture) {
+    if (lecErr || !lecture) {
       return errorResponse("Lecture not found", 404);
     }
 
     // ============================================
     // STEP 2: Find active enrollment
     // ============================================
-    const enrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId: auth.userId,
-          courseId: lecture.courseId,
-        },
-      },
-    });
+    const { data: enrollment, error: enrollErr } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("*")
+      .eq("userId", auth.userId)
+      .eq("courseId", lecture.courseId)
+      .maybeSingle();
 
-    if (!enrollment || enrollment.status !== "active") {
+    if (enrollErr || !enrollment || enrollment.status !== "active") {
       return errorResponse("You are not enrolled in this course", 403);
     }
 
@@ -90,96 +82,99 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 4: Upsert progress record
     // ============================================
-    // Check existing progress to preserve completedAt
-    const existingProgress = await prisma.userProgress.findUnique({
-      where: {
-        enrollmentId_lectureId: {
-          enrollmentId: enrollment.id,
-          lectureId,
-        },
-      },
-      select: { completedAt: true, isCompleted: true },
-    });
+    const { data: existingProgress } = await supabaseAdmin!
+      .from("UserProgress")
+      .select("completedAt, isCompleted")
+      .eq("enrollmentId", enrollment.id)
+      .eq("lectureId", lectureId)
+      .maybeSingle();
 
-    const progress = await prisma.userProgress.upsert({
-      where: {
-        enrollmentId_lectureId: {
-          enrollmentId: enrollment.id,
-          lectureId,
-        },
-      },
-      create: {
-        enrollmentId: enrollment.id,
-        lectureId,
-        userId: auth.userId,
-        isCompleted: shouldMarkComplete,
-        completedAt: shouldMarkComplete ? new Date() : null,
-        watchDuration,
-        watchPercentage: calculatedPercentage,
-        lastWatchedAt: new Date(),
-      },
-      update: {
-        watchDuration,
-        watchPercentage: calculatedPercentage,
-        lastWatchedAt: new Date(),
-        // Only set completed if not already completed
-        ...(shouldMarkComplete
-          ? {
-              isCompleted: true,
-              completedAt: existingProgress?.completedAt || new Date(),
-            }
-          : {}),
-      },
-      select: {
-        id: true,
-        isCompleted: true,
-        watchDuration: true,
-        watchPercentage: true,
-        lastWatchedAt: true,
-        completedAt: true,
-      },
-    });
+    // Upsert progress via insert (or update if exists)
+    let progress: any;
+    const progressData = {
+      enrollmentId: enrollment.id,
+      lectureId,
+      userId: auth.userId,
+      isCompleted: shouldMarkComplete,
+      completedAt: shouldMarkComplete
+        ? existingProgress?.completedAt || new Date().toISOString()
+        : null,
+      watchDuration,
+      watchPercentage: calculatedPercentage,
+      lastWatchedAt: new Date().toISOString(),
+    };
+
+    if (existingProgress) {
+      const { data: updated } = await supabaseAdmin!
+        .from("UserProgress")
+        .update({
+          watchDuration,
+          watchPercentage: calculatedPercentage,
+          lastWatchedAt: new Date().toISOString(),
+          ...(shouldMarkComplete
+            ? {
+                isCompleted: true,
+                completedAt:
+                  existingProgress.completedAt || new Date().toISOString(),
+              }
+            : {}),
+        })
+        .eq("enrollmentId", enrollment.id)
+        .eq("lectureId", lectureId)
+        .select(
+          "id, isCompleted, watchDuration, watchPercentage, lastWatchedAt, completedAt",
+        )
+        .single();
+      progress = updated;
+    } else {
+      const { data: created } = await supabaseAdmin!
+        .from("UserProgress")
+        .insert(progressData)
+        .select(
+          "id, isCompleted, watchDuration, watchPercentage, lastWatchedAt, completedAt",
+        )
+        .single();
+      progress = created;
+    }
 
     // ============================================
     // STEP 5: Update enrollment totals
     // ============================================
-    const allProgress = await prisma.userProgress.findMany({
-      where: { enrollmentId: enrollment.id },
-      select: { watchDuration: true, isCompleted: true },
-    });
+    const { data: allProgress } = await supabaseAdmin!
+      .from("UserProgress")
+      .select("watchDuration, isCompleted")
+      .eq("enrollmentId", enrollment.id);
 
-    const totalWatchTime = allProgress.reduce(
-      (sum: number, p: { watchDuration: number }) => sum + p.watchDuration,
+    const totalWatchTime = (allProgress || []).reduce(
+      (sum: number, p: any) => sum + (p.watchDuration || 0),
       0,
     );
-    const completedCount = allProgress.filter(
-      (p: { isCompleted: boolean }) => p.isCompleted,
+    const completedCount = (allProgress || []).filter(
+      (p: any) => p.isCompleted,
     ).length;
 
-    // Get total lecture count for the course
-    const lectureCount = await prisma.lecture.count({
-      where: { courseId: lecture.courseId, isPublished: true },
-    });
+    const { count } = await supabaseAdmin!
+      .from("Lecture")
+      .select("*", { count: "exact", head: true })
+      .eq("courseId", lecture.courseId)
+      .eq("isPublished", true);
 
-    // Calculate completion percentage
+    const lectureCount = count || 0;
+
     const completionPercentage =
       lectureCount > 0 ? Math.round((completedCount / lectureCount) * 100) : 0;
 
-    await prisma.enrollment.update({
-      where: { id: enrollment.id },
-      data: {
+    await supabaseAdmin!
+      .from("Enrollment")
+      .update({
         totalWatchTime,
         completionPercentage,
-        lastAccessedAt: new Date(),
-        // Auto-mark course as completed
+        lastAccessedAt: new Date().toISOString(),
         ...(completionPercentage >= 100
-          ? {
-              status: "completed",
-              completionDate: new Date(),
-            }
+          ? { status: "completed", completionDate: new Date().toISOString() }
           : {}),
-      },
-    });
+      })
+      .eq("id", enrollment.id);
 
     // ============================================
     // STEP 6: Check if course is completed
@@ -188,7 +183,7 @@ export async function POST(request: NextRequest) {
     if (completionPercentage >= 100) {
       courseCompleted = true;
       console.log(
-        `[PROGRESS] Course completed! User ${auth.userId} completed ${lecture.course.title}`,
+        `[PROGRESS] Course completed! User ${auth.userId} completed course ${lecture.courseId}`,
       );
     }
 
@@ -235,16 +230,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify enrollment
-    const enrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId: auth.userId,
-          courseId,
-        },
-      },
-    });
+    const { data: enrollment, error: enrollErr } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("*")
+      .eq("userId", auth.userId)
+      .eq("courseId", courseId)
+      .maybeSingle();
 
-    if (!enrollment || enrollment.status !== "active") {
+    if (enrollErr || !enrollment || enrollment.status !== "active") {
       return errorResponse("You are not enrolled in this course", 403);
     }
 
@@ -254,65 +247,86 @@ export async function PATCH(request: NextRequest) {
         const shouldComplete =
           lecture.watchPercentage >= 90 || lecture.isCompleted;
 
-        return prisma.userProgress.upsert({
-          where: {
-            enrollmentId_lectureId: {
-              enrollmentId: enrollment.id,
-              lectureId: lecture.lectureId,
-            },
-          },
-          create: {
-            enrollmentId: enrollment.id,
-            lectureId: lecture.lectureId,
-            userId: auth.userId,
-            isCompleted: shouldComplete,
-            completedAt: shouldComplete ? new Date() : null,
-            watchDuration: lecture.watchDuration || 0,
-            watchPercentage: Math.min(lecture.watchPercentage || 0, 100),
-            lastWatchedAt: new Date(),
-          },
-          update: {
-            watchDuration: lecture.watchDuration || 0,
-            watchPercentage: Math.min(lecture.watchPercentage || 0, 100),
-            lastWatchedAt: new Date(),
-            ...(shouldComplete
-              ? { isCompleted: true, completedAt: new Date() }
-              : {}),
-          },
-        });
+        const progressData = {
+          enrollmentId: enrollment.id,
+          lectureId: lecture.lectureId,
+          userId: auth.userId,
+          isCompleted: shouldComplete,
+          completedAt: shouldComplete ? new Date().toISOString() : null,
+          watchDuration: lecture.watchDuration || 0,
+          watchPercentage: Math.min(lecture.watchPercentage || 0, 100),
+          lastWatchedAt: new Date().toISOString(),
+        };
+
+        // Check existing
+        const { data: existing } = await supabaseAdmin!
+          .from("UserProgress")
+          .select("id")
+          .eq("enrollmentId", enrollment.id)
+          .eq("lectureId", lecture.lectureId)
+          .maybeSingle();
+
+        if (existing) {
+          const { data: updated } = await supabaseAdmin!
+            .from("UserProgress")
+            .update({
+              watchDuration: lecture.watchDuration || 0,
+              watchPercentage: Math.min(lecture.watchPercentage || 0, 100),
+              lastWatchedAt: new Date().toISOString(),
+              ...(shouldComplete
+                ? { isCompleted: true, completedAt: new Date().toISOString() }
+                : {}),
+            })
+            .eq("id", existing.id)
+            .select()
+            .single();
+          return updated;
+        } else {
+          const { data: created } = await supabaseAdmin!
+            .from("UserProgress")
+            .insert(progressData)
+            .select()
+            .single();
+          return created;
+        }
       }),
     );
 
     // Recalculate enrollment totals
-    const allProgress = await prisma.userProgress.findMany({
-      where: { enrollmentId: enrollment.id },
-      select: { watchDuration: true, isCompleted: true },
-    });
+    const { data: allProgress } = await supabaseAdmin!
+      .from("UserProgress")
+      .select("watchDuration, isCompleted")
+      .eq("enrollmentId", enrollment.id);
 
-    const totalWatchTime = allProgress.reduce(
-      (sum: number, p: { watchDuration: number }) => sum + p.watchDuration,
+    const totalWatchTime = (allProgress || []).reduce(
+      (sum: number, p: any) => sum + (p.watchDuration || 0),
       0,
     );
-    const completedCount = allProgress.filter(
-      (p: { isCompleted: boolean }) => p.isCompleted,
+    const completedCount = (allProgress || []).filter(
+      (p: any) => p.isCompleted,
     ).length;
-    const lectureCount = await prisma.lecture.count({
-      where: { courseId, isPublished: true },
-    });
+
+    const { count } = await supabaseAdmin!
+      .from("Lecture")
+      .select("*", { count: "exact", head: true })
+      .eq("courseId", courseId)
+      .eq("isPublished", true);
+
+    const lectureCount = count || 0;
     const completionPercentage =
       lectureCount > 0 ? Math.round((completedCount / lectureCount) * 100) : 0;
 
-    await prisma.enrollment.update({
-      where: { id: enrollment.id },
-      data: {
+    await supabaseAdmin!
+      .from("Enrollment")
+      .update({
         totalWatchTime,
         completionPercentage,
-        lastAccessedAt: new Date(),
+        lastAccessedAt: new Date().toISOString(),
         ...(completionPercentage >= 100
-          ? { status: "completed", completionDate: new Date() }
+          ? { status: "completed", completionDate: new Date().toISOString() }
           : {}),
-      },
-    });
+      })
+      .eq("id", enrollment.id);
 
     return successResponse(
       {

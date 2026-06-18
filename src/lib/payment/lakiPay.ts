@@ -2,6 +2,7 @@
 // Laki Pay Payment Gateway Integration
 
 import axios, { AxiosInstance } from "axios";
+import crypto from "node:crypto";
 
 // ============================================
 // Laki Pay Configuration
@@ -171,7 +172,6 @@ export class LakiPayService {
     payload: Record<string, any>,
     signature: string,
   ): boolean {
-    const crypto = require("crypto");
     const expectedSignature = crypto
       .createHmac("sha256", LAKI_PAY_CONFIG.webhookSecret)
       .update(JSON.stringify(payload))

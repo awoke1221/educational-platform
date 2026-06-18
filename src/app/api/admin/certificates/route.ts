@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import CertificateService from "@/lib/certificate";
 import {
   successResponse,
@@ -44,35 +44,38 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [certificates, total] = await Promise.all([
-      prisma.certificate.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { issuedDate: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-            },
-          },
-          course: {
-            select: {
-              id: true,
-              title: true,
-              level: true,
-            },
-          },
-        },
-      }),
-      prisma.certificate.count({ where }),
-    ]);
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    let query = supabaseAdmin!
+      .from("Certificate")
+      .select(
+        "*, user:User(id, fullName, email), course:Course(id, title, level)",
+        { count: "exact" },
+      );
+
+    if (status === "valid") {
+      query = query.eq("isValid", true);
+    } else if (status === "revoked") {
+      query = query.eq("isValid", false);
+    }
+
+    if (search) {
+      query = query.or(
+        `certificateNumber.ilike.%${search}%,verificationCode.ilike.%${search}%`,
+      );
+    }
+
+    const {
+      data: certificates,
+      count,
+      error,
+    } = await query.order("issuedDate", { ascending: false }).range(from, to);
+
+    if (error) throw error;
 
     return paginatedResponse(
-      certificates,
-      total,
+      certificates || [],
+      count || 0,
       page,
       limit,
       "Certificates retrieved successfully",

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Try Supabase REST — graceful fallback if table doesn't exist
     try {
-      const { data: enrollments, error } = await supabaseAdmin
+      const { data: enrollments, error } = await supabaseAdmin!
         .from("Enrollment")
         .select(
           "status, completionPercentage, lastAccessedAt, course:Course(id, title, coverImage)",

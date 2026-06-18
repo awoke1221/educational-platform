@@ -20,7 +20,7 @@ export async function POST(
       );
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabaseAdmin!
       .from("User")
       .update({ isApproved: true, paymentStatus: "approved" })
       .eq("id", userId);

@@ -2,6 +2,7 @@
 // User Registration API Endpoint - Supabase REST API (IPv4 Compatible)
 
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { registerSchema } from "@/lib/validators/schemas";
 import { supabaseAdmin } from "@/lib/db/supabase";
 import { jwtService } from "@/lib/auth/jwt";
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 3: Check for Existing User
     // ============================================
-    const { data: existingUser, error: findError } = await supabaseAdmin
+    const { data: existingUser, error: findError } = await supabaseAdmin!
       .from("User")
       .select("id, email, username")
       .or(`email.eq.${email.toLowerCase()},username.eq.${username}`)
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 5: Create User in Database
     // ============================================
-    const { data: newUser, error: createError } = await supabaseAdmin
+    const { data: newUser, error: createError } = await supabaseAdmin!
       .from("User")
       .insert({
         id: crypto.randomUUID(),
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest) {
     // ============================================
 
     // update created user to explicitly set isApproved = false and initial payment status
-    await supabaseAdmin
+    await supabaseAdmin!
       .from("User")
       .update({ isApproved: false, paymentStatus: "pending" })
       .eq("id", newUser.id);
@@ -184,7 +185,6 @@ function getDeviceInfo(request: NextRequest): {
     deviceType = "tablet";
   }
 
-  const crypto = require("crypto");
   const deviceId = crypto
     .createHash("sha256")
     .update(userAgent + ipAddress)

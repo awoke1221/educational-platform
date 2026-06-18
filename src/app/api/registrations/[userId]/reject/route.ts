@@ -21,7 +21,7 @@ export async function POST(
       );
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabaseAdmin!
       .from("User")
       .update({ isApproved: false, paymentStatus: "rejected" })
       .eq("id", userId);

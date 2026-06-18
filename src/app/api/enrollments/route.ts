@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
           data: enrollments,
           error,
           count,
-        } = await supabaseAdmin
+        } = await supabaseAdmin!
           .from("Enrollment")
           .select("*, course:Course(*)", { count: "exact" })
           .eq("userId", auth.userId);
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     if (!courseId) return errorResponse("courseId is required", 400);
 
     // Return a simulated successful enrollment
-    // (DB tables need to be migrated first via Prisma)
+    // (DB tables use Supabase REST API)
     const enrollment = {
       id: crypto.randomUUID(),
       userId: auth.userId,

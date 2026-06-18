@@ -3,16 +3,51 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
   handleApiError,
 } from "@/lib/utils/api";
 
-// ============================================
-// GET /api/admin/analytics - Full Dashboard Stats
-// ============================================
+// Helper: get count from supabase with optional filter
+async function countTable(
+  table: string,
+  filter?: Record<string, any>,
+): Promise<number> {
+  let query = supabaseAdmin!
+    .from(table)
+    .select("*", { count: "exact", head: true });
+  if (filter) {
+    for (const [k, v] of Object.entries(filter)) {
+      if (k === "gte") query = query.gte("createdAt", v);
+      else query = query.eq(k, v);
+    }
+  }
+  const { count, error } = await query;
+  if (error) {
+    console.error(`[ANALYTICS] Count error on ${table}:`, error);
+    return 0;
+  }
+  return count || 0;
+}
+
+// Helper: list rows
+async function listTable(
+  table: string,
+  select: string,
+  orderBy: string,
+  limit: number,
+  ascending = false,
+) {
+  const { data, error } = await supabaseAdmin!
+    .from(table)
+    .select(select)
+    .order(orderBy, { ascending })
+    .limit(limit);
+  if (error) return [];
+  return data || [];
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,69 +58,69 @@ export async function GET(request: NextRequest) {
     if (!auth) return errorResponse("Unauthorized", 401);
 
     const searchParams = request.nextUrl.searchParams;
-    const period = searchParams.get("period") || "all"; // day, week, month, year, all
+    const period = searchParams.get("period") || "all";
 
-    // Calculate date range
     const now = new Date();
-    let startDate: Date | null = null;
+    let startDate: string | null = null;
 
     switch (period) {
       case "day":
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
         break;
       case "week":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = new Date(
+          now.getTime() - 7 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         break;
       case "month":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = new Date(
+          now.getTime() - 30 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         break;
       case "year":
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        startDate = new Date(
+          now.getTime() - 365 * 24 * 60 * 60 * 1000,
+        ).toISOString();
         break;
-      default:
-        startDate = null;
     }
-
-    const dateFilter = startDate ? { gte: startDate } : undefined;
 
     // ============================================
     // USER STATS
     // ============================================
-    const [totalUsers, newUsers, activeUsers, bannedUsers] = await Promise.all([
-      prisma.user.count(),
-      startDate
-        ? prisma.user.count({ where: { createdAt: { gte: startDate } } })
-        : Promise.resolve(0),
-      prisma.user.count({ where: { isActive: true, isBanned: false } }),
-      prisma.user.count({ where: { isBanned: true } }),
+    const [
+      totalUsers,
+      newUsers,
+      activeUsers,
+      bannedUsers,
+      instructors,
+      admins,
+    ] = await Promise.all([
+      countTable("User"),
+      startDate ? countTable("User", { gte: startDate }) : 0,
+      countTable("User", { isActive: true, isBanned: false }),
+      countTable("User", { isBanned: true }),
+      countTable("User", { role: "instructor" }),
+      countTable("User", { role: "admin" }),
     ]);
-
-    // User role breakdown
-    const instructors = await prisma.user.count({
-      where: { role: "instructor" },
-    });
-    const admins = await prisma.user.count({ where: { role: "admin" } });
-    const regularUsers = totalUsers - instructors - admins;
 
     // ============================================
     // COURSE STATS
     // ============================================
-    const [totalCourses, publishedCourses, draftCourses, archivedCourses] =
-      await Promise.all([
-        prisma.course.count(),
-        prisma.course.count({
-          where: { isPublished: true, isArchived: false },
-        }),
-        prisma.course.count({
-          where: { isPublished: false, isArchived: false },
-        }),
-        prisma.course.count({ where: { isArchived: true } }),
-      ]);
-
-    const totalEnrollmentsAll = await prisma.enrollment.count();
-    const completedCoursesAll = await prisma.enrollment.count({
-      where: { status: "completed" },
-    });
+    const [
+      totalCourses,
+      publishedCourses,
+      draftCourses,
+      archivedCourses,
+      totalEnrollmentsAll,
+      completedCoursesAll,
+    ] = await Promise.all([
+      countTable("Course"),
+      countTable("Course", { isPublished: true, isArchived: false }),
+      countTable("Course", { isPublished: false, isArchived: false }),
+      countTable("Course", { isArchived: true }),
+      countTable("Enrollment"),
+      countTable("Enrollment", { status: "completed" }),
+    ]);
 
     // ============================================
     // PAYMENT STATS
@@ -98,85 +133,74 @@ export async function GET(request: NextRequest) {
       localPayments,
       diasporaPayments,
     ] = await Promise.all([
-      prisma.payment.count(),
-      prisma.payment.count({ where: { status: "pending" } }),
-      prisma.payment.count({ where: { status: "approved" } }),
-      prisma.payment.count({ where: { status: "rejected" } }),
-      prisma.payment.count({ where: { paymentType: "local" } }),
-      prisma.payment.count({ where: { paymentType: "diaspora" } }),
+      countTable("Payment"),
+      countTable("Payment", { status: "pending" }),
+      countTable("Payment", { status: "approved" }),
+      countTable("Payment", { status: "rejected" }),
+      countTable("Payment", { paymentType: "local" }),
+      countTable("Payment", { paymentType: "diaspora" }),
     ]);
 
-    // Revenue calculation
-    const revenueAgg = await prisma.payment.aggregate({
-      where: { status: "approved" },
-      _sum: { amount: true },
-    });
-    const totalRevenue = revenueAgg._sum.amount || 0;
+    // Revenue: sum of approved payment amounts
+    let totalRevenue = 0;
+    let periodRevenue = 0;
+    try {
+      const { data: allApproved } = await supabaseAdmin!
+        .from("Payment")
+        .select("amount")
+        .eq("status", "approved");
+      totalRevenue = (allApproved || []).reduce(
+        (sum, p) => sum + Number(p.amount || 0),
+        0,
+      );
 
-    // Revenue by period
-    const periodRevenueAgg = await prisma.payment.aggregate({
-      where: {
-        status: "approved",
-        ...(dateFilter ? { createdAt: { gte: startDate! } } : {}),
-      },
-      _sum: { amount: true },
-    });
-    const periodRevenue = periodRevenueAgg._sum.amount || 0;
+      if (startDate) {
+        const { data: periodApproved } = await supabaseAdmin!
+          .from("Payment")
+          .select("amount")
+          .eq("status", "approved")
+          .gte("createdAt", startDate);
+        periodRevenue = (periodApproved || []).reduce(
+          (sum, p) => sum + Number(p.amount || 0),
+          0,
+        );
+      }
+    } catch (revErr) {
+      console.error("[ANALYTICS] Revenue error:", revErr);
+    }
 
     // ============================================
     // CERTIFICATE STATS
     // ============================================
     const [totalCertificates, validCertificates] = await Promise.all([
-      prisma.certificate.count(),
-      prisma.certificate.count({ where: { isValid: true } }),
+      countTable("Certificate"),
+      countTable("Certificate", { isValid: true }),
     ]);
 
     // ============================================
     // RECENT ACTIVITY
     // ============================================
-    const recentUsers = await prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-      },
-    });
+    const [recentUsers, recentPayments, recentEnrollments] = await Promise.all([
+      listTable(
+        "User",
+        "id, fullName, email, role, isActive, createdAt",
+        "createdAt",
+        5,
+      ),
+      listTable(
+        "Payment",
+        "id, amount, currency, paymentType, status, createdAt, user:User(fullName, email), course:Course(title)",
+        "createdAt",
+        5,
+      ),
+      listTable(
+        "Enrollment",
+        "id, status, createdAt, user:User(fullName, email), course:Course(title)",
+        "createdAt",
+        5,
+      ),
+    ]);
 
-    const recentPayments = await prisma.payment.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        amount: true,
-        currency: true,
-        paymentType: true,
-        status: true,
-        createdAt: true,
-        user: { select: { fullName: true, email: true } },
-        course: { select: { title: true } },
-      },
-    });
-
-    const recentEnrollments = await prisma.enrollment.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        status: true,
-        createdAt: true,
-        user: { select: { fullName: true, email: true } },
-        course: { select: { title: true } },
-      },
-    });
-
-    // ============================================
-    // COMPLETION RATE
-    // ============================================
     const completionRate =
       totalEnrollmentsAll > 0
         ? Math.round((completedCoursesAll / totalEnrollmentsAll) * 100)
@@ -192,7 +216,7 @@ export async function GET(request: NextRequest) {
           banned: bannedUsers,
           instructors,
           admins,
-          regularUsers,
+          regularUsers: totalUsers - instructors - admins,
         },
         courses: {
           total: totalCourses,
@@ -212,8 +236,8 @@ export async function GET(request: NextRequest) {
           diaspora: diasporaPayments,
         },
         revenue: {
-          total: Number(totalRevenue),
-          periodRevenue: Number(periodRevenue),
+          total: totalRevenue,
+          periodRevenue,
           currency: "ETB",
         },
         certificates: {

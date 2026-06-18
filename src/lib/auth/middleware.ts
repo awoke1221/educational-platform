@@ -2,8 +2,9 @@
 // Advanced Authentication Middleware
 
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { jwtService, JWTPayload } from "./jwt";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 
 /**
  * Verify JWT token from Authorization header
@@ -44,7 +45,7 @@ export async function isUserActive(userId: string): Promise<boolean> {
     const { supabaseAdmin } = await import("@/lib/db/supabase");
     if (!supabaseAdmin) return true; // Default allow if no DB
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin!
       .from("User")
       .select("isActive, isBanned")
       .eq("id", userId)
@@ -66,16 +67,17 @@ export async function verifyDeviceSession(
   deviceId: string,
 ): Promise<boolean> {
   try {
-    const session = await prisma.deviceSession.findUnique({
-      where: {
-        userId_deviceId: {
-          userId,
-          deviceId,
-        },
-      },
-    });
+    if (!supabaseAdmin) return false;
 
-    return session?.isActive || false;
+    const { data, error } = await supabaseAdmin!
+      .from("DeviceSession")
+      .select("isActive")
+      .eq("userId", userId)
+      .eq("deviceId", deviceId)
+      .maybeSingle();
+
+    if (error || !data) return false;
+    return data.isActive === true;
   } catch (error) {
     console.error("Error verifying device session:", error);
     return false;
@@ -90,30 +92,23 @@ export async function checkEnrollmentAccess(
   courseId: string,
 ): Promise<boolean> {
   try {
-    const enrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId,
-          courseId,
-        },
-      },
-      select: {
-        status: true,
-        payment: {
-          select: {
-            status: true,
-          },
-        },
-      },
-    });
+    if (!supabaseAdmin) return false;
 
-    if (!enrollment) return false;
+    const { data: enrollment, error } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("status, payment:Payment(status)")
+      .eq("userId", userId)
+      .eq("courseId", courseId)
+      .maybeSingle();
 
-    // Check if enrollment is active and payment is approved
-    return (
-      enrollment.status === "active" &&
-      enrollment.payment?.status === "approved"
-    );
+    if (error || !enrollment) return false;
+
+    // Type guard: payment could be array (Supabase nested select returns array)
+    const payment = Array.isArray(enrollment.payment)
+      ? enrollment.payment[0]
+      : enrollment.payment;
+
+    return enrollment.status === "active" && payment?.status === "approved";
   } catch (error) {
     console.error("Error checking enrollment:", error);
     return false;
@@ -145,7 +140,6 @@ export function getDeviceInfo(request: NextRequest): {
   }
 
   // Generate device ID from User-Agent hash
-  const crypto = require("crypto");
   const deviceId = crypto
     .createHash("sha256")
     .update(userAgent + ipAddress)

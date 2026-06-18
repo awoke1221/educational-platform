@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import { successResponse, errorResponse } from "@/lib/utils/api";
 
 // ============================================
@@ -12,7 +12,6 @@ import { successResponse, errorResponse } from "@/lib/utils/api";
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify authentication
     const authError = await requireAuth(request);
     if (authError) return authError;
 
@@ -21,23 +20,17 @@ export async function GET(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    // Fetch all device sessions for user
-    const devices = await prisma.deviceSession.findMany({
-      where: { userId: auth.userId },
-      select: {
-        id: true,
-        deviceId: true,
-        deviceName: true,
-        deviceType: true,
-        isActive: true,
-        loginAt: true,
-        logoutAt: true,
-        ipAddress: true,
-      },
-      orderBy: { loginAt: "desc" },
-    });
+    const { data: devices, error } = await supabaseAdmin!
+      .from("DeviceSession")
+      .select(
+        "id, deviceId, deviceName, deviceType, isActive, loginAt, logoutAt, ipAddress",
+      )
+      .eq("userId", auth.userId)
+      .order("loginAt", { ascending: false });
 
-    return successResponse(devices, "Devices retrieved successfully");
+    if (error) throw error;
+
+    return successResponse(devices || [], "Devices retrieved successfully");
   } catch (error) {
     console.error("[GET DEVICES ERROR]", error);
     return errorResponse("Failed to retrieve devices", 500);
@@ -50,7 +43,6 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Verify authentication
     const authError = await requireAuth(request);
     if (authError) return authError;
 
@@ -59,33 +51,27 @@ export async function DELETE(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    // Get device ID from query params
     const deviceId = request.nextUrl.searchParams.get("deviceId");
 
     if (!deviceId) {
       return errorResponse("Device ID is required", 400);
     }
 
-    // Verify device belongs to user
-    const device = await prisma.deviceSession.findFirst({
-      where: {
-        userId: auth.userId,
-        deviceId,
-      },
-    });
+    const { data: device } = await supabaseAdmin!
+      .from("DeviceSession")
+      .select("id")
+      .eq("userId", auth.userId)
+      .eq("deviceId", deviceId)
+      .maybeSingle();
 
     if (!device) {
       return errorResponse("Device not found", 404);
     }
 
-    // Logout from device
-    await prisma.deviceSession.update({
-      where: { id: device.id },
-      data: {
-        isActive: false,
-        logoutAt: new Date(),
-      },
-    });
+    await supabaseAdmin!
+      .from("DeviceSession")
+      .update({ isActive: false, logoutAt: new Date().toISOString() })
+      .eq("id", device.id);
 
     console.log(
       `[AUDIT] User ${auth.userId} logged out from device ${deviceId}`,

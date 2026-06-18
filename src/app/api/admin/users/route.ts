@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role");
     const status = searchParams.get("status");
 
-    let query = supabaseAdmin
+    let query = supabaseAdmin!
       .from("User")
       .select("*", { count: "exact" })
       .order("createdAt", { ascending: false })
@@ -128,7 +128,7 @@ export async function PATCH(request: NextRequest) {
         return errorResponse("Invalid action", 400);
     }
 
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin!
       .from("User")
       .update(updateData)
       .eq("id", userId);

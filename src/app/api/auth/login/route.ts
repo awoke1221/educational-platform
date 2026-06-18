@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: users, error: findError } = await supabaseAdmin
+    const { data: users, error: findError } = await supabaseAdmin!
       .from("User")
       .select(
         "id, email, username, fullName, passwordHash, role, isActive, isBanned, isApproved, lastLogin, loginCount",
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Update last login via Supabase REST
-    await supabaseAdmin
+    await supabaseAdmin!
       .from("User")
       .update({
         lastLogin: new Date().toISOString(),

@@ -99,7 +99,7 @@ export async function GET() {
 
     // Insert courses
     for (const course of COURSES) {
-      const { error } = await supabaseAdmin
+      const { error } = await supabaseAdmin!
         .from("Course")
         .upsert(course, { onConflict: "id" });
       if (error) {
@@ -110,7 +110,7 @@ export async function GET() {
     }
 
     // Create enrollment for test user
-    const { error: enrollError } = await supabaseAdmin
+    const { error: enrollError } = await supabaseAdmin!
       .from("Enrollment")
       .upsert(
         {

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin!
       .from("User")
       .select(
         "id, username, email, fullName, phoneNumber, pendingReceiptUrl, paymentMethod, paymentStatus, createdAt",

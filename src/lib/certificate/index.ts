@@ -2,7 +2,7 @@
 // Certificate Generation & Verification Service
 
 import crypto from "node:crypto";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 
 // ============================================
 // Certificate Types
@@ -37,10 +37,6 @@ export interface IssueCertificateParams {
 // ============================================
 
 export class CertificateService {
-  /**
-   * Generate a unique certificate number
-   * Format: CERT-YYYYMMDD-XXXXXXXX (date + 8 random hex chars)
-   */
   static generateCertificateNumber(): string {
     const date = new Date();
     const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
@@ -48,12 +44,8 @@ export class CertificateService {
     return `CERT-${dateStr}-${random}`;
   }
 
-  /**
-   * Generate a verification code
-   * Format: V-XXXXXXXX (8 alphanumeric chars)
-   */
   static generateVerificationCode(): string {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // No I,O,0,1 to avoid confusion
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let code = "V-";
     for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -61,45 +53,41 @@ export class CertificateService {
     return code;
   }
 
-  /**
-   * Generate verification URL
-   */
   static generateVerificationUrl(verificationCode: string): string {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     return `${baseUrl}/verify/${verificationCode}`;
   }
 
-  /**
-   * Generate a certificate for a completed course
-   */
   static async issueCertificate(
     params: IssueCertificateParams,
   ): Promise<CertificateData> {
     const { enrollmentId, userId, courseId } = params;
 
-    // Check if certificate already exists
-    const existing = await prisma.certificate.findUnique({
-      where: { enrollmentId },
-    });
+    const { data: existing } = await supabaseAdmin!
+      .from("Certificate")
+      .select("*")
+      .eq("enrollmentId", enrollmentId)
+      .maybeSingle();
 
     if (existing) {
-      // Return existing certificate
       return await this.getCertificateData(existing.id);
     }
 
-    // Generate unique identifiers
     let certificateNumber = this.generateCertificateNumber();
     let verificationCode = this.generateVerificationCode();
 
-    // Ensure uniqueness (retry on collision)
     let retries = 0;
     while (retries < 3) {
-      const existingNumber = await prisma.certificate.findUnique({
-        where: { certificateNumber },
-      });
-      const existingCode = await prisma.certificate.findUnique({
-        where: { verificationCode },
-      });
+      const { data: existingNumber } = await supabaseAdmin!
+        .from("Certificate")
+        .select("id")
+        .eq("certificateNumber", certificateNumber)
+        .maybeSingle();
+      const { data: existingCode } = await supabaseAdmin!
+        .from("Certificate")
+        .select("id")
+        .eq("verificationCode", verificationCode)
+        .maybeSingle();
 
       if (!existingNumber && !existingCode) break;
 
@@ -108,28 +96,29 @@ export class CertificateService {
       retries++;
     }
 
-    // Create certificate
-    const certificate = await prisma.certificate.create({
-      data: {
+    const { data: certificate, error: createErr } = await supabaseAdmin!
+      .from("Certificate")
+      .insert({
         enrollmentId,
         userId,
         courseId,
         certificateNumber,
         verificationCode,
         verificationUrl: this.generateVerificationUrl(verificationCode),
-        issuedDate: new Date(),
+        issuedDate: new Date().toISOString(),
         isValid: true,
-      },
-    });
+      })
+      .select()
+      .single();
+    if (createErr) throw new Error("Failed to create certificate");
 
-    // Update enrollment
-    await prisma.enrollment.update({
-      where: { id: enrollmentId },
-      data: {
+    await supabaseAdmin!
+      .from("Enrollment")
+      .update({
         certificateIssued: true,
-        certificateIssuedDate: new Date(),
-      },
-    });
+        certificateIssuedDate: new Date().toISOString(),
+      })
+      .eq("id", enrollmentId);
 
     console.log(
       `[CERTIFICATE] Issued: ${certificateNumber} for user ${userId}, course ${courseId}`,
@@ -138,23 +127,18 @@ export class CertificateService {
     return await this.getCertificateData(certificate.id);
   }
 
-  /**
-   * Get full certificate data with user and course info
-   */
   static async getCertificateData(
     certificateId: string,
   ): Promise<CertificateData> {
-    const cert = await prisma.certificate.findUnique({
-      where: { id: certificateId },
-      include: {
-        user: { select: { fullName: true } },
-        course: { select: { title: true, level: true, duration: true } },
-      },
-    });
+    const { data: cert, error } = await supabaseAdmin!
+      .from("Certificate")
+      .select("*, user:User(fullName), course:Course(title, level, duration)")
+      .eq("id", certificateId)
+      .single();
+    if (error || !cert) throw new Error("Certificate not found");
 
-    if (!cert) {
-      throw new Error("Certificate not found");
-    }
+    const user = Array.isArray(cert.user) ? cert.user[0] : cert.user;
+    const course = Array.isArray(cert.course) ? cert.course[0] : cert.course;
 
     return {
       id: cert.id,
@@ -163,44 +147,39 @@ export class CertificateService {
       verificationUrl: cert.verificationUrl || "",
       issuedDate: cert.issuedDate,
       isValid: cert.isValid,
-      user: { fullName: cert.user.fullName },
+      user: { fullName: user?.fullName || "" },
       course: {
-        title: cert.course.title,
-        level: cert.course.level,
-        duration: cert.course.duration || 0,
+        title: course?.title || "",
+        level: course?.level || "",
+        duration: course?.duration || 0,
       },
     };
   }
 
-  /**
-   * Verify a certificate by verification code
-   */
   static async verifyCertificate(verificationCode: string): Promise<{
     isValid: boolean;
     certificate?: CertificateData;
     error?: string;
   }> {
-    const certificate = await prisma.certificate.findUnique({
-      where: { verificationCode },
-      include: {
-        user: { select: { fullName: true } },
-        course: { select: { title: true, level: true, duration: true } },
-      },
-    });
+    const { data: certificate, error } = await supabaseAdmin!
+      .from("Certificate")
+      .select("*, user:User(fullName), course:Course(title, level, duration)")
+      .eq("verificationCode", verificationCode)
+      .maybeSingle();
 
-    if (!certificate) {
-      return {
-        isValid: false,
-        error: "Certificate not found. Please check the verification code.",
-      };
+    if (error || !certificate) {
+      return { isValid: false, error: "Certificate not found." };
     }
-
     if (!certificate.isValid) {
-      return {
-        isValid: false,
-        error: "This certificate has been revoked or is no longer valid.",
-      };
+      return { isValid: false, error: "This certificate has been revoked." };
     }
+
+    const user = Array.isArray(certificate.user)
+      ? certificate.user[0]
+      : certificate.user;
+    const course = Array.isArray(certificate.course)
+      ? certificate.course[0]
+      : certificate.course;
 
     return {
       isValid: true,
@@ -211,46 +190,39 @@ export class CertificateService {
         verificationUrl: certificate.verificationUrl || "",
         issuedDate: certificate.issuedDate,
         isValid: certificate.isValid,
-        user: { fullName: certificate.user.fullName },
+        user: { fullName: user?.fullName || "" },
         course: {
-          title: certificate.course.title,
-          level: certificate.course.level,
-          duration: certificate.course.duration || 0,
+          title: course?.title || "",
+          level: course?.level || "",
+          duration: course?.duration || 0,
         },
       },
     };
   }
 
-  /**
-   * Auto-issue certificate when course is completed
-   * Called from progress tracking when 100% completion detected
-   */
   static async autoIssueOnCompletion(
     enrollmentId: string,
     userId: string,
     courseId: string,
   ): Promise<CertificateData | null> {
     try {
-      // Verify course is actually completed
-      const enrollment = await prisma.enrollment.findUnique({
-        where: { id: enrollmentId },
-      });
+      const { data: enrollment } = await supabaseAdmin!
+        .from("Enrollment")
+        .select("*")
+        .eq("id", enrollmentId)
+        .maybeSingle();
 
-      if (!enrollment || enrollment.status !== "completed") {
-        return null;
-      }
+      if (!enrollment || enrollment.status !== "completed") return null;
 
       if (enrollment.certificateIssued) {
-        // Certificate already issued, return existing
-        const existing = await prisma.certificate.findUnique({
-          where: { enrollmentId },
-        });
-        if (existing) {
-          return await this.getCertificateData(existing.id);
-        }
+        const { data: existing } = await supabaseAdmin!
+          .from("Certificate")
+          .select("*")
+          .eq("enrollmentId", enrollmentId)
+          .maybeSingle();
+        if (existing) return await this.getCertificateData(existing.id);
       }
 
-      // Issue new certificate
       return await this.issueCertificate({ enrollmentId, userId, courseId });
     } catch (error) {
       console.error("[CERTIFICATE] Auto-issue failed:", error);
@@ -258,90 +230,70 @@ export class CertificateService {
     }
   }
 
-  /**
-   * Get user's certificates
-   */
-  static async getUserCertificates(
-    userId: string,
-    page: number = 1,
-    limit: number = 20,
-  ) {
-    const skip = (page - 1) * limit;
+  static async getUserCertificates(userId: string, page = 1, limit = 20) {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
-    const [certificates, total] = await Promise.all([
-      prisma.certificate.findMany({
-        where: { userId },
-        skip,
-        take: limit,
-        orderBy: { issuedDate: "desc" },
-        include: {
-          course: {
-            select: {
-              id: true,
-              title: true,
-              level: true,
-              coverImage: true,
-            },
-          },
-        },
-      }),
-      prisma.certificate.count({ where: { userId } }),
-    ]);
+    const {
+      data: certificates,
+      count,
+      error,
+    } = await supabaseAdmin!
+      .from("Certificate")
+      .select("*, course:Course(id, title, level, coverImage)", {
+        count: "exact",
+      })
+      .eq("userId", userId)
+      .order("issuedDate", { ascending: false })
+      .range(from, to);
+
+    if (error) throw new Error("Failed to fetch certificates");
 
     return {
-      certificates,
-      total,
+      certificates: certificates || [],
+      total: count || 0,
       page,
       limit,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil((count || 0) / limit),
     };
   }
 
-  /**
-   * Get certificate for a specific course enrollment
-   */
   static async getCourseCertificate(
     userId: string,
     courseId: string,
   ): Promise<CertificateData | null> {
-    const enrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId,
-          courseId,
-        },
-      },
-      select: { id: true },
-    });
+    const { data: enrollment } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("id")
+      .eq("userId", userId)
+      .eq("courseId", courseId)
+      .maybeSingle();
 
     if (!enrollment) return null;
 
-    const certificate = await prisma.certificate.findUnique({
-      where: { enrollmentId: enrollment.id },
-    });
+    const { data: certificate } = await supabaseAdmin!
+      .from("Certificate")
+      .select("*")
+      .eq("enrollmentId", enrollment.id)
+      .maybeSingle();
 
     if (!certificate) return null;
-
     return await this.getCertificateData(certificate.id);
   }
 
-  /**
-   * Revoke a certificate (admin function)
-   */
   static async revokeCertificate(
     certificateId: string,
     reason?: string,
   ): Promise<boolean> {
     try {
-      await prisma.certificate.update({
-        where: { id: certificateId },
-        data: { isValid: false },
-      });
+      await supabaseAdmin!
+        .from("Certificate")
+        .update({ isValid: false })
+        .eq("id", certificateId);
 
       console.log(
         `[CERTIFICATE] Revoked: ${certificateId}${reason ? ` - ${reason}` : ""}`,
       );
-
       return true;
     } catch (error) {
       console.error("[CERTIFICATE] Revoke failed:", error);

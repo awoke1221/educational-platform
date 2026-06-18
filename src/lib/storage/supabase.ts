@@ -3,7 +3,7 @@
 // Professional implementation with signed URLs, bucket management, and validation
 
 import { randomUUID } from "crypto";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin, getSupabaseAdmin } from "@/lib/db/supabase";
 
 // ============================================
 // Configuration
@@ -84,11 +84,14 @@ async function ensureBucket(bucketName: string): Promise<boolean> {
   try {
     // Try to create the bucket — if it already exists, Supabase returns a 409
     // which is fine. If RLS blocks creation, we assume the bucket exists.
-    const { error } = await supabaseAdmin.storage.createBucket(bucketName, {
-      public: true,
-      allowedMimeTypes: STORAGE_CONFIG.allowedMimeTypes,
-      fileSizeLimit: STORAGE_CONFIG.maxFileSize,
-    });
+    const { error } = await getSupabaseAdmin().storage.createBucket(
+      bucketName,
+      {
+        public: true,
+        allowedMimeTypes: STORAGE_CONFIG.allowedMimeTypes,
+        fileSizeLimit: STORAGE_CONFIG.maxFileSize,
+      },
+    );
 
     if (error) {
       // Bucket already exists (duplicate name) — that's OK
@@ -176,8 +179,8 @@ export async function uploadReceipt(
     const storagePath = `${userId}/${uniqueId}_${sanitizedFilename}`;
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-      .from(STORAGE_CONFIG.receiptsBucket)
+    const { data: uploadData, error: uploadError } = await getSupabaseAdmin()
+      .storage.from(STORAGE_CONFIG.receiptsBucket)
       .upload(storagePath, buffer, {
         contentType: mimeType,
         cacheControl: "3600",
@@ -195,8 +198,8 @@ export async function uploadReceipt(
     }
 
     // Get public URL
-    const { data: urlData } = supabaseAdmin.storage
-      .from(STORAGE_CONFIG.receiptsBucket)
+    const { data: urlData } = getSupabaseAdmin()
+      .storage.from(STORAGE_CONFIG.receiptsBucket)
       .getPublicUrl(storagePath);
 
     const publicUrl = urlData?.publicUrl || "";
@@ -225,8 +228,8 @@ export async function deleteFile(storagePath: string): Promise<DeleteResult> {
       return { success: false, error: "Storage not configured" };
     }
 
-    const { error } = await supabaseAdmin.storage
-      .from(STORAGE_CONFIG.receiptsBucket)
+    const { error } = await getSupabaseAdmin()
+      .storage.from(STORAGE_CONFIG.receiptsBucket)
       .remove([storagePath]);
 
     if (error) {
@@ -252,8 +255,8 @@ export async function getSignedUrl(
   try {
     if (!supabaseAdmin) return null;
 
-    const { data, error } = await supabaseAdmin.storage
-      .from(STORAGE_CONFIG.receiptsBucket)
+    const { data, error } = await getSupabaseAdmin()
+      .storage.from(STORAGE_CONFIG.receiptsBucket)
       .createSignedUrl(storagePath, STORAGE_CONFIG.urlExpiry);
 
     if (error || !data) {
@@ -276,8 +279,8 @@ export async function listUserReceipts(userId: string): Promise<string[]> {
   try {
     if (!supabaseAdmin) return [];
 
-    const { data, error } = await supabaseAdmin.storage
-      .from(STORAGE_CONFIG.receiptsBucket)
+    const { data, error } = await getSupabaseAdmin()
+      .storage.from(STORAGE_CONFIG.receiptsBucket)
       .list(userId, { sortBy: { column: "created_at", order: "desc" } });
 
     if (error) {

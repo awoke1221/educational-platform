@@ -66,7 +66,7 @@ export async function POST(
     }
 
     // ── Persist receipt info on the User record ──
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin!
       .from("User")
       .update({
         pendingReceiptUrl: uploadResult.publicUrl,

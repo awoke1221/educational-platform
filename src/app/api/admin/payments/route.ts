@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import PaymentService from "@/lib/payment";
 import {
   successResponse,
@@ -39,44 +39,29 @@ export async function GET(request: NextRequest) {
       where.paymentType = paymentType;
     }
 
-    const [payments, total] = await Promise.all([
-      prisma.payment.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              username: true,
-              phoneNumber: true,
-            },
-          },
-          course: {
-            select: {
-              id: true,
-              title: true,
-              coverImage: true,
-              price: true,
-            },
-          },
-          enrollment: {
-            select: {
-              id: true,
-              status: true,
-            },
-          },
-        },
-      }),
-      prisma.payment.count({ where }),
-    ]);
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    let query = supabaseAdmin!
+      .from("Payment")
+      .select(
+        "*, user:User(id, fullName, email, username, phoneNumber), course:Course(id, title, coverImage, price), enrollment:Enrollment(id, status)",
+        { count: "exact" },
+      );
+
+    if (status && status !== "all") query = query.eq("status", status);
+    if (paymentType) query = query.eq("paymentType", paymentType);
+
+    const {
+      data: payments,
+      count,
+      error,
+    } = await query.order("createdAt", { ascending: false }).range(from, to);
+
+    if (error) throw error;
 
     return paginatedResponse(
-      payments,
-      total,
+      payments || [],
+      count || 0,
       page,
       limit,
       "Payments retrieved successfully",
@@ -168,18 +153,14 @@ export async function POST(request: NextRequest) {
       return errorResponse("Payment ID and receipt URL are required", 400);
     }
 
-    // Update payment with receipt screenshot
-    const payment = await prisma.payment.update({
-      where: { id: paymentId },
-      data: {
-        receiptScreenshotUrl: receiptUrl,
-      },
-      select: {
-        id: true,
-        status: true,
-        receiptScreenshotUrl: true,
-      },
-    });
+    const { data: payment, error: updateErr } = await supabaseAdmin!
+      .from("Payment")
+      .update({ receiptScreenshotUrl: receiptUrl })
+      .eq("id", paymentId)
+      .select("id, status, receiptScreenshotUrl")
+      .single();
+
+    if (updateErr) throw updateErr;
 
     return successResponse(payment, "Receipt uploaded successfully");
   } catch (error) {

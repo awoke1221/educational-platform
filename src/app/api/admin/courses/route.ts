@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -50,34 +50,37 @@ export async function GET(request: NextRequest) {
       where.instructorId = instructorId;
     }
 
-    const [courses, total] = await Promise.all([
-      prisma.course.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { updatedAt: "desc" },
-        include: {
-          instructor: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-            },
-          },
-          _count: {
-            select: {
-              lectures: true,
-              enrollments: true,
-            },
-          },
-        },
-      }),
-      prisma.course.count({ where }),
-    ]);
+    // Build Supabase query
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    let query = supabaseAdmin!
+      .from("Course")
+      .select("*, instructor:User(id, fullName, email)", { count: "exact" });
+
+    if (status === "published") {
+      query = query.eq("isPublished", true).eq("isArchived", false);
+    } else if (status === "draft") {
+      query = query.eq("isPublished", false).eq("isArchived", false);
+    } else if (status === "archived") {
+      query = query.eq("isArchived", true);
+    }
+
+    if (instructorId) query = query.eq("instructorId", instructorId);
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,category.ilike.%${search}%`);
+    }
+
+    const {
+      data: courses,
+      count,
+      error,
+    } = await query.order("updatedAt", { ascending: false }).range(from, to);
+
+    if (error) throw error;
 
     return paginatedResponse(
-      courses,
-      total,
+      courses || [],
+      count || 0,
       page,
       limit,
       "Courses retrieved successfully",
@@ -136,16 +139,19 @@ export async function PATCH(request: NextRequest) {
         );
     }
 
-    const course = await prisma.course.update({
-      where: { id: courseId },
-      data: updateData,
-      select: {
-        id: true,
-        title: true,
-        isPublished: true,
-        isArchived: true,
-      },
-    });
+    const { data: course, error: updateErr } = await supabaseAdmin!
+      .from("Course")
+      .update(updateData)
+      .eq("id", courseId)
+      .select("id, title, isPublished, isArchived")
+      .single();
+
+    if (updateErr) {
+      if (updateErr.message?.includes("multiple (or no) rows")) {
+        return errorResponse("Course not found", 404);
+      }
+      throw updateErr;
+    }
 
     console.log(`[ADMIN] Course ${action}: ${courseId} by ${auth.userId}`);
 

@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtService } from "@/lib/auth/jwt";
 import { refreshTokenSchema } from "@/lib/validators/schemas";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,18 +51,13 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 3: Verify User Still Exists and Active
     // ============================================
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        isActive: true,
-        isBanned: true,
-      },
-    });
+    const { data: user, error: userErr } = await supabaseAdmin!
+      .from("User")
+      .select("id, email, role, isActive, isBanned")
+      .eq("id", payload.userId)
+      .single();
 
-    if (!user || !user.isActive || user.isBanned) {
+    if (userErr || !user || !user.isActive || user.isBanned) {
       return NextResponse.json(
         { error: "User account is no longer valid" },
         { status: 403 },
@@ -73,14 +68,12 @@ export async function POST(request: NextRequest) {
     // STEP 4: Verify Device Session if DeviceId Present
     // ============================================
     if (payload.deviceId) {
-      const deviceSession = await prisma.deviceSession.findUnique({
-        where: {
-          userId_deviceId: {
-            userId: user.id,
-            deviceId: payload.deviceId,
-          },
-        },
-      });
+      const { data: deviceSession } = await supabaseAdmin!
+        .from("DeviceSession")
+        .select("isActive")
+        .eq("userId", user.id)
+        .eq("deviceId", payload.deviceId)
+        .maybeSingle();
 
       if (!deviceSession || !deviceSession.isActive) {
         return NextResponse.json(

@@ -47,47 +47,15 @@ function getSupabaseAdminClient(): SupabaseClient | null {
 
 export const supabaseAdmin = getSupabaseAdminClient();
 
-// ============================================
-// Prisma Client (Legacy - for backward compatibility)
-// NOTE: Requires IPv6 to reach Supabase PostgreSQL directly.
-// New routes should use supabaseAdmin (IPv4-compatible REST API)
-// ============================================
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-
-declare global {
-  var __prisma: PrismaClient | undefined;
-}
-
-let prismaInstance: PrismaClient | null = null;
-
-function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL || "";
-  const adapter = new PrismaPg(connectionString);
-
-  return new PrismaClient({
-    adapter,
-    errorFormat: "pretty",
-    log: ["warn", "error"],
-  });
-}
-
-function getPrisma(): PrismaClient {
-  if (!prismaInstance) {
-    if (process.env.NODE_ENV !== "production" && global.__prisma) {
-      prismaInstance = global.__prisma;
-    } else {
-      prismaInstance = createPrismaClient();
-      if (process.env.NODE_ENV !== "production") {
-        global.__prisma = prismaInstance;
-      }
-    }
+/**
+ * Get the Supabase admin client, throwing if not configured.
+ * Use this in route handlers that require the admin client.
+ */
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdmin) {
+    throw new Error(
+      "Supabase admin client is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+    );
   }
-  return prismaInstance;
+  return supabaseAdmin;
 }
-
-export const prisma = new Proxy({} as PrismaClient, {
-  get(_target, prop) {
-    return (getPrisma() as any)[prop];
-  },
-});

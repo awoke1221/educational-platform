@@ -7,7 +7,7 @@ import {
   localPaymentSchema,
   diasporaPaymentSchema,
 } from "@/lib/validators/schemas";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import PaymentService from "@/lib/payment";
 import {
   successResponse,
@@ -117,13 +117,13 @@ export async function POST(request: NextRequest) {
 
       const { courseId, amount } = validation.data;
 
-      // Get user profile for Laki Pay
-      const user = await prisma.user.findUnique({
-        where: { id: auth.userId },
-        select: { fullName: true, email: true, phoneNumber: true },
-      });
+      const { data: user, error: userErr } = await supabaseAdmin!
+        .from("User")
+        .select("fullName, email, phoneNumber")
+        .eq("id", auth.userId)
+        .single();
 
-      if (!user) return errorResponse("User not found", 404);
+      if (userErr || !user) return errorResponse("User not found", 404);
 
       result = await PaymentService.processDiasporaPayment({
         userId: auth.userId,

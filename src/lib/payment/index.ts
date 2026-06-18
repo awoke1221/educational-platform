@@ -1,7 +1,7 @@
 // src/lib/payment/index.ts
 // Payment Service - Unified Payment Processing
 
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import LakiPayService from "./lakiPay";
 
 // ============================================
@@ -28,9 +28,38 @@ export interface ProcessPaymentParams {
 // ============================================
 
 export class PaymentService {
+  // Helper: get a single row, throw if not found
+  private static async getOne(
+    table: string,
+    id: string,
+    select = "*",
+  ): Promise<Record<string, any>> {
+    const { data, error } = await supabaseAdmin!
+      .from(table)
+      .select(select)
+      .eq("id", id)
+      .single();
+    if (error || !data) throw new Error(`${table} not found`);
+    return data as Record<string, any>;
+  }
+
+  // Helper: maybe get a single row
+  private static async maybeOne(
+    table: string,
+    filters: Record<string, any>,
+    select = "*",
+  ): Promise<Record<string, any> | null> {
+    let query = supabaseAdmin!.from(table).select(select);
+    for (const [k, v] of Object.entries(filters)) {
+      query = query.eq(k, v) as any;
+    }
+    const { data, error } = await query.maybeSingle();
+    if (error) return null;
+    return data as Record<string, any> | null;
+  }
+
   /**
    * Process a local payment (Telebirr, CB Birr, Bank Transfer)
-   * These require admin approval before enrollment is activated
    */
   static async processLocalPayment(params: ProcessPaymentParams): Promise<{
     success: boolean;
@@ -39,52 +68,54 @@ export class PaymentService {
     message: string;
   }> {
     // Verify course exists
-    const course = await prisma.course.findUnique({
-      where: { id: params.courseId },
-      select: { id: true, title: true, price: true },
-    });
-
-    if (!course) {
-      throw new Error("Course not found");
-    }
+    const course = await this.getOne(
+      "Course",
+      params.courseId,
+      "id, title, price",
+    );
 
     // Check if user already has an active enrollment
-    const existingEnrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId: params.userId,
-          courseId: params.courseId,
-        },
-      },
-      include: { payment: true },
-    });
+    const { data: existingEnrollment, error: enrollErr } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("*, payment:Payment(*)")
+      .eq("userId", params.userId)
+      .eq("courseId", params.courseId)
+      .maybeSingle();
 
-    if (existingEnrollment) {
+    if (!enrollErr && existingEnrollment) {
       if (existingEnrollment.status === "active") {
         throw new Error("You are already enrolled in this course");
       }
-      if (existingEnrollment.payment?.status === "pending") {
+      const pay = Array.isArray(existingEnrollment.payment)
+        ? existingEnrollment.payment[0]
+        : existingEnrollment.payment;
+      if (pay?.status === "pending") {
         throw new Error("You have a pending payment for this course");
       }
     }
 
-    // Create or update enrollment (pending)
+    // Create or keep enrollment
     let enrollment;
     if (existingEnrollment) {
       enrollment = existingEnrollment;
     } else {
-      enrollment = await prisma.enrollment.create({
-        data: {
+      const { data: newEnroll, error: createErr } = await supabaseAdmin!
+        .from("Enrollment")
+        .insert({
           userId: params.userId,
           courseId: params.courseId,
-          status: "active", // Set active early, payment tracks approval
-        },
-      });
+          status: "active",
+        })
+        .select()
+        .single();
+      if (createErr) throw new Error("Failed to create enrollment");
+      enrollment = newEnroll;
     }
 
     // Create payment record
-    const payment = await prisma.payment.create({
-      data: {
+    const { data: payment, error: payErr } = await supabaseAdmin!
+      .from("Payment")
+      .insert({
         enrollmentId: enrollment.id,
         userId: params.userId,
         courseId: params.courseId,
@@ -93,12 +124,13 @@ export class PaymentService {
         paymentType: "local",
         paymentMethod: params.paymentMethod || "telebirr",
         status: "pending",
-        transactionId: params.transactionId,
+        transactionId: params.transactionId || null,
         receiptScreenshotUrl: params.receiptScreenshotUrl || null,
-      },
-    });
+      })
+      .select()
+      .single();
+    if (payErr) throw new Error("Failed to create payment");
 
-    // Log audit
     console.log(
       `[PAYMENT] Local payment created: ${payment.id} for course ${params.courseId}`,
     );
@@ -113,10 +145,7 @@ export class PaymentService {
         status: payment.status,
         transactionId: payment.transactionId,
       },
-      enrollment: {
-        id: enrollment.id,
-        status: enrollment.status,
-      },
+      enrollment: { id: enrollment.id, status: enrollment.status },
       message:
         "Payment submitted successfully. An admin will review and approve it shortly.",
     };
@@ -124,7 +153,6 @@ export class PaymentService {
 
   /**
    * Process a diaspora payment (Laki Pay)
-   * These are processed immediately via Laki Pay
    */
   static async processDiasporaPayment(params: {
     userId: string;
@@ -139,52 +167,44 @@ export class PaymentService {
     transactionId: string;
     message: string;
   }> {
-    // Check if Laki Pay is configured
     if (!LakiPayService.isConfigured()) {
       throw new Error(
         "Laki Pay is not configured. Please set LAKI_PAY_API_KEY and LAKI_PAY_API_SECRET.",
       );
     }
 
-    // Verify course
-    const course = await prisma.course.findUnique({
-      where: { id: params.courseId },
-      select: { id: true, title: true, price: true },
-    });
+    const course = await this.getOne(
+      "Course",
+      params.courseId,
+      "id, title, price",
+    );
 
-    if (!course) {
-      throw new Error("Course not found");
-    }
-
-    // Check for existing enrollment
-    const existingEnrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId: params.userId,
-          courseId: params.courseId,
-        },
-      },
-    });
+    const { data: existingEnrollment } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("*")
+      .eq("userId", params.userId)
+      .eq("courseId", params.courseId)
+      .maybeSingle();
 
     if (existingEnrollment?.status === "active") {
       throw new Error("You are already enrolled in this course");
     }
 
-    // Create or update enrollment
-    let enrollment;
-    if (existingEnrollment) {
-      enrollment = existingEnrollment;
-    } else {
-      enrollment = await prisma.enrollment.create({
-        data: {
+    let enrollment = existingEnrollment;
+    if (!enrollment) {
+      const { data: newEnroll, error: createErr } = await supabaseAdmin!
+        .from("Enrollment")
+        .insert({
           userId: params.userId,
           courseId: params.courseId,
           status: "active",
-        },
-      });
+        })
+        .select()
+        .single();
+      if (createErr) throw new Error("Failed to create enrollment");
+      enrollment = newEnroll;
     }
 
-    // Initialize Laki Pay transaction
     const merchantReference = `ENR-${enrollment.id}-${Date.now()}`;
     const lakiPay = LakiPayService.getInstance();
 
@@ -203,9 +223,9 @@ export class PaymentService {
       },
     });
 
-    // Create payment record
-    const payment = await prisma.payment.create({
-      data: {
+    const { data: payment, error: payErr } = await supabaseAdmin!
+      .from("Payment")
+      .insert({
         enrollmentId: enrollment.id,
         userId: params.userId,
         courseId: params.courseId,
@@ -215,9 +235,11 @@ export class PaymentService {
         paymentMethod: "laki_pay",
         status: "processing",
         lakiPayTransactionId: lakiPayResponse.transactionId,
-        paymentGatewayResponse: lakiPayResponse as any,
-      },
-    });
+        paymentGatewayResponse: lakiPayResponse,
+      })
+      .select()
+      .single();
+    if (payErr) throw new Error("Failed to create payment");
 
     console.log(
       `[PAYMENT] Diaspora payment initiated: ${payment.id}, LakiPay TX: ${lakiPayResponse.transactionId}`,
@@ -239,46 +261,54 @@ export class PaymentService {
     adminUserId: string,
     notes?: string,
   ): Promise<any> {
-    const payment = await prisma.payment.findUnique({
-      where: { id: paymentId },
-      include: { enrollment: true },
-    });
-
-    if (!payment) {
-      throw new Error("Payment not found");
-    }
+    const payment = await this.getOne(
+      "Payment",
+      paymentId,
+      "*, enrollment:Enrollment(*)",
+    );
 
     if (payment.status !== "pending") {
       throw new Error("Payment is not in pending status");
     }
 
-    // Update payment status
-    const updatedPayment = await prisma.payment.update({
-      where: { id: paymentId },
-      data: {
+    const { data: updatedPayment, error: upErr } = await supabaseAdmin!
+      .from("Payment")
+      .update({
         status: "approved",
         approvedBy: adminUserId,
-        approvedAt: new Date(),
+        approvedAt: new Date().toISOString(),
         approvalNotes: notes || null,
-      },
-    });
+      })
+      .eq("id", paymentId)
+      .select()
+      .single();
+    if (upErr) throw new Error("Failed to approve payment");
 
-    // Ensure enrollment is active
-    await prisma.enrollment.update({
-      where: { id: payment.enrollmentId },
-      data: { status: "active" },
-    });
+    await supabaseAdmin!
+      .from("Enrollment")
+      .update({ status: "active" })
+      .eq("id", payment.enrollmentId);
 
     // Increment course enrollment count
-    await prisma.course.update({
-      where: { id: payment.courseId },
-      data: { enrollmentCount: { increment: 1 } },
-    });
+    const enroll = Array.isArray(payment.enrollment)
+      ? payment.enrollment[0]
+      : payment.enrollment;
+    const courseId = enroll?.courseId || payment.courseId;
+    const { data: course } = await supabaseAdmin!
+      .from("Course")
+      .select("enrollmentCount")
+      .eq("id", courseId)
+      .single();
+    if (course) {
+      await supabaseAdmin!
+        .from("Course")
+        .update({ enrollmentCount: (course.enrollmentCount || 0) + 1 })
+        .eq("id", courseId);
+    }
 
     console.log(
       `[PAYMENT] Payment approved: ${paymentId} by admin ${adminUserId}`,
     );
-
     return updatedPayment;
   }
 
@@ -290,40 +320,33 @@ export class PaymentService {
     adminUserId: string,
     reason: string,
   ): Promise<any> {
-    const payment = await prisma.payment.findUnique({
-      where: { id: paymentId },
-      include: { enrollment: true },
-    });
-
-    if (!payment) {
-      throw new Error("Payment not found");
-    }
+    const payment = await this.getOne("Payment", paymentId, "*");
 
     if (payment.status !== "pending") {
       throw new Error("Payment is not in pending status");
     }
 
-    // Update payment status
-    const updatedPayment = await prisma.payment.update({
-      where: { id: paymentId },
-      data: {
+    const { data: updatedPayment, error: upErr } = await supabaseAdmin!
+      .from("Payment")
+      .update({
         status: "rejected",
         approvedBy: adminUserId,
-        rejectedAt: new Date(),
+        rejectedAt: new Date().toISOString(),
         rejectionReason: reason,
-      },
-    });
+      })
+      .eq("id", paymentId)
+      .select()
+      .single();
+    if (upErr) throw new Error("Failed to reject payment");
 
-    // Cancel enrollment
-    await prisma.enrollment.update({
-      where: { id: payment.enrollmentId },
-      data: { status: "cancelled" },
-    });
+    await supabaseAdmin!
+      .from("Enrollment")
+      .update({ status: "cancelled" })
+      .eq("id", payment.enrollmentId);
 
     console.log(
       `[PAYMENT] Payment rejected: ${paymentId} by admin ${adminUserId}`,
     );
-
     return updatedPayment;
   }
 
@@ -331,13 +354,13 @@ export class PaymentService {
    * Handle Laki Pay webhook callback
    */
   static async handleWebhook(payload: any): Promise<void> {
-    const { transactionId, status, merchantReference, metadata } = payload;
+    const { transactionId, status } = payload;
 
-    // Find payment by Laki Pay transaction ID
-    const payment = await prisma.payment.findFirst({
-      where: { lakiPayTransactionId: transactionId },
-      include: { enrollment: true },
-    });
+    const { data: payment } = await supabaseAdmin!
+      .from("Payment")
+      .select("*, enrollment:Enrollment(*)")
+      .eq("lakiPayTransactionId", transactionId)
+      .maybeSingle();
 
     if (!payment) {
       console.error(`[WEBHOOK] Payment not found for TX: ${transactionId}`);
@@ -345,48 +368,55 @@ export class PaymentService {
     }
 
     if (status === "completed") {
-      // Approve payment
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
+      await supabaseAdmin!
+        .from("Payment")
+        .update({
           status: "approved",
-          approvedAt: new Date(),
+          approvedAt: new Date().toISOString(),
           lakiPayStatus: status,
           paymentGatewayResponse: payload,
-        },
-      });
+        })
+        .eq("id", payment.id);
 
-      // Activate enrollment
-      await prisma.enrollment.update({
-        where: { id: payment.enrollmentId },
-        data: { status: "active" },
-      });
+      await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "active" })
+        .eq("id", payment.enrollmentId);
 
-      // Increment enrollment count
-      await prisma.course.update({
-        where: { id: payment.courseId },
-        data: { enrollmentCount: { increment: 1 } },
-      });
+      const enroll = Array.isArray(payment.enrollment)
+        ? payment.enrollment[0]
+        : payment.enrollment;
+      const courseId = enroll?.courseId || payment.courseId;
+      const { data: course } = await supabaseAdmin!
+        .from("Course")
+        .select("enrollmentCount")
+        .eq("id", courseId)
+        .single();
+      if (course) {
+        await supabaseAdmin!
+          .from("Course")
+          .update({ enrollmentCount: (course.enrollmentCount || 0) + 1 })
+          .eq("id", courseId);
+      }
 
       console.log(
         `[WEBHOOK] Payment completed: ${transactionId}, enrollment activated`,
       );
     } else if (status === "failed" || status === "cancelled") {
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
+      await supabaseAdmin!
+        .from("Payment")
+        .update({
           status: "rejected",
           lakiPayStatus: status,
-          rejectedAt: new Date(),
+          rejectedAt: new Date().toISOString(),
           rejectionReason: `Laki Pay: ${status}`,
-        },
-      });
+        })
+        .eq("id", payment.id);
 
-      // Cancel enrollment
-      await prisma.enrollment.update({
-        where: { id: payment.enrollmentId },
-        data: { status: "cancelled" },
-      });
+      await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "cancelled" })
+        .eq("id", payment.enrollmentId);
 
       console.log(`[WEBHOOK] Payment ${status}: ${transactionId}`);
     }
@@ -395,89 +425,64 @@ export class PaymentService {
   /**
    * Get user's payment history
    */
-  static async getUserPayments(
-    userId: string,
-    page: number = 1,
-    limit: number = 10,
-  ) {
+  static async getUserPayments(userId: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
+    const from = skip;
+    const to = skip + limit - 1;
 
-    const [payments, total] = await Promise.all([
-      prisma.payment.findMany({
-        where: { userId },
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          course: {
-            select: {
-              id: true,
-              title: true,
-              coverImage: true,
-            },
-          },
-        },
-      }),
-      prisma.payment.count({ where: { userId } }),
-    ]);
+    const {
+      data: payments,
+      count,
+      error,
+    } = await supabaseAdmin!
+      .from("Payment")
+      .select("*, course:Course(id, title, coverImage)", { count: "exact" })
+      .eq("userId", userId)
+      .order("createdAt", { ascending: false })
+      .range(from, to);
+
+    if (error) throw new Error("Failed to fetch payments");
 
     return {
-      payments,
-      total,
+      payments: payments || [],
+      total: count || 0,
       page,
       limit,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil((count || 0) / limit),
     };
   }
 
   /**
    * Get pending payments for admin review
    */
-  static async getPendingPayments(page: number = 1, limit: number = 20) {
+  static async getPendingPayments(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
+    const from = skip;
+    const to = skip + limit - 1;
 
-    const [payments, total] = await Promise.all([
-      prisma.payment.findMany({
-        where: {
-          paymentType: "local",
-          status: "pending",
-        },
-        skip,
-        take: limit,
-        orderBy: { createdAt: "asc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              username: true,
-              phoneNumber: true,
-            },
-          },
-          course: {
-            select: {
-              id: true,
-              title: true,
-              coverImage: true,
-            },
-          },
-        },
-      }),
-      prisma.payment.count({
-        where: {
-          paymentType: "local",
-          status: "pending",
-        },
-      }),
-    ]);
+    const {
+      data: payments,
+      count,
+      error,
+    } = await supabaseAdmin!
+      .from("Payment")
+      .select(
+        "*, user:User(id, fullName, email, username, phoneNumber), course:Course(id, title, coverImage)",
+        { count: "exact" },
+      )
+      .eq("paymentType", "local")
+      .eq("status", "pending")
+      .order("createdAt", { ascending: true })
+      .range(from, to);
+
+    if (error) throw new Error("Failed to fetch pending payments");
 
     return {
-      payments,
-      total,
+      payments: payments || [],
+      total: count || 0,
       page,
       limit,
-      pages: Math.ceil(total / limit),
+      pages: Math.ceil((count || 0) / limit),
     };
   }
 }

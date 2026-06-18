@@ -2,7 +2,7 @@
 // Health Check Endpoint
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,10 +21,13 @@ export async function GET(request: NextRequest) {
     // ============================================
     try {
       // Try a simple database query
-      const userCount = await prisma.user.count();
+      const { count, error } = await supabaseAdmin!
+        .from("User")
+        .select("*", { count: "exact", head: true });
+      const userCount = error ? 0 : (count ?? 0);
 
       health.database = {
-        status: "connected",
+        status: error ? "disconnected" : "connected",
         userCount,
       };
     } catch (dbError) {

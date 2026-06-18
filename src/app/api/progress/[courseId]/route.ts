@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -31,66 +31,43 @@ export async function GET(
     // ============================================
     // Verify enrollment
     // ============================================
-    const enrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId: auth.userId,
-          courseId,
-        },
-      },
-      select: {
-        id: true,
-        status: true,
-        completionPercentage: true,
-        totalWatchTime: true,
-        enrollmentDate: true,
-        lastAccessedAt: true,
-        certificateIssued: true,
-      },
-    });
+    const { data: enrollment, error: enrollErr } = await supabaseAdmin!
+      .from("Enrollment")
+      .select(
+        "id, status, completionPercentage, totalWatchTime, enrollmentDate, lastAccessedAt, certificateIssued",
+      )
+      .eq("userId", auth.userId)
+      .eq("courseId", courseId)
+      .maybeSingle();
 
-    if (!enrollment) {
+    if (enrollErr || !enrollment) {
       return errorResponse("You are not enrolled in this course", 403);
     }
 
     // ============================================
     // Get all lectures with progress
     // ============================================
-    const lectures = await prisma.lecture.findMany({
-      where: {
-        courseId,
-        isPublished: true,
-      },
-      orderBy: { orderIndex: "asc" },
-      select: {
-        id: true,
-        title: true,
-        duration: true,
-        orderIndex: true,
-        cloudinaryPublicId: true,
-      },
-    });
+    const { data: lectures } = await supabaseAdmin!
+      .from("Lecture")
+      .select("id, title, duration, orderIndex, cloudinaryPublicId")
+      .eq("courseId", courseId)
+      .eq("isPublished", true)
+      .order("orderIndex", { ascending: true });
 
-    // Get user's progress for each lecture
-    const progressRecords = await prisma.userProgress.findMany({
-      where: {
-        enrollmentId: enrollment.id,
-      },
-      select: {
-        lectureId: true,
-        isCompleted: true,
-        watchDuration: true,
-        watchPercentage: true,
-        lastWatchedAt: true,
-        completedAt: true,
-      },
-    });
+    const { data: progressRecords } = await supabaseAdmin!
+      .from("UserProgress")
+      .select(
+        "lectureId, isCompleted, watchDuration, watchPercentage, lastWatchedAt, completedAt",
+      )
+      .eq("enrollmentId", enrollment.id);
 
     // Build progress map
-    const progressMap = new Map(progressRecords.map((p) => [p.lectureId, p]));
+    const progressMap = new Map(
+      (progressRecords || []).map((p: any) => [p.lectureId, p]),
+    );
 
     // Enrich lectures with progress data
-    const lecturesWithProgress = lectures.map((lecture) => {
+    const lecturesWithProgress = (lectures || []).map((lecture: any) => {
       const progress = progressMap.get(lecture.id);
       return {
         id: lecture.id,
@@ -119,8 +96,10 @@ export async function GET(
     // ============================================
     // Calculate course stats
     // ============================================
-    const completedCount = progressRecords.filter((p) => p.isCompleted).length;
-    const totalCount = lectures.length;
+    const completedCount = (progressRecords || []).filter(
+      (p: any) => p.isCompleted,
+    ).length;
+    const totalCount = (lectures || []).length;
     const progressPercentage =
       totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 

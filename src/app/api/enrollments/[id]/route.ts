@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -28,69 +28,15 @@ export async function GET(
 
     const { id } = await params;
 
-    const enrollment = await prisma.enrollment.findUnique({
-      where: { id },
-      include: {
-        course: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            shortDescription: true,
-            coverImage: true,
-            price: true,
-            level: true,
-            category: true,
-            duration: true,
-            videoCount: true,
-            instructor: {
-              select: {
-                id: true,
-                fullName: true,
-                profileImage: true,
-              },
-            },
-          },
-        },
-        payment: {
-          select: {
-            id: true,
-            amount: true,
-            currency: true,
-            paymentType: true,
-            paymentMethod: true,
-            status: true,
-            createdAt: true,
-          },
-        },
-        certificate: {
-          select: {
-            id: true,
-            certificateNumber: true,
-            issuedDate: true,
-            verificationUrl: true,
-            isValid: true,
-          },
-        },
-        userProgress: {
-          include: {
-            lecture: {
-              select: {
-                id: true,
-                title: true,
-                duration: true,
-                orderIndex: true,
-              },
-            },
-          },
-          orderBy: {
-            lecture: { orderIndex: "asc" },
-          },
-        },
-      },
-    });
+    const { data: enrollment, error: enrollErr } = await supabaseAdmin!
+      .from("Enrollment")
+      .select(
+        "*, course:Course(*, instructor:User(id, fullName, profileImage)), payment:Payment(id, amount, currency, paymentType, paymentMethod, status, createdAt), certificate:Certificate(id, certificateNumber, issuedDate, verificationUrl, isValid), userProgress:UserProgress(*, lecture:Lecture(id, title, duration, orderIndex))",
+      )
+      .eq("id", id)
+      .maybeSingle();
 
-    if (!enrollment) {
+    if (enrollErr || !enrollment) {
       return notFoundResponse("Enrollment");
     }
 
@@ -102,7 +48,7 @@ export async function GET(
     // Calculate progress
     const totalLectures = enrollment.course.videoCount;
     const completedLectures = enrollment.userProgress.filter(
-      (p) => p.isCompleted,
+      (p: any) => p.isCompleted,
     ).length;
 
     const progressPercentage =

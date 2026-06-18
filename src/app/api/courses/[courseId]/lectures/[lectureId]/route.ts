@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import CloudinaryService from "@/lib/cloudinary";
 import {
   successResponse,
@@ -23,24 +23,29 @@ async function canManageLecture(
   userRole: string,
 ): Promise<{ allowed: boolean; lecture: any }> {
   if (userRole === "admin") {
-    const lecture = await prisma.lecture.findUnique({
-      where: { id: lectureId },
-    });
+    const { data: lecture } = await supabaseAdmin!
+      .from("Lecture")
+      .select("*")
+      .eq("id", lectureId)
+      .maybeSingle();
     return { allowed: !!lecture, lecture };
   }
 
-  const course = await prisma.course.findUnique({
-    where: { id: courseId },
-    select: { instructorId: true },
-  });
+  const { data: course } = await supabaseAdmin!
+    .from("Course")
+    .select("instructorId")
+    .eq("id", courseId)
+    .maybeSingle();
 
   if (!course || course.instructorId !== userId) {
     return { allowed: false, lecture: null };
   }
 
-  const lecture = await prisma.lecture.findUnique({
-    where: { id: lectureId },
-  });
+  const { data: lecture } = await supabaseAdmin!
+    .from("Lecture")
+    .select("*")
+    .eq("id", lectureId)
+    .maybeSingle();
 
   return { allowed: !!lecture, lecture };
 }
@@ -59,12 +64,11 @@ export async function GET(
 
     // Try DB first
     try {
-      const lecture = await prisma.lecture.findUnique({
-        where: { id: lectureId },
-        include: {
-          course: { select: { instructorId: true, isPublished: true } },
-        },
-      });
+      const { data: lecture } = await supabaseAdmin!
+        .from("Lecture")
+        .select("*")
+        .eq("id", lectureId)
+        .maybeSingle();
 
       if (lecture && lecture.courseId === courseId) {
         let streamingUrl = null;
@@ -170,42 +174,39 @@ export async function PUT(
     // Handle different update actions
     if (body.action === "video") {
       // Update video URL from Cloudinary upload
-      const updated = await prisma.lecture.update({
-        where: { id: lectureId },
-        data: {
+      const { data: updated, error: videoUpdateErr } = await supabaseAdmin!
+        .from("Lecture")
+        .update({
           videoUrl: body.videoUrl,
           cloudinaryPublicId: body.cloudinaryPublicId,
           duration: body.duration || lecture.duration,
           videoSize: body.videoSize
-            ? BigInt(body.videoSize)
+            ? String(body.videoSize)
             : lecture.videoSize,
           isPublished: true,
-        },
-        select: {
-          id: true,
-          title: true,
-          videoUrl: true,
-          cloudinaryPublicId: true,
-          duration: true,
-          isPublished: true,
-        },
-      });
+        })
+        .eq("id", lectureId)
+        .select(
+          "id, title, videoUrl, cloudinaryPublicId, duration, isPublished",
+        )
+        .single();
+
+      if (videoUpdateErr) throw videoUpdateErr;
 
       // Update course total duration
-      const allLectures = await prisma.lecture.findMany({
-        where: { courseId },
-        select: { duration: true },
-      });
-      const totalDuration = allLectures.reduce(
-        (sum: number, l: { duration: number | null }) =>
-          sum + (l.duration || 0),
+      const { data: allLectures } = await supabaseAdmin!
+        .from("Lecture")
+        .select("duration")
+        .eq("courseId", courseId);
+      const totalDuration = (allLectures || []).reduce(
+        (sum: number, l: any) => sum + (l.duration || 0),
         0,
       );
 
-      await prisma.course.update({
-        where: { id: courseId },
-        data: { duration: totalDuration },
-      });
+      await supabaseAdmin!
+        .from("Course")
+        .update({ duration: totalDuration })
+        .eq("id", courseId);
 
       return successResponse(updated, "Video uploaded successfully");
     }
@@ -223,18 +224,14 @@ export async function PUT(
       return errorResponse("No fields to update", 400);
     }
 
-    const updated = await prisma.lecture.update({
-      where: { id: lectureId },
-      data: updateData,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        orderIndex: true,
-        isPublished: true,
-        updatedAt: true,
-      },
-    });
+    const { data: updated, error: stdUpdateErr } = await supabaseAdmin!
+      .from("Lecture")
+      .update(updateData)
+      .eq("id", lectureId)
+      .select("id, title, description, orderIndex, isPublished, updatedAt")
+      .single();
+
+    if (stdUpdateErr) throw stdUpdateErr;
 
     console.log(`[AUDIT] Lecture updated: ${lectureId} in course ${courseId}`);
 
@@ -278,28 +275,23 @@ export async function DELETE(
       await CloudinaryService.deleteFile(lecture.cloudinaryPublicId, "video");
     }
 
-    // Delete lecture
-    await prisma.lecture.delete({
-      where: { id: lectureId },
-    });
+    await supabaseAdmin!.from("Lecture").delete().eq("id", lectureId);
 
-    // Update course video count and duration
-    const remainingLectures = await prisma.lecture.findMany({
-      where: { courseId },
-      select: { duration: true },
-    });
+    const { data: remainingLectures } = await supabaseAdmin!
+      .from("Lecture")
+      .select("duration")
+      .eq("courseId", courseId);
 
-    await prisma.course.update({
-      where: { id: courseId },
-      data: {
-        videoCount: remainingLectures.length,
-        duration: remainingLectures.reduce(
-          (sum: number, l: { duration: number | null }) =>
-            sum + (l.duration || 0),
+    await supabaseAdmin!
+      .from("Course")
+      .update({
+        videoCount: (remainingLectures || []).length,
+        duration: (remainingLectures || []).reduce(
+          (sum: number, l: any) => sum + (l.duration || 0),
           0,
         ),
-      },
-    });
+      })
+      .eq("id", courseId);
 
     console.log(
       `[AUDIT] Lecture deleted: ${lectureId} from course ${courseId}`,

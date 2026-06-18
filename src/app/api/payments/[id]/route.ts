@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -28,28 +28,15 @@ export async function GET(
 
     const { id } = await params;
 
-    const payment = await prisma.payment.findUnique({
-      where: { id },
-      include: {
-        course: {
-          select: {
-            id: true,
-            title: true,
-            coverImage: true,
-            price: true,
-          },
-        },
-        enrollment: {
-          select: {
-            id: true,
-            status: true,
-            completionPercentage: true,
-          },
-        },
-      },
-    });
+    const { data: payment, error: payErr } = await supabaseAdmin!
+      .from("Payment")
+      .select(
+        "*, course:Course(id, title, coverImage, price), enrollment:Enrollment(id, status, completionPercentage)",
+      )
+      .eq("id", id)
+      .maybeSingle();
 
-    if (!payment) {
+    if (payErr || !payment) {
       return notFoundResponse("Payment");
     }
 

@@ -4,7 +4,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth, requireRole } from "@/lib/auth/middleware";
 import { createCourseSchema } from "@/lib/validators/schemas";
-import { prisma } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabase";
 import {
   successResponse,
   errorResponse,
@@ -12,6 +12,38 @@ import {
   handleApiError,
 } from "@/lib/utils/api";
 import { parsePagination } from "@/lib/utils/request";
+
+// Helper: build Supabase query from params
+function buildCourseQuery(
+  filters: Record<string, any>,
+  sortBy: string,
+  sortOrder: string,
+  page: number,
+  limit: number,
+) {
+  let query = supabaseAdmin!
+    .from("Course")
+    .select("*, instructor:User(id, fullName, profileImage)", {
+      count: "exact",
+    })
+    .eq("isPublished", true)
+    .eq("isArchived", false);
+
+  if (filters.category) query = query.eq("category", filters.category);
+  if (filters.level) query = query.eq("level", filters.level);
+  if (filters.search) {
+    query = query.or(
+      `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,category.ilike.%${filters.search}%`,
+    );
+  }
+
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  return query
+    .order(sortBy, { ascending: sortOrder === "asc" })
+    .range(from, to);
+}
 
 // ============================================
 // GET /api/courses - List Published Courses
@@ -21,78 +53,29 @@ export async function GET(request: NextRequest) {
   try {
     const { page, limit } = parsePagination(request);
 
-    // Build filters from query params
     const searchParams = request.nextUrl.searchParams;
+    const filters: Record<string, any> = {};
     const category = searchParams.get("category");
     const level = searchParams.get("level");
     const search = searchParams.get("search");
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
-    // Build where clause
-    const where: Record<string, any> = {
-      isPublished: true,
-      isArchived: false,
-    };
+    if (category) filters.category = category;
+    if (level) filters.level = level;
+    if (search) filters.search = search;
 
-    if (category) {
-      where.category = category;
-    }
+    const {
+      data: courses,
+      count,
+      error,
+    } = await buildCourseQuery(filters, sortBy, sortOrder, page, limit);
 
-    if (level) {
-      where.level = level;
-    }
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { category: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    // Get courses with pagination
-    const [courses, total] = await Promise.all([
-      prisma.course.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        select: {
-          id: true,
-          title: true,
-          shortDescription: true,
-          coverImage: true,
-          price: true,
-          currency: true,
-          level: true,
-          category: true,
-          tags: true,
-          duration: true,
-          videoCount: true,
-          enrollmentCount: true,
-          instructorId: true,
-          createdAt: true,
-          instructor: {
-            select: {
-              id: true,
-              fullName: true,
-              profileImage: true,
-            },
-          },
-          _count: {
-            select: {
-              lectures: true,
-            },
-          },
-        },
-      }),
-      prisma.course.count({ where }),
-    ]);
+    if (error) throw error;
 
     return paginatedResponse(
-      courses,
-      total,
+      courses || [],
+      count || 0,
       page,
       limit,
       "Courses retrieved successfully",
@@ -109,7 +92,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify instructor/admin role
     const authError = await requireRole(request, ["instructor", "admin"]);
     if (authError) return authError;
 
@@ -118,7 +100,6 @@ export async function POST(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    // Parse and validate request body
     const body = await request.json().catch(() => null);
     if (!body) {
       return errorResponse("Invalid JSON body", 400);
@@ -143,9 +124,9 @@ export async function POST(request: NextRequest) {
       tags,
     } = validation.data;
 
-    // Create course
-    const course = await prisma.course.create({
-      data: {
+    const { data: course, error: createErr } = await supabaseAdmin!
+      .from("Course")
+      .insert({
         title,
         description,
         shortDescription: shortDescription || null,
@@ -157,22 +138,13 @@ export async function POST(request: NextRequest) {
         category: category || null,
         tags: tags || [],
         isPublished: false,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        shortDescription: true,
-        price: true,
-        currency: true,
-        level: true,
-        category: true,
-        tags: true,
-        isPublished: true,
-        instructorId: true,
-        createdAt: true,
-      },
-    });
+      })
+      .select(
+        "id, title, description, shortDescription, price, currency, level, category, tags, isPublished, instructorId, createdAt",
+      )
+      .single();
+
+    if (createErr) throw createErr;
 
     console.log(
       `[AUDIT] Course created: ${course.id} by instructor ${auth.userId}`,
