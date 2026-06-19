@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 interface CourseDetail {
   id: string;
@@ -28,49 +29,91 @@ export default function CourseDetailPage() {
   const router = useRouter();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [enrolling, setEnrolling] = useState(false);
   const [token, setToken] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [pendingEnrollment, setPendingEnrollment] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState("");
 
   useEffect(() => {
-    const t = localStorage.getItem("token") || "";
-    setToken(t);
+    setToken(localStorage.getItem("token") || "");
+  }, []);
 
-    if (!t) {
-      router.push(`/auth/register?redirect=/courses/${courseId}`);
-      return;
-    }
+  useEffect(() => {
+    (async () => {
+      try {
+        const courseRes = await fetch(`/api/courses/${courseId}`).then((r) =>
+          r.json(),
+        );
+        setCourse(courseRes.data || courseRes.data?.data || null);
 
-    fetch(`/api/courses/${courseId}`)
-      .then((r) => r.json())
-      .then((d) => setCourse(d.data))
-      .finally(() => setLoading(false));
+        const tokenFromStorage = localStorage.getItem("token") || "";
+        const authToken = tokenFromStorage || token;
 
-    setIsEnrolled(true);
-  }, [courseId, router]);
+        if (authToken) {
+          try {
+            const profileResult = await authFetchJson("/api/user/profile", {
+              method: "GET",
+            });
+            if (profileResult.response.ok) {
+              const profile = profileResult.data.data || {};
+              setUserId(profile.id || null);
+              const admin = profile.role === "admin";
+              setIsAdmin(admin);
+              if (admin) {
+                setIsEnrolled(true);
+                setPendingEnrollment(false);
+                return;
+              }
+            }
 
-  // Handle free enrollment or redirect to payment
-  const handleEnroll = useCallback(() => {
-    if (!token) {
-      router.push(`/auth/register?redirect=/courses/${courseId}`);
-      return;
-    }
-    if (!course) return;
-
-    const firstLecture = course.lectures?.[0];
-    if (firstLecture) {
-      router.push(`/courses/${courseId}/lectures/${firstLecture.id}`);
-    } else {
-      router.push(`/courses/${courseId}`);
-    }
-  }, [token, course, courseId, router]);
+            const enrResult = await authFetchJson(`/api/enrollments`, {
+              method: "GET",
+            });
+            const items = enrResult.data?.data || enrResult.data || [];
+            const activeFound = items.some(
+              (e: any) =>
+                (e.courseId || e.course?.id) === courseId &&
+                e.status === "active",
+            );
+            const pendingFound = items.some(
+              (e: any) =>
+                (e.courseId || e.course?.id) === courseId &&
+                e.status === "processing",
+            );
+            setIsEnrolled(activeFound);
+            setPendingEnrollment(!activeFound && pendingFound);
+          } catch (e) {
+            console.warn("Failed to load user enrollment data", e);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load course", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [courseId, token]);
 
   const levelLabels: Record<string, string> = {
     beginner: "ጀማሪ",
     intermediate: "መካከለኛ",
     advanced: "ከፍተኛ",
   };
+
+  const courseStatusLabel = isEnrolled
+    ? "Active access"
+    : pendingEnrollment
+      ? "Pending payment review"
+      : "Receipt required";
+
+  const courseStatusStyles = isEnrolled
+    ? "bg-emerald-100 text-emerald-800"
+    : pendingEnrollment
+      ? "bg-amber-100 text-amber-800"
+      : "bg-slate-100 text-slate-800";
 
   if (loading)
     return <div className="text-center text-gray-500 py-20">በመጫን ላይ...</div>;
@@ -95,7 +138,14 @@ export default function CourseDetailPage() {
             <span>{course.duration || 0} ደቂቃ</span>
             <span>{course.enrollmentCount} ተማሪዎች</span>
           </div>
-          {/* CTA Button - changes based on enrollment & auth */}
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <span
+              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${courseStatusStyles}`}
+            >
+              {courseStatusLabel}
+            </span>
+            {/* CTA Button - changes based on enrollment & auth */}
+          </div>
           {isEnrolled ? (
             <Link
               href={
@@ -105,29 +155,41 @@ export default function CourseDetailPage() {
               }
               className="inline-block mt-4 bg-white text-[#00BCD4] px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
             >
-              መማር ቀጥል → ቪዲዮ ይመልከቱ
+              Continue learning
             </Link>
+          ) : pendingEnrollment ? (
+            <div className="mt-4 inline-flex items-center justify-center bg-[#FFF7ED] border border-[#FBBF24] text-[#B45309] px-8 py-3 rounded-lg font-semibold">
+              Pending payment review
+            </div>
           ) : (
             <div className="mt-4 flex flex-col sm:flex-row gap-3">
               <button
-                onClick={handleEnroll}
+                onClick={() => {
+                  if (!token) {
+                    router.push(
+                      `/auth/register?redirect=${encodeURIComponent(
+                        `/auth/register/payment?courseId=${courseId}&redirect=/courses/${courseId}`,
+                      )}`,
+                    );
+                  } else if (isAdmin) {
+                    router.push(`/courses/${courseId}`);
+                  } else {
+                    router.push(
+                      `/auth/register/payment?${userId ? `userId=${userId}&` : ""}courseId=${courseId}&redirect=/courses/${courseId}`,
+                    );
+                  }
+                }}
                 disabled={enrolling}
                 className="bg-white text-[#FF1744] px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50"
               >
                 {enrolling
                   ? "በመመዝገብ ላይ..."
-                  : isLoggedIn
-                    ? "Start learning"
-                    : "Register to take course"}
+                  : isAdmin
+                    ? "View course"
+                    : isLoggedIn
+                      ? "Pay and start learning"
+                      : "Register and pay to take course"}
               </button>
-              {!isLoggedIn && (
-                <Link
-                  href={`/auth/login?redirect=/courses/${courseId}`}
-                  className="bg-white/20 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors text-center"
-                >
-                  በመለያ ይግቡ
-                </Link>
-              )}
             </div>
           )}
 

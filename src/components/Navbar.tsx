@@ -140,7 +140,7 @@ export default function Navbar() {
           </Link>
 
           {/* Right Side */}
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="hidden md:flex items-center gap-3 sm:gap-6">
             <Link
               href="/courses"
               className="text-xs sm:text-sm text-[#0D3B4A] hover:text-[#00BCD4] transition-colors font-medium"
@@ -156,7 +156,7 @@ export default function Navbar() {
 
             {user ? (
               /* ── Logged In: User Avatar ─────────────── */
-              <div className="relative" ref={dropdownRef}>
+              <div className="hidden md:block relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors"
@@ -282,7 +282,7 @@ export default function Navbar() {
               </div>
             ) : (
               /* ── Logged Out: Login / Register ──────── */
-              <>
+              <div className="hidden md:flex items-center gap-3 sm:gap-6">
                 <Link
                   href="/auth/login"
                   className="text-xs sm:text-sm text-[#0D3B4A] hover:text-[#00BCD4] transition-colors font-medium"
@@ -295,7 +295,7 @@ export default function Navbar() {
                 >
                   ተመዝገብ
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>

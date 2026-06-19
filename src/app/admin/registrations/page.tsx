@@ -1,17 +1,25 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 // ── Types ──
 interface PendingRegistration {
-  id: string;
+  // enrollment entry id when available
+  entryId?: string;
+  id: string; // user id
+  userId?: string;
   username: string;
   email: string;
   fullName: string;
   phoneNumber: string;
   pendingReceiptUrl: string | null;
   paymentMethod: string | null;
+  paymentType?: string | null;
   paymentStatus: string;
   createdAt: string;
+  courseId?: string | null;
+  courseTitle?: string | null;
+  coursePrice?: number | null;
 }
 
 // ── Receipt Zoom Modal ──
@@ -119,8 +127,11 @@ export default function AdminRegistrationsPage() {
   // Confirm dialog
   const [confirm, setConfirm] = useState<{
     type: "approve" | "reject";
-    id: string;
+    id: string; // entry id or user id for display
     username: string;
+    userId?: string;
+    courseId?: string | null;
+    courseTitle?: string | null;
   } | null>(null);
 
   // Get token on mount
@@ -129,27 +140,18 @@ export default function AdminRegistrationsPage() {
     setToken(t);
   }, []);
 
-  // Auth header helper
-  const authHeaders = useCallback(
-    (extra?: Record<string, string>) => ({
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...extra,
-    }),
-    [token],
-  );
-
   // ── Fetch pending registrations ──
   const fetchPending = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/registrations/pending", {
-        headers: authHeaders(),
+      const result = await authFetchJson("/api/registrations/pending", {
+        method: "GET",
       });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 401) {
+      const data = result.data;
+      if (!result.response.ok) {
+        if (result.response.status === 401) {
           setError("Unauthorized — please login again");
         } else {
           setError(data.error || "Failed to load");
@@ -162,7 +164,7 @@ export default function AdminRegistrationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, authHeaders]);
+  }, [token]);
 
   useEffect(() => {
     fetchPending();
@@ -175,15 +177,25 @@ export default function AdminRegistrationsPage() {
     setActionLoading(id);
     setConfirm(null);
     try {
-      const res = await fetch(`/api/registrations/${id}/approve`, {
-        method: "POST",
-        headers: authHeaders(),
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      // Use userId for the endpoint and include courseId in body when present
+      const userId = (confirm && confirm.userId) || id;
+      const body: any = {};
+      if (confirm?.courseId) body.courseId = confirm.courseId;
+      const result = await authFetchJson(
+        `/api/registrations/${userId}/approve`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      const data = result.data;
+      if (!result.response.ok) {
         alert(data.error || "Approval failed");
       } else {
-        setItems((prev) => prev.filter((it) => it.id !== id));
+        setItems((prev) =>
+          prev.filter((it) => it.entryId !== id && it.id !== id),
+        );
       }
     } catch {
       alert("Approval failed. Please try again.");
@@ -199,18 +211,24 @@ export default function AdminRegistrationsPage() {
     setActionLoading(id);
     setConfirm(null);
     try {
-      const res = await fetch(`/api/registrations/${id}/reject`, {
-        method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          reason: "Payment receipt invalid or insufficient",
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const userId = (confirm && confirm.userId) || id;
+      const body: any = { reason: "Payment receipt invalid or insufficient" };
+      if (confirm?.courseId) body.courseId = confirm.courseId;
+      const result = await authFetchJson(
+        `/api/registrations/${userId}/reject`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      const data = result.data;
+      if (!result.response.ok) {
         alert(data.error || "Rejection failed");
       } else {
-        setItems((prev) => prev.filter((it) => it.id !== id));
+        setItems((prev) =>
+          prev.filter((it) => it.entryId !== id && it.id !== id),
+        );
       }
     } catch {
       alert("Rejection failed. Please try again.");
@@ -370,18 +388,30 @@ export default function AdminRegistrationsPage() {
 
               {/* User info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="min-w-0">
                     <h3 className="font-semibold text-gray-900 text-lg truncate">
                       {it.fullName}
                     </h3>
                     <p className="text-sm text-gray-500">@{it.username}</p>
                   </div>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${pm.color}`}
-                  >
-                    {pm.label}
-                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                      {it.courseId
+                        ? "Course enrollment"
+                        : "Account registration"}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                      {it.paymentStatus === "submitted"
+                        ? "Receipt submitted"
+                        : it.paymentStatus}
+                    </span>
+                    {it.paymentType && (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-800">
+                        {it.paymentType}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
@@ -394,10 +424,10 @@ export default function AdminRegistrationsPage() {
                     <span className="text-gray-700">{it.phoneNumber}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400">Status:</span>{" "}
-                    <span className="inline-flex items-center gap-1 text-yellow-700">
-                      <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                      Pending
+                    <span className="text-gray-400">Course:</span>{" "}
+                    <span className="text-gray-700">
+                      {it.courseTitle || "(not specified)"}
+                      {it.coursePrice ? ` — ETB ${it.coursePrice}` : ""}
                     </span>
                   </div>
                   <div>
@@ -409,13 +439,16 @@ export default function AdminRegistrationsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="mt-4 flex gap-3">
+                <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     onClick={() =>
                       setConfirm({
                         type: "approve",
-                        id: it.id,
+                        id: it.entryId || it.id,
                         username: it.fullName,
+                        userId: it.id,
+                        courseId: it.courseId,
+                        courseTitle: it.courseTitle,
                       })
                     }
                     disabled={isProcessing}
@@ -427,8 +460,10 @@ export default function AdminRegistrationsPage() {
                     onClick={() =>
                       setConfirm({
                         type: "reject",
-                        id: it.id,
+                        id: it.entryId || it.id,
                         username: it.fullName,
+                        userId: it.id,
+                        courseId: it.courseId,
                       })
                     }
                     disabled={isProcessing}
@@ -462,8 +497,12 @@ export default function AdminRegistrationsPage() {
           }
           message={
             confirm.type === "approve"
-              ? `Allow ${confirm.username} to log in and access courses?`
-              : `Reject ${confirm.username}'s registration? They will not be able to log in.`
+              ? confirm.courseTitle
+                ? `Approve payment and activate access to "${confirm.courseTitle}" for ${confirm.username}?`
+                : `Approve ${confirm.username}'s account registration?`
+              : confirm.courseTitle
+                ? `Reject ${confirm.username}'s payment for "${confirm.courseTitle}"?`
+                : `Reject ${confirm.username}'s registration? They will not be able to log in.`
           }
           confirmLabel={confirm.type === "approve" ? "Approve" : "Reject"}
           confirmColor={

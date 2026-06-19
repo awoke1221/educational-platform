@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const { data: user, error } = await supabaseAdmin!
       .from("User")
       .select(
-        "id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt",
+        "id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt, pendingReceiptUrl, paymentMethod, paymentStatus",
       )
       .eq("id", auth.userId)
       .single();

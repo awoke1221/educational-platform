@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 interface Course {
   id: string;
@@ -97,10 +98,62 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string>("");
+  const [enrolledIds, setEnrolledIds] = useState<Set<string>>(
+    new Set<string>(),
+  );
+  const [pendingCourseIds, setPendingCourseIds] = useState<Set<string>>(
+    new Set<string>(),
+  );
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setToken(localStorage.getItem("token") || "");
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    const loadUserInfo = async () => {
+      try {
+        const profileResult = await authFetchJson("/api/user/profile", {
+          method: "GET",
+        });
+        if (profileResult.response.ok) {
+          const profile = profileResult.data.data || {};
+          setUserId(profile.id || null);
+          setIsAdmin(profile.role === "admin");
+          if (profile.role === "admin") {
+            setEnrolledIds(new Set(courses.map((course) => course.id)));
+            return;
+          }
+        }
+
+        const enr = await authFetchJson("/api/enrollments", {
+          method: "GET",
+        }).then((result) => result.data);
+        const items = (enr.data?.data || enr.data || []) as Array<{
+          courseId?: string;
+          course?: { id?: string };
+          status?: string;
+        }>;
+
+        const activeIds: string[] = items
+          .filter((e) => e.status === "active")
+          .map((e) => String(e.courseId || e.course?.id));
+
+        const pendingIds: string[] = items
+          .filter((e) => e.status === "processing")
+          .map((e) => String(e.courseId || e.course?.id));
+
+        setEnrolledIds(new Set(activeIds));
+        setPendingCourseIds(new Set(pendingIds));
+      } catch (e) {
+        console.warn("Failed to load enrollments", e);
+      }
+    };
+
+    loadUserInfo();
+  }, [token, courses]);
 
   useEffect(() => {
     Promise.all([
@@ -258,6 +311,29 @@ export default function CoursesPage() {
                       ቪዲዮ ኮርስ
                     </div>
                   )}
+
+                  {/* Lock badge for not-enrolled */}
+                  {!enrolledIds.has(course.id) && !isAdmin && (
+                    <>
+                      <div className="absolute inset-0 bg-black/20 pointer-events-none transition-opacity duration-300" />
+                      <div className="absolute top-3 right-3 inline-flex items-center gap-2 bg-white/90 text-[#0D3B4A] text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm pointer-events-none">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11zm-7 0h14v10H5V11z"
+                          />
+                        </svg>
+                        Locked
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-1.5">
@@ -280,17 +356,138 @@ export default function CoursesPage() {
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm font-semibold text-[#0D3B4A]">
+                        {enrolledIds.has(course.id) ? (
+                          <span className="inline-flex items-center gap-2 text-[#00BCD4]">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                            Enrolled
+                          </span>
+                        ) : pendingCourseIds.has(course.id) ? (
+                          <span className="inline-flex items-center gap-2 text-[#CA8A04]">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            Pending admin review
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-2 text-[#FF1744]">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11zm-7 0h14v10H5V11z"
+                              />
+                            </svg>
+                            {(course.currency || "ETB") +
+                              " " +
+                              (course.price ?? 0)}
+                          </span>
+                        )}
+                      </div>
+                      {/* CTA */}
+                      {isAdmin ? (
+                        <Link
+                          href={`/courses/${course.id}`}
+                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
+                        >
+                          View course
+                        </Link>
+                      ) : enrolledIds.has(course.id) ? (
+                        <Link
+                          href={`/courses/${course.id}`}
+                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
+                        >
+                          Continue learning
+                        </Link>
+                      ) : pendingCourseIds.has(course.id) ? (
+                        <button
+                          type="button"
+                          className="mt-0 inline-flex items-center justify-center bg-[#FFF7ED] border border-[#FBBF24] text-[#B45309] text-sm font-semibold px-4 py-2.5 rounded-xl"
+                          disabled
+                        >
+                          Pending payment review
+                        </button>
+                      ) : token ? (
+                        <Link
+                          href={`/auth/register/payment?${userId ? `userId=${userId}&` : ""}redirect=/courses/${course.id}&courseId=${course.id}`}
+                          className="mt-0 inline-flex items-center justify-center bg-white border border-[#FFCDD2] text-[#FF1744] text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
+                        >
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v-3m0 0V8m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Pay and start learning
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/auth/register?redirect=${encodeURIComponent(
+                            `/auth/register/payment?courseId=${course.id}&redirect=/courses/${course.id}`,
+                          )}`}
+                          className="mt-0 inline-flex items-center justify-center bg-white border border-[#FFCDD2] text-[#FF1744] text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
+                        >
+                          Register and pay to take course
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                  <Link
-                    href={
-                      token
-                        ? `/courses/${course.id}`
-                        : `/auth/register?redirect=/courses/${course.id}`
-                    }
-                    className="mt-3 inline-flex w-full justify-center bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white text-sm font-semibold py-2.5 rounded-xl hover:shadow-lg transition-all"
-                  >
-                    {token ? "Start learning" : "Register to take course"}
-                  </Link>
+                  {/* Lock overlay for not-enrolled */}
+                  {!enrolledIds.has(course.id) && (
+                    <div className="absolute inset-0 flex items-start justify-end p-3 pointer-events-none">
+                      <div className="bg-white/80 rounded-full p-2 shadow">
+                        <svg
+                          className="w-5 h-5 text-[#FF1744]"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11z M5 11h14v10H5V11z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

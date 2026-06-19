@@ -160,14 +160,26 @@ function RegisterForm() {
           setFieldErrors(errors);
         }
       } else {
-        // Registration is created as pre-registration. Redirect to payment page
+        // Registration is created as pre-registration. Redirect to payment page.
         const userId = data.user?.id;
         if (userId) {
-          router.push(
-            `/auth/register/payment?userId=${userId}&redirect=${encodeURIComponent(
-              redirectTo,
-            )}`,
-          );
+          const targetUrl = redirectTo.startsWith("/auth/register/payment")
+            ? (() => {
+                try {
+                  const url = new URL(redirectTo, window.location.origin);
+                  url.searchParams.set("userId", userId);
+                  return `${url.pathname}${url.search}`;
+                } catch {
+                  return `/auth/register/payment?userId=${userId}&redirect=${encodeURIComponent(
+                    redirectTo,
+                  )}`;
+                }
+              })()
+            : `/auth/register/payment?userId=${userId}&redirect=${encodeURIComponent(
+                redirectTo,
+              )}`;
+
+          router.push(targetUrl);
         } else {
           setError("Registration created but missing user id.");
         }

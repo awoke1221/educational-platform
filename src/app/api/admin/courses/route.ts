@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
     const to = from + limit - 1;
     let query = supabaseAdmin!
       .from("Course")
-      .select("*, instructor:User(id, fullName, email)", { count: "exact" });
+      // select instructorId and attach instructor data separately to avoid FK dependency
+      .select("*, instructorId", { count: "exact" });
 
     if (status === "published") {
       query = query.eq("isPublished", true).eq("isArchived", false);
@@ -78,8 +79,24 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
+    const courseList = courses || [];
+    if (courseList.length > 0) {
+      const instructorIds = Array.from(
+        new Set(courseList.map((c: any) => c.instructorId).filter(Boolean)),
+      );
+      if (instructorIds.length > 0) {
+        const { data: instructors } = await supabaseAdmin!
+          .from("User")
+          .select("id, fullName, email")
+          .in("id", instructorIds as any[]);
+        const map = new Map((instructors || []).map((u: any) => [u.id, u]));
+        for (const c of courseList)
+          c.instructor = map.get(c.instructorId) || null;
+      }
+    }
+
     return paginatedResponse(
-      courses || [],
+      courseList,
       count || 0,
       page,
       limit,

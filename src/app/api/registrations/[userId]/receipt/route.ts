@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabase";
 import { StorageService } from "@/lib/storage/supabase";
@@ -9,7 +10,14 @@ export async function POST(
   try {
     const { userId } = await params;
     const body = await request.json();
-    const { paymentMethod, paymentChannel, filename, fileBase64 } = body;
+    const {
+      paymentMethod,
+      paymentChannel,
+      filename,
+      fileBase64,
+      courseId,
+      transactionId,
+    } = body;
 
     // ── Validate required fields ──
     if (!userId || !fileBase64 || !filename) {
@@ -89,6 +97,156 @@ export async function POST(
       );
     }
 
+    // ── If a courseId was provided, create or update a pending Enrollment and Payment record ──
+    let paymentRecord: any = null;
+    if (courseId) {
+      const { data: course } = await supabaseAdmin!
+        .from("Course")
+        .select("id, price, currency")
+        .eq("id", courseId)
+        .maybeSingle();
+
+      if (!course) {
+        return NextResponse.json(
+          { error: "Course not found" },
+          { status: 404 },
+        );
+      }
+
+      const { data: existingEnrollment, error: enrollErr } =
+        await supabaseAdmin!
+          .from("Enrollment")
+          .select("*")
+          .eq("userId", userId)
+          .eq("courseId", courseId)
+          .maybeSingle();
+
+      if (enrollErr) {
+        console.error("[RECEIPT] Enrollment lookup error:", enrollErr);
+        return NextResponse.json(
+          { error: "Failed to verify enrollment" },
+          { status: 500 },
+        );
+      }
+
+      let enrollment = existingEnrollment;
+      if (existingEnrollment) {
+        if (existingEnrollment.status === "active") {
+          return NextResponse.json(
+            {
+              error:
+                "You already have active access to this course. No receipt is required.",
+            },
+            { status: 409 },
+          );
+        }
+
+        const { data: updatedEnrollment, error: updateEnrollErr } =
+          await supabaseAdmin!
+            .from("Enrollment")
+            .update({
+              status: "processing",
+              updatedAt: new Date().toISOString(),
+            })
+            .eq("id", existingEnrollment.id)
+            .select()
+            .single();
+
+        if (updateEnrollErr) {
+          console.error("[RECEIPT] Enrollment update error:", updateEnrollErr);
+          return NextResponse.json(
+            { error: "Failed to update enrollment status" },
+            { status: 500 },
+          );
+        }
+
+        enrollment = updatedEnrollment;
+      } else {
+        const { data: newEnrollment, error: createEnrollErr } =
+          await supabaseAdmin!
+            .from("Enrollment")
+            .insert({
+              userId,
+              courseId,
+              status: "processing",
+              enrollmentDate: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+            .select()
+            .single();
+
+        if (createEnrollErr) {
+          console.error("[RECEIPT] Enrollment create error:", createEnrollErr);
+          return NextResponse.json(
+            { error: "Failed to create enrollment" },
+            { status: 500 },
+          );
+        }
+
+        enrollment = newEnrollment;
+      }
+
+      if (enrollment) {
+        const { data: existingPayment } = await supabaseAdmin!
+          .from("Payment")
+          .select("*")
+          .eq("enrollmentId", enrollment.id)
+          .maybeSingle();
+
+        const paymentData = {
+          enrollmentId: enrollment.id,
+          userId,
+          courseId,
+          amount: course.price || 0,
+          currency: course.currency || "ETB",
+          paymentType: "local",
+          paymentMethod: paymentChannel || paymentMethod || "telebirr",
+          status: "pending",
+          transactionId: transactionId || null,
+          receiptScreenshotUrl: uploadResult.publicUrl,
+          receiptScreenshotKey: uploadResult.storagePath,
+          updatedAt: new Date().toISOString(),
+        };
+
+        if (existingPayment) {
+          const { data: updatedPayment, error: updatePaymentErr } =
+            await supabaseAdmin!
+              .from("Payment")
+              .update(paymentData)
+              .eq("id", existingPayment.id)
+              .select()
+              .single();
+
+          if (updatePaymentErr) {
+            console.error("[RECEIPT] Payment update error:", updatePaymentErr);
+            return NextResponse.json(
+              { error: "Failed to update payment record" },
+              { status: 500 },
+            );
+          }
+
+          paymentRecord = updatedPayment;
+        } else {
+          const { data: newPayment, error: createPaymentErr } =
+            await supabaseAdmin!
+              .from("Payment")
+              .insert(paymentData)
+              .select()
+              .single();
+
+          if (createPaymentErr) {
+            console.error("[RECEIPT] Payment create error:", createPaymentErr);
+            return NextResponse.json(
+              { error: "Failed to create payment record" },
+              { status: 500 },
+            );
+          }
+
+          paymentRecord = newPayment;
+        }
+      }
+    }
+
     console.log(
       `[RECEIPT] User ${userId} submitted receipt: ${uploadResult.storagePath}`,
     );
@@ -98,6 +256,7 @@ export async function POST(
         success: true,
         publicUrl: uploadResult.publicUrl,
         storagePath: uploadResult.storagePath,
+        paymentId: paymentRecord?.id || null,
       },
       { status: 200 },
     );

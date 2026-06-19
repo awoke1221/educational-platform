@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 interface CourseInfo {
   id: string;
@@ -12,6 +13,7 @@ interface CourseInfo {
 interface Enrollment {
   id: string;
   status: string;
+  paymentStatus?: string;
   completionPercentage: number;
   progressPercentage: number;
   course: CourseInfo;
@@ -33,17 +35,21 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
 
+  const pendingCount = enrollments.filter(
+    (enr) => enr.paymentStatus === "submitted" || enr.status === "processing",
+  ).length;
+
   useEffect(() => {
     const t = localStorage.getItem("token");
     if (!t) return;
     setToken(t);
     Promise.all([
-      fetch("/api/enrollments", {
-        headers: { Authorization: `Bearer ${t}` },
-      }).then((r) => r.json()),
-      fetch("/api/enrollments/stats", {
-        headers: { Authorization: `Bearer ${t}` },
-      }).then((r) => r.json()),
+      authFetchJson("/api/enrollments", {
+        method: "GET",
+      }).then((result) => result.data),
+      authFetchJson("/api/enrollments/stats", {
+        method: "GET",
+      }).then((result) => result.data),
     ])
       .then(([enr, st]) => {
         setEnrollments(enr.data?.data || []);
@@ -75,7 +81,7 @@ export default function DashboardPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
           {[
             { label: "የተመዘገቡ", value: stats.overview?.totalEnrollments || 0 },
             { label: "ንቁ ኮርሶች", value: stats.overview?.activeCourses || 0 },
@@ -83,6 +89,10 @@ export default function DashboardPage() {
             {
               label: "የምስክር ወረቀት",
               value: stats.overview?.certificatesCount || 0,
+            },
+            {
+              label: "የተላከ ክፍያ",
+              value: pendingCount,
             },
           ].map((s, i) => (
             <div
@@ -115,19 +125,29 @@ export default function DashboardPage() {
               key={enr.id}
               className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
             >
-              <Link
-                href={`/courses/${enr.course?.id || enr.courseId}`}
-                className="block"
-              >
-                <div className="h-32 bg-gradient-to-br from-[#1B2A4A] to-[#2C3E6B] rounded-lg flex items-center justify-center mb-3">
-                  <span className="text-white text-2xl font-bold">
-                    {enr.course?.title?.charAt(0) || "?"}
+              <div className="flex items-center justify-between mb-3">
+                <Link
+                  href={`/courses/${enr.course?.id || enr.courseId}`}
+                  className="block"
+                >
+                  <div className="h-32 bg-gradient-to-br from-[#1B2A4A] to-[#2C3E6B] rounded-lg flex items-center justify-center mb-3">
+                    <span className="text-white text-2xl font-bold">
+                      {enr.course?.title?.charAt(0) || "?"}
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-sm mb-2">
+                    {enr.course?.title}
+                  </h3>
+                </Link>
+              </div>
+              {(enr.paymentStatus === "submitted" ||
+                enr.status === "processing") && (
+                <div className="inline-flex items-center gap-2 text-[#CA8A04] text-xs font-semibold mb-3">
+                  <span className="inline-flex h-6 px-2.5 items-center rounded-full bg-[#FEF3C7] text-[#CA8A04]">
+                    Pending approval
                   </span>
                 </div>
-                <h3 className="font-semibold text-sm mb-2">
-                  {enr.course?.title}
-                </h3>
-              </Link>
+              )}
               <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
                 <div
                   className="bg-[#C9952A] h-2 rounded-full transition-all"

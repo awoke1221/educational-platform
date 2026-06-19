@@ -36,9 +36,17 @@ export async function GET(
     try {
       const { data: course } = await supabaseAdmin!
         .from("Course")
-        .select("*, instructor:User(id, fullName, profileImage)")
+        .select("*, instructorId")
         .eq("id", courseId)
         .maybeSingle();
+      if (course?.instructorId) {
+        const { data: instr } = await supabaseAdmin!
+          .from("User")
+          .select("id, fullName, profileImage")
+          .eq("id", course.instructorId)
+          .maybeSingle();
+        if (instr) course.instructor = instr;
+      }
       if (course) {
         // Get lectures
         const { data: lectures } = await supabaseAdmin!

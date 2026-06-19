@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 // ============================================
 // Types
@@ -120,22 +121,18 @@ export default function AdminCourseDetailPage() {
     setLoading(true);
 
     try {
-      const [courseRes, lecturesRes] = await Promise.all([
-        fetch(`/api/courses/${courseId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`/api/courses/${courseId}/lectures`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+      const [courseResult, lecturesResult] = await Promise.all([
+        authFetchJson(`/api/courses/${courseId}`, { method: "GET" }),
+        authFetchJson(`/api/courses/${courseId}/lectures`, { method: "GET" }),
       ]);
 
-      const courseData = await courseRes.json();
-      if (courseData.success) {
+      const courseData = courseResult.data;
+      if (courseResult.response.ok && courseData.success) {
         setCourse(courseData.data);
       }
 
-      const lecturesData = await lecturesRes.json();
-      if (lecturesData.success) {
+      const lecturesData = lecturesResult.data;
+      if (lecturesResult.response.ok && lecturesData.success) {
         setLectures(lecturesData.data.lectures || []);
       }
     } catch (err) {
@@ -159,11 +156,10 @@ export default function AdminCourseDetailPage() {
 
     setCreating(true);
     try {
-      const res = await fetch(`/api/courses/${courseId}/lectures`, {
+      const result = await authFetchJson(`/api/courses/${courseId}/lectures`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: newLectureTitle.trim(),
@@ -171,8 +167,8 @@ export default function AdminCourseDetailPage() {
         }),
       });
 
-      const data = await res.json();
-      if (data.success) {
+      const data = result.data;
+      if (result.response.ok && data.success) {
         setNewLectureTitle("");
         setNewLectureDesc("");
         setShowCreateForm(false);
@@ -232,54 +228,25 @@ export default function AdminCourseDetailPage() {
         formData.append("file", file);
         formData.append("type", "video");
 
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const pct = Math.round((e.loaded / e.total) * 100);
-            setUploadState((prev) => ({ ...prev, progress: pct }));
-          }
-        };
-
-        const uploadResult = await new Promise<any>((resolve, reject) => {
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                resolve(JSON.parse(xhr.responseText));
-              } catch {
-                reject(new Error("Invalid response"));
-              }
-            } else {
-              try {
-                const err = JSON.parse(xhr.responseText);
-                reject(new Error(err.error || "Upload failed"));
-              } catch {
-                reject(new Error("Upload failed"));
-              }
-            }
-          };
-          xhr.onerror = () => reject(new Error("Network error"));
-          xhr.onabort = () => reject(new Error("Upload cancelled"));
-
-          xhr.open("POST", `/api/upload`, true);
-          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-          xhr.send(formData);
+        const uploadResponse = await authFetchJson("/api/upload", {
+          method: "POST",
+          body: formData,
         });
 
-        if (!uploadResult.success) {
+        const uploadResult = uploadResponse.data;
+        if (!uploadResponse.response.ok || !uploadResult.success) {
           throw new Error(uploadResult.error || "Upload failed");
         }
 
         const { publicId, url, duration } = uploadResult.data;
 
         // Now attach the video to the lecture
-        const attachRes = await fetch(
+        const attachResult = await authFetchJson(
           `/api/courses/${courseId}/lectures/${lectureId}`,
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               action: "video",
@@ -291,8 +258,8 @@ export default function AdminCourseDetailPage() {
           },
         );
 
-        const attachData = await attachRes.json();
-        if (!attachData.success) {
+        const attachData = attachResult.data;
+        if (!attachResult.response.ok || !attachData.success) {
           throw new Error(attachData.error || "Failed to attach video");
         }
 
@@ -335,15 +302,14 @@ export default function AdminCourseDetailPage() {
     if (!confirm("Are you sure? This lecture will be deleted.")) return;
 
     try {
-      const res = await fetch(
+      const result = await authFetchJson(
         `/api/courses/${courseId}/lectures/${lectureId}`,
         {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
         },
       );
-      const data = await res.json();
-      if (data.success) {
+      const data = result.data;
+      if (result.response.ok && data.success) {
         fetchData();
       }
     } catch (err) {

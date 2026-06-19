@@ -84,16 +84,10 @@ export default async function Home() {
             </div>
 
             {/* CTA Buttons below video */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-2 w-full max-w-md mx-auto">
-              <Link
-                href="/auth/register"
-                className="bg-white text-[#00BCD4] px-8 py-3.5 rounded-lg text-center font-semibold hover:bg-[#F0FEFF] transition-all shadow-lg hover:shadow-xl sm:flex-1"
-              >
-                አሁን ይመዝገቡ
-              </Link>
+            <div className="flex justify-center mt-2 w-full max-w-md mx-auto">
               <Link
                 href="/courses"
-                className="bg-[#FF1744] text-white px-8 py-3.5 rounded-lg text-center font-semibold hover:bg-[#FF3366] transition-all shadow-lg hover:shadow-xl sm:flex-1"
+                className="bg-[#FF1744] text-white px-8 py-3.5 rounded-lg text-center font-semibold hover:bg-[#FF3366] transition-all shadow-lg hover:shadow-xl w-full"
               >
                 ኮርሶችን ይመልከቱ
               </Link>

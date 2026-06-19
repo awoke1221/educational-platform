@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 import {
   validateSearchQuery,
   sanitizeInput,
@@ -124,22 +125,22 @@ export default function AdminCoursesPage() {
       if (search) params.set("search", search);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
-      const res = await fetch(`/api/admin/courses?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const result = await authFetchJson(`/api/admin/courses?${params}`, {
+        method: "GET",
       });
-      const data: PaginatedResponse = await res.json();
+      const data: PaginatedResponse = result.data;
 
-      if (data.success) {
+      if (result.response.ok && data.success) {
         setCourses(data.data.items);
         setTotal(data.data.total);
         setTotalPages(data.data.totalPages);
 
         // Also fetch all for stats
-        const allRes = await fetch(`/api/admin/courses?limit=1`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const allResult = await authFetchJson(`/api/admin/courses?limit=1`, {
+          method: "GET",
         });
-        const allData = await allRes.json();
-        if (allData.success) {
+        const allData = allResult.data;
+        if (allResult.response.ok && allData.success) {
           setStats({
             total: allData.data.total,
             published: 0,
@@ -165,15 +166,15 @@ export default function AdminCoursesPage() {
     const fetchStats = async () => {
       try {
         const [pub, draft, arch] = await Promise.all([
-          fetch(`/api/admin/courses?status=published&limit=1`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`/api/admin/courses?status=draft&limit=1`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
-          fetch(`/api/admin/courses?status=archived&limit=1`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((r) => r.json()),
+          authFetchJson(`/api/admin/courses?status=published&limit=1`, {
+            method: "GET",
+          }).then((result) => result.data),
+          authFetchJson(`/api/admin/courses?status=draft&limit=1`, {
+            method: "GET",
+          }).then((result) => result.data),
+          authFetchJson(`/api/admin/courses?status=archived&limit=1`, {
+            method: "GET",
+          }).then((result) => result.data),
         ]);
         setStats({
           total: stats.total || 0,
@@ -181,7 +182,9 @@ export default function AdminCoursesPage() {
           draft: draft.data?.total || 0,
           archived: arch.data?.total || 0,
         });
-      } catch {}
+      } catch (err) {
+        console.error("[ADMIN COURSES] Stats fetch error:", err);
+      }
     };
     fetchStats();
   }, [token]);
@@ -195,16 +198,15 @@ export default function AdminCoursesPage() {
     action: "publish" | "unpublish" | "archive" | "restore",
   ) => {
     try {
-      const res = await fetch("/api/admin/courses", {
+      const result = await authFetchJson("/api/admin/courses", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ courseId, action }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = result.data;
+      if (result.response.ok && data.success) {
         fetchCourses();
       }
     } catch (err) {

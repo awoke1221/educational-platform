@@ -31,7 +31,7 @@ export async function GET(
     const { data: enrollment, error: enrollErr } = await supabaseAdmin!
       .from("Enrollment")
       .select(
-        "*, course:Course(*, instructor:User(id, fullName, profileImage)), payment:Payment(id, amount, currency, paymentType, paymentMethod, status, createdAt), certificate:Certificate(id, certificateNumber, issuedDate, verificationUrl, isValid), userProgress:UserProgress(*, lecture:Lecture(id, title, duration, orderIndex))",
+        "*, course:Course(*, instructorId, videoCount), payment:Payment(id, amount, currency, paymentType, paymentMethod, status, createdAt), certificate:Certificate(id, certificateNumber, issuedDate, verificationUrl, isValid), userProgress:UserProgress(*, lecture:Lecture(id, title, duration, orderIndex))",
       )
       .eq("id", id)
       .maybeSingle();
@@ -43,6 +43,16 @@ export async function GET(
     // Only allow owner or admin to view
     if (enrollment.userId !== auth.userId && auth.role !== "admin") {
       return errorResponse("Access denied", 403);
+    }
+
+    // If course has instructorId, fetch instructor info separately to avoid FK dependency errors
+    if (enrollment?.course?.instructorId) {
+      const { data: instructor } = await supabaseAdmin!
+        .from("User")
+        .select("id, fullName, profileImage")
+        .eq("id", enrollment.course.instructorId)
+        .maybeSingle();
+      enrollment.course.instructor = instructor || null;
     }
 
     // Calculate progress

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 // ============================================
 // Types
@@ -84,6 +85,7 @@ export default function LecturePlayerPage() {
   const [lectures, setLectures] = useState<CourseLectures | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState<boolean | null>(null);
 
   // Player state
@@ -110,7 +112,11 @@ export default function LecturePlayerPage() {
   useEffect(() => {
     const t = localStorage.getItem("token");
     if (!t) {
-      router.push(`/auth/register?redirect=/courses/${courseId}`);
+      router.push(
+        `/auth/register?redirect=${encodeURIComponent(
+          `/auth/register/payment?courseId=${courseId}&redirect=/courses/${courseId}`,
+        )}`,
+      );
       return;
     }
     setToken(t);
@@ -123,26 +129,64 @@ export default function LecturePlayerPage() {
   useEffect(() => {
     if (!token || !lectureId) return;
 
-    setLoading(true);
-    setError("");
-    setIsEnrolled(true);
+    const fetchLecture = async () => {
+      setLoading(true);
+      setError("");
+      setIsEnrolled(false);
 
-    fetch(`/api/courses/${courseId}/lectures/${lectureId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((lecData) => {
-        if (!lecData.success) {
+      try {
+        const profileResult = await authFetchJson("/api/user/profile", {
+          method: "GET",
+        });
+        let admin = false;
+        if (profileResult.response.ok) {
+          const profile = profileResult.data.data || {};
+          admin = profile.role === "admin";
+          setIsAdmin(admin);
+          if (admin) {
+            setIsEnrolled(true);
+          }
+        }
+
+        if (!admin) {
+          const enrResult = await authFetchJson(`/api/enrollments`, {
+            method: "GET",
+          });
+          const enrData = enrResult.data;
+          const items = enrData.data?.data || enrData.data || [];
+          const activeEnrollment = items.some(
+            (e: any) =>
+              (e.courseId || e.course?.id) === courseId &&
+              e.status === "active",
+          );
+          setIsEnrolled(activeEnrollment);
+
+          if (!activeEnrollment) {
+            setLoading(false);
+            return;
+          }
+        }
+
+        const lectureResult = await authFetchJson(
+          `/api/courses/${courseId}/lectures/${lectureId}`,
+          { method: "GET" },
+        );
+        const lecData = lectureResult.data;
+        if (!lectureResult.response.ok || !lecData.success) {
           setError(lecData.error || "ምዕራፍ አልተገኘም");
+          setLoading(false);
           return;
         }
         setLecture(lecData.data);
-      })
-      .catch((err) => {
+      } catch (err) {
         setError("መረጃ በመጫን ላይ ስህተት ተከስቷል");
         console.error("[LECTURE PLAYER] Fetch error:", err);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLecture();
   }, [token, lectureId, courseId]);
 
   // ============================================
@@ -152,13 +196,12 @@ export default function LecturePlayerPage() {
   useEffect(() => {
     if (!token || !courseId) return;
 
-    fetch(`/api/courses/${courseId}/lectures`, {
-      headers: { Authorization: `Bearer ${token}` },
+    authFetchJson(`/api/courses/${courseId}/lectures`, {
+      method: "GET",
     })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          setLectures(data.data);
+      .then((result) => {
+        if (result.response.ok && result.data.success) {
+          setLectures(result.data.data);
         }
       })
       .catch(() => {});
@@ -186,11 +229,10 @@ export default function LecturePlayerPage() {
       if (!token || !lectureId) return;
 
       try {
-        await fetch("/api/progress", {
+        await authFetchJson("/api/progress", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             lectureId,
@@ -501,7 +543,7 @@ export default function LecturePlayerPage() {
 
   const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
   const videoUrl =
-    lecture.signedVideoUrl || lecture.streamingUrl || lecture.videoUrl;
+    lecture.videoUrl || lecture.signedVideoUrl || lecture.streamingUrl;
 
   return (
     <div className="min-h-screen bg-gray-950">

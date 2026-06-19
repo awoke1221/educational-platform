@@ -97,14 +97,34 @@ export class PaymentService {
     // Create or keep enrollment
     let enrollment;
     if (existingEnrollment) {
-      enrollment = existingEnrollment;
+      if (existingEnrollment.status === "active") {
+        throw new Error("You are already enrolled in this course");
+      }
+      if (existingEnrollment.status !== "processing") {
+        const { data: updatedEnroll, error: updateEnrollErr } =
+          await supabaseAdmin!
+            .from("Enrollment")
+            .update({
+              status: "processing",
+              updatedAt: new Date().toISOString(),
+            })
+            .eq("id", existingEnrollment.id)
+            .select()
+            .single();
+        if (updateEnrollErr) throw new Error("Failed to update enrollment");
+        enrollment = updatedEnroll;
+      } else {
+        enrollment = existingEnrollment;
+      }
     } else {
       const { data: newEnroll, error: createErr } = await supabaseAdmin!
         .from("Enrollment")
         .insert({
           userId: params.userId,
           courseId: params.courseId,
-          status: "active",
+          status: "processing",
+          enrollmentDate: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         })
         .select()
         .single();
@@ -112,24 +132,48 @@ export class PaymentService {
       enrollment = newEnroll;
     }
 
-    // Create payment record
-    const { data: payment, error: payErr } = await supabaseAdmin!
+    // Create or update payment record
+    const { data: existingPayment } = await supabaseAdmin!
       .from("Payment")
-      .insert({
-        enrollmentId: enrollment.id,
-        userId: params.userId,
-        courseId: params.courseId,
-        amount: params.amount,
-        currency: "ETB",
-        paymentType: "local",
-        paymentMethod: params.paymentMethod || "telebirr",
-        status: "pending",
-        transactionId: params.transactionId || null,
-        receiptScreenshotUrl: params.receiptScreenshotUrl || null,
-      })
-      .select()
-      .single();
-    if (payErr) throw new Error("Failed to create payment");
+      .select("*")
+      .eq("enrollmentId", enrollment.id)
+      .maybeSingle();
+
+    if (existingPayment && existingPayment.status === "pending") {
+      throw new Error("You have a pending payment for this course");
+    }
+
+    const paymentPayload = {
+      enrollmentId: enrollment.id,
+      userId: params.userId,
+      courseId: params.courseId,
+      amount: params.amount,
+      currency: "ETB",
+      paymentType: "local",
+      paymentMethod: params.paymentMethod || "telebirr",
+      status: "pending",
+      transactionId: params.transactionId || null,
+      receiptScreenshotUrl: params.receiptScreenshotUrl || null,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const paymentRecord = existingPayment
+      ? await supabaseAdmin!
+          .from("Payment")
+          .update(paymentPayload)
+          .eq("id", existingPayment.id)
+          .select()
+          .single()
+      : await supabaseAdmin!
+          .from("Payment")
+          .insert(paymentPayload)
+          .select()
+          .single();
+
+    if (!paymentRecord || paymentRecord.error) {
+      throw new Error("Failed to create payment");
+    }
+    const payment = paymentRecord.data || paymentRecord;
 
     console.log(
       `[PAYMENT] Local payment created: ${payment.id} for course ${params.courseId}`,
@@ -191,13 +235,30 @@ export class PaymentService {
     }
 
     let enrollment = existingEnrollment;
-    if (!enrollment) {
+    if (existingEnrollment) {
+      if (existingEnrollment.status !== "processing") {
+        const { data: updatedEnrollment, error: updateEnrollErr } =
+          await supabaseAdmin!
+            .from("Enrollment")
+            .update({
+              status: "processing",
+              updatedAt: new Date().toISOString(),
+            })
+            .eq("id", existingEnrollment.id)
+            .select()
+            .single();
+        if (updateEnrollErr) throw new Error("Failed to update enrollment");
+        enrollment = updatedEnrollment;
+      }
+    } else {
       const { data: newEnroll, error: createErr } = await supabaseAdmin!
         .from("Enrollment")
         .insert({
           userId: params.userId,
           courseId: params.courseId,
-          status: "active",
+          status: "processing",
+          enrollmentDate: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         })
         .select()
         .single();

@@ -123,8 +123,6 @@ INSERT INTO "User" (
 
 ```bash
 # Run migrations in Supabase (manually via SQL Editor - see above)
-# Or use Prisma:
-npx prisma migrate deploy
 ```
 
 ### 2. **Test Locally**
@@ -192,9 +190,6 @@ src/app/admin/registrations/page.tsx
 ### Modified Files
 
 ```
-prisma/schema.prisma
-  → Added isApproved, pendingReceiptUrl, paymentMethod, paymentStatus to User model
-
 supabase-schema.sql
   → Added column definitions and indexes
 
@@ -328,21 +323,7 @@ Returns: List of users with paymentStatus='submitted'
 
 ### User Table (Updated)
 
-```prisma
-model User {
-  // ... existing fields ...
-  isActive              Boolean           @default(true)
-  isApproved            Boolean           @default(false)  // NEW
-  isBanned              Boolean           @default(false)
-
-  // NEW: Payment/Registration fields
-  pendingReceiptUrl     String?           // NEW: URL to uploaded receipt
-  paymentMethod         String?           // NEW: telebirr, paypal, etc
-  paymentStatus         String?           @default("none")  // NEW: pending, submitted, approved, rejected
-
-  // ... existing relationships ...
-}
-```
+See the SQL migration section above for the required `User` table changes (added columns: `isApproved`, `pendingReceiptUrl`, `paymentMethod`, `paymentStatus`).
 
 ---
 

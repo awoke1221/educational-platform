@@ -108,7 +108,10 @@ export async function checkEnrollmentAccess(
       ? enrollment.payment[0]
       : enrollment.payment;
 
-    return enrollment.status === "active" && payment?.status === "approved";
+    return (
+      enrollment.status === "active" &&
+      (!payment || payment.status === "approved")
+    );
   } catch (error) {
     console.error("Error checking enrollment:", error);
     return false;

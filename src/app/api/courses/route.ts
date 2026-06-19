@@ -23,7 +23,8 @@ function buildCourseQuery(
 ) {
   let query = supabaseAdmin!
     .from("Course")
-    .select("*, instructor:User(id, fullName, profileImage)", {
+    // select course fields and instructorId only — do not rely on DB foreign-key relationships
+    .select("*, instructorId", {
       count: "exact",
     })
     .eq("isPublished", true)
@@ -73,8 +74,31 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
+    // Attach instructor info by fetching users for instructorIds (avoids requiring FK in Postgres schema)
+    const courseList = courses || [];
+    if (courseList.length > 0) {
+      const instructorIds = Array.from(
+        new Set(courseList.map((c: any) => c.instructorId).filter(Boolean)),
+      );
+
+      if (instructorIds.length > 0) {
+        const { data: instructors } = await supabaseAdmin!
+          .from("User")
+          .select("id, fullName, profileImage")
+          .in("id", instructorIds as any[]);
+
+        const instructorMap = new Map(
+          (instructors || []).map((u: any) => [u.id, u]),
+        );
+
+        for (const c of courseList) {
+          c.instructor = instructorMap.get(c.instructorId) || null;
+        }
+      }
+    }
+
     return paginatedResponse(
-      courses || [],
+      courseList,
       count || 0,
       page,
       limit,

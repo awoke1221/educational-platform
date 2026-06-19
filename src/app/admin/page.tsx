@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 export default function AdminPage() {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -14,9 +15,16 @@ export default function AdminPage() {
       setLoading(false);
       return;
     }
-    fetch("/api/admin/analytics", { headers: { Authorization: `Bearer ${t}` } })
-      .then((r) => r.json())
-      .then((d) => setAnalytics(d.data))
+
+    authFetchJson("/api/admin/analytics", {
+      method: "GET",
+    })
+      .then((result) => {
+        if (result.response.ok) {
+          setAnalytics(result.data.data);
+        }
+      })
+      .catch((err) => console.error("Failed to load admin analytics", err))
       .finally(() => setLoading(false));
   }, []);
 

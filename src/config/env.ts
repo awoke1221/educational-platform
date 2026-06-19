@@ -74,20 +74,6 @@ export const env = {
   // ============================================
   // Email Configuration
   // ============================================
-  email: {
-    provider: process.env.EMAIL_PROVIDER || "sendgrid", // sendgrid, nodemailer
-    sendGrid: {
-      apiKey: process.env.SENDGRID_API_KEY || "",
-      fromEmail: process.env.SENDGRID_FROM_EMAIL || "",
-    },
-    nodemailer: {
-      host: process.env.SMTP_HOST || "",
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      user: process.env.SMTP_USER || "",
-      pass: process.env.SMTP_PASS || "",
-      from: process.env.SMTP_FROM_EMAIL || "",
-    },
-  },
 
   // ============================================
   // Application Configuration

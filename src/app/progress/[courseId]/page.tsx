@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 interface Lecture {
   id: string;
@@ -36,11 +37,16 @@ export default function ProgressPage() {
       setLoading(false);
       return;
     }
-    fetch(`/api/progress/${courseId}`, {
-      headers: { Authorization: `Bearer ${t}` },
+
+    authFetchJson(`/api/progress/${courseId}`, {
+      method: "GET",
     })
-      .then((r) => r.json())
-      .then((d) => setData(d.data))
+      .then((result) => {
+        if (result.response.ok) {
+          setData(result.data.data);
+        }
+      })
+      .catch((err) => console.error("Failed to load progress", err))
       .finally(() => setLoading(false));
   }, [courseId]);
 

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { authFetchJson } from "@/lib/utils/auth-fetch";
 
 interface AdminUser {
   id: string;
@@ -44,11 +45,11 @@ export default function AdminUsersPage() {
       if (roleFilter !== "all") params.set("role", roleFilter);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
-      const res = await fetch(`/api/admin/users?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const result = await authFetchJson(`/api/admin/users?${params}`, {
+        method: "GET",
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = result.data;
+      if (result.response.ok && data.success) {
         setUsers(data.data?.data || []);
         setTotal(data.data?.total || 0);
       }
@@ -69,15 +70,14 @@ export default function AdminUsersPage() {
     value?: string,
   ) => {
     try {
-      const res = await fetch("/api/admin/users", {
+      const result = await authFetchJson("/api/admin/users", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ userId, action, value }),
       });
-      const data = await res.json();
+      const data = result.data;
       if (data.success) {
         fetchUsers();
       } else {
