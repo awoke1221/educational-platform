@@ -1,6 +1,7 @@
 // src/app/api/courses/[courseId]/lectures/route.ts
 // Lecture Listing & Creation API
 
+import crypto from "node:crypto";
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { createLectureSchema } from "@/lib/validators/schemas";
@@ -200,6 +201,7 @@ export async function POST(
     const { data: lecture, error: createErr } = await supabaseAdmin!
       .from("Lecture")
       .insert({
+        id: crypto.randomUUID(),
         courseId,
         title,
         description: description || null,

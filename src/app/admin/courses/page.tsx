@@ -43,7 +43,8 @@ interface PaginatedResponse {
     total: number;
     page: number;
     limit: number;
-    totalPages: number;
+    pages?: number;
+    totalPages?: number;
   };
 }
 
@@ -83,6 +84,8 @@ export default function AdminCoursesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
+
+  const totalPagesSafe = Math.max(1, totalPages);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -131,9 +134,13 @@ export default function AdminCoursesPage() {
       const data: PaginatedResponse = result.data;
 
       if (result.response.ok && data.success) {
-        setCourses(data.data.items);
-        setTotal(data.data.total);
-        setTotalPages(data.data.totalPages);
+        const items = data.data?.items ?? [];
+        const totalItems = data.data?.total ?? 0;
+        const pages = data.data?.totalPages ?? data.data?.pages ?? 1;
+
+        setCourses(items);
+        setTotal(totalItems);
+        setTotalPages(pages);
 
         // Also fetch all for stats
         const allResult = await authFetchJson(`/api/admin/courses?limit=1`, {
@@ -142,7 +149,7 @@ export default function AdminCoursesPage() {
         const allData = allResult.data;
         if (allResult.response.ok && allData.success) {
           setStats({
-            total: allData.data.total,
+            total: allData.data?.total ?? 0,
             published: 0,
             draft: 0,
             archived: 0,
@@ -601,10 +608,10 @@ export default function AdminCoursesPage() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {totalPagesSafe > 1 && (
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-gray-500">
-            Total {total} courses • Page {page} / {totalPages}
+            Total {total} courses • Page {page} / {totalPagesSafe}
           </p>
           <div className="flex gap-2">
             <button
@@ -615,8 +622,8 @@ export default function AdminCoursesPage() {
               ← Previous
             </button>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPagesSafe, p + 1))}
+              disabled={page >= totalPagesSafe}
               className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 transition-colors"
             >
               Next →

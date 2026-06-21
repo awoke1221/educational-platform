@@ -18,14 +18,15 @@ function normalizeUrl(value: string) {
 }
 
 function normalizeBunnyStorageZone(value: string) {
-  if (!value) return "";
+  const trimmedValue = value?.trim() || "";
+  if (!trimmedValue) return "";
 
   try {
-    const url = new URL(value);
+    const url = new URL(trimmedValue);
     const segments = url.pathname.split("/").filter(Boolean);
-    return segments.length > 0 ? segments[segments.length - 1] : value;
+    return segments.length > 0 ? segments[segments.length - 1] : trimmedValue;
   } catch {
-    return value;
+    return trimmedValue;
   }
 }
 
@@ -75,7 +76,7 @@ export const env = {
   // Bunny Storage + Pull Zone Configuration
   // ============================================
   bunny: {
-    accessKey: process.env.BUNNY_ACCESS_KEY || "",
+    accessKey: process.env.BUNNY_ACCESS_KEY?.trim() || "",
     storageZone: normalizeBunnyStorageZone(
       process.env.BUNNY_STORAGE_ZONE || "",
     ),
@@ -83,8 +84,9 @@ export const env = {
       process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL || "",
     ),
     defaultFolder:
-      process.env.NEXT_PUBLIC_BUNNY_DEFAULT_FOLDER || "educational-platform",
-    demoVideoUrl: process.env.NEXT_PUBLIC_BUNNY_DEMO_VIDEO_URL || "",
+      process.env.NEXT_PUBLIC_BUNNY_DEFAULT_FOLDER?.trim() ||
+      "educational-platform",
+    demoVideoUrl: process.env.NEXT_PUBLIC_BUNNY_DEMO_VIDEO_URL?.trim() || "",
   },
 
   // ============================================

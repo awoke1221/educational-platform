@@ -59,7 +59,7 @@ export class BunnyService {
       : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const storagePath = `${folder}/${filename}`.replace(/\/+/g, "/");
 
-    const body = typeof file === "string" ? Buffer.from(file, "utf-8") : file;
+    const body = typeof file === "string" ? file : new Uint8Array(file).buffer;
 
     const response = await fetch(this.getStorageEndpoint(storagePath), {
       method: "PUT",
@@ -73,9 +73,14 @@ export class BunnyService {
 
     if (!response.ok) {
       const message = await response.text();
-      throw new Error(
+      const uploadError = new Error(
         `Bunny storage upload failed (${response.status}): ${message}`,
       );
+      if (response.status === 401) {
+        uploadError.message +=
+          " - Verify your Bunny storage access key and storage zone configuration.";
+      }
+      throw uploadError;
     }
 
     return {

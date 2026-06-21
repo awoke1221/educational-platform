@@ -131,11 +131,9 @@ export async function POST(request: NextRequest) {
 
     const validation = createCourseSchema.safeParse(body);
     if (!validation.success) {
-      return errorResponse(
-        "Validation failed",
-        400,
-        validation.error.flatten().fieldErrors,
-      );
+      const fieldErrors = validation.error.flatten().fieldErrors;
+      console.error("[CREATE COURSE VALIDATION ERROR]", fieldErrors);
+      return errorResponse("Validation failed", 400, fieldErrors);
     }
 
     const {
@@ -152,6 +150,7 @@ export async function POST(request: NextRequest) {
     const { data: course, error: createErr } = await supabaseAdmin!
       .from("Course")
       .insert({
+        id: crypto.randomUUID(),
         title,
         description,
         shortDescription: shortDescription || null,

@@ -447,12 +447,6 @@ export default function AdminCourseDetailPage() {
         >
           Settings
         </button>
-            )}
-            {!showCreateForm && (
-              <p className="text-xs text-gray-500 mt-2">
-                The upload dialog will open automatically after creating a lecture.
-              </p>
-            )}
       </div>
 
       {/* ============================================ */}
@@ -734,7 +728,9 @@ export default function AdminCourseDetailPage() {
                                   <div className="w-full bg-gray-100 rounded-full h-2">
                                     <div
                                       className="bg-secondary h-2 rounded-full transition-all"
-                                      style={{ width: `${uploadState.progress}%` }}
+                                      style={{
+                                        width: `${uploadState.progress}%`,
+                                      }}
                                     />
                                   </div>
                                   <p className="text-xs text-gray-500 mt-1 text-left">

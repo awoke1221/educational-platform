@@ -69,6 +69,16 @@ export default function NewCoursePage() {
       }
     }
 
+    if (field === "category") {
+      if (!form.category || form.category.trim() === "") {
+        errors.category = "Category is required";
+      } else if (form.category.length > 100) {
+        errors.category = "Category must not exceed 100 characters";
+      } else {
+        delete errors.category;
+      }
+    }
+
     if (field === "price") {
       const validation = validatePrice(form.price);
       if (!validation.valid) {
@@ -190,12 +200,20 @@ export default function NewCoursePage() {
       hasErrors = true;
     }
 
-    if (form.description) {
+    if (!form.description || form.description.trim() === "") {
+      errors.description = "Description is required";
+      hasErrors = true;
+    } else {
       const descValidation = validateCourseDescription(form.description);
       if (!descValidation.valid) {
         errors.description = descValidation.message || "Invalid description";
         hasErrors = true;
       }
+    }
+
+    if (!form.category || form.category.trim() === "") {
+      errors.category = "Category is required";
+      hasErrors = true;
     }
 
     const priceValidation = validatePrice(form.price);
@@ -220,19 +238,23 @@ export default function NewCoursePage() {
     setLoading(true);
 
     try {
-      const courseData = {
+      const courseData: Record<string, any> = {
         title: sanitizeInput(normalizeInput(form.title)),
-        shortDescription: form.shortDescription
-          ? sanitizeInput(normalizeInput(form.shortDescription))
-          : "",
-        description: form.description ? sanitizeInput(form.description) : "",
-        category: form.category
-          ? sanitizeInput(normalizeInput(form.category))
-          : "",
+        description: sanitizeInput(form.description),
+        category: sanitizeInput(normalizeInput(form.category)),
         price: parseFloat(form.price) || 0,
         level: form.level,
-        coverImage: form.coverImage,
       };
+
+      if (form.shortDescription?.trim()) {
+        courseData.shortDescription = sanitizeInput(
+          normalizeInput(form.shortDescription),
+        );
+      }
+
+      if (form.coverImage?.trim()) {
+        courseData.coverImage = form.coverImage.trim();
+      }
 
       const res = await fetch("/api/courses", {
         method: "POST",
@@ -249,6 +271,17 @@ export default function NewCoursePage() {
         const created = data.data;
         router.push(`/admin/courses/${created.id}`);
       } else {
+        if (data.errors && typeof data.errors === "object") {
+          const apiErrors: Record<string, string> = {};
+          Object.entries(data.errors).forEach(([field, value]) => {
+            if (Array.isArray(value)) {
+              apiErrors[field] = value.join(", ");
+            } else if (typeof value === "string") {
+              apiErrors[field] = value;
+            }
+          });
+          setFieldErrors((prev) => ({ ...prev, ...apiErrors }));
+        }
         alert(data.error || "Failed to create course");
       }
     } catch {
