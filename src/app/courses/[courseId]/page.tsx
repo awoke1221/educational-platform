@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import CourseReviews from "@/components/CourseReviews";
 
 interface CourseDetail {
   id: string;
@@ -436,6 +437,17 @@ export default function CourseDetailPage() {
           )}
         </div>
       </motion.div>
+
+      {/* ⭐ Reviews Section */}
+      {course && (
+        <div className="mt-8">
+          <CourseReviews
+            courseId={course.id}
+            isEnrolled={isEnrolled}
+            token={token}
+          />
+        </div>
+      )}
     </div>
   );
 }

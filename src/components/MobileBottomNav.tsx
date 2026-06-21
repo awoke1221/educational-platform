@@ -108,6 +108,25 @@ export default function MobileBottomNav() {
       ),
     },
     {
+      path: "/about",
+      label: "ስለ እኛ",
+      icon: (active: boolean) => (
+        <svg
+          className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
+          fill={active ? "#C9952A" : "none"}
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+    },
+    {
       path: "/dashboard",
       label: token ? "ፕሮፋይል" : "ግቤት",
       icon: (active: boolean) => {

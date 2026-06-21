@@ -284,3 +284,23 @@ CREATE INDEX IF NOT EXISTS "User_isActive_idx" ON "User"("isActive");
 -- FROM information_schema.columns 
 -- WHERE table_name='User' 
 -- ORDER BY ordinal_position;
+
+-- ============================================
+-- Step 6: Course Reviews Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS "Review" (
+    "id" TEXT NOT NULL,
+    "courseId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    "comment" TEXT,
+    "isApproved" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Review_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "Review_userId_courseId_key" ON "Review"("userId", "courseId");
+CREATE INDEX IF NOT EXISTS "Review_courseId_idx" ON "Review"("courseId");
+CREATE INDEX IF NOT EXISTS "Review_rating_idx" ON "Review"("rating");
+CREATE INDEX IF NOT EXISTS "Review_isApproved_idx" ON "Review"("isApproved");

@@ -80,13 +80,49 @@ export const env = {
     storageZone: normalizeBunnyStorageZone(
       process.env.BUNNY_STORAGE_ZONE || "",
     ),
+    storageZoneName:
+      process.env.BUNNY_STORAGE_ZONE_NAME?.trim() ||
+      normalizeBunnyStorageZone(process.env.BUNNY_STORAGE_ZONE || ""),
     pullZoneUrl: normalizeUrl(
       process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL || "",
     ),
+    pullZoneId: process.env.BUNNY_PULL_ZONE_ID?.trim() || "",
+    pullZonePassword: process.env.BUNNY_PULL_ZONE_PASSWORD?.trim() || "",
     defaultFolder:
       process.env.NEXT_PUBLIC_BUNNY_DEFAULT_FOLDER?.trim() ||
       "educational-platform",
     demoVideoUrl: process.env.NEXT_PUBLIC_BUNNY_DEMO_VIDEO_URL?.trim() || "",
+    apiUrl: process.env.BUNNY_API_URL?.trim() || "https://api.bunny.net",
+    // Token authentication configuration
+    tokenAuthEnabled: process.env.BUNNY_TOKEN_AUTH_ENABLED === "true",
+    tokenAuthKey:
+      process.env.BUNNY_TOKEN_AUTH_KEY?.trim() ||
+      process.env.BUNNY_ACCESS_KEY?.trim() ||
+      "",
+    tokenExpirationMinutes: parseInt(
+      process.env.BUNNY_TOKEN_EXPIRATION_MINUTES || "60",
+    ),
+    // Thumbnail configuration
+    thumbnailWidth: parseInt(process.env.BUNNY_THUMBNAIL_WIDTH || "640"),
+    thumbnailHeight: parseInt(process.env.BUNNY_THUMBNAIL_HEIGHT || "360"),
+    // Upload limits
+    maxVideoSize: parseInt(process.env.BUNNY_MAX_VIDEO_SIZE || "5368709120"), // 5GB
+    maxFileSize: parseInt(process.env.BUNNY_MAX_FILE_SIZE || "10485760"), // 10MB
+    allowedVideoTypes: [
+      "video/mp4",
+      "video/webm",
+      "video/ogg",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/x-matroska",
+    ],
+    allowedImageTypes: [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/avif",
+    ],
   },
 
   // ============================================

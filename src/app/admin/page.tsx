@@ -257,6 +257,113 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
+        {/* Quick Actions */}
+        <AnimatedSection direction="up" delay={0.1} className="mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-border-light dark:border-gray-700">
+            <h3 className="font-semibold text-primary dark:text-gray-100 mb-4 flex items-center gap-2">
+              <span>⚡</span> Quick Actions
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <Link
+                href="/admin/courses/new"
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20 hover:border-secondary/50 hover:shadow-md transition-all group"
+              >
+                <span className="text-2xl">📚</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-secondary transition-colors">
+                  New Course
+                </span>
+              </Link>
+              <Link
+                href="/admin/courses"
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 hover:border-blue-300 hover:shadow-md transition-all group"
+              >
+                <span className="text-2xl">📖</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-blue-600 transition-colors">
+                  All Courses
+                </span>
+              </Link>
+              <Link
+                href="/admin/users"
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 hover:border-purple-300 hover:shadow-md transition-all group"
+              >
+                <span className="text-2xl">👥</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-purple-600 transition-colors">
+                  Users
+                </span>
+              </Link>
+              <Link
+                href="/admin/registrations"
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 hover:border-amber-300 hover:shadow-md transition-all group"
+              >
+                <span className="text-2xl">📝</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-amber-600 transition-colors">
+                  Registrations
+                </span>
+              </Link>
+              <Link
+                href="/admin/courses"
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 hover:border-green-300 hover:shadow-md transition-all group"
+              >
+                <span className="text-2xl">📊</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-green-600 transition-colors">
+                  Analytics
+                </span>
+              </Link>
+            </div>
+
+            {/* Bunny.net Management */}
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <span>🐰</span> Bunny.net CDN & Storage
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <a
+                  href="https://dash.bunny.net/storage/1605341"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 hover:border-orange-300 hover:shadow-sm transition-all group text-sm"
+                >
+                  <span>🗄️</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-orange-600">
+                    Storage Zone
+                  </span>
+                </a>
+                <a
+                  href="https://dash.bunny.net/cdn/6042330"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 hover:border-orange-300 hover:shadow-sm transition-all group text-sm"
+                >
+                  <span>⚡</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-orange-600">
+                    Pull Zone
+                  </span>
+                </a>
+                <Link
+                  href="/api/bunny/health"
+                  target="_blank"
+                  className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 hover:border-orange-300 hover:shadow-sm transition-all group text-sm"
+                >
+                  <span>🩺</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-orange-600">
+                    Health Check
+                  </span>
+                </Link>
+                <Link
+                  href="/api/bunny/statistics"
+                  target="_blank"
+                  className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 hover:border-orange-300 hover:shadow-sm transition-all group text-sm"
+                >
+                  <span>📈</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-orange-600">
+                    Statistics
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </AnimatedSection>
+
         {/* Overview Cards */}
         <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {sections.map((section, i) => (

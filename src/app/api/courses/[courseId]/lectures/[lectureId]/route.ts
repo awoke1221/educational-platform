@@ -108,9 +108,9 @@ export async function GET(
           streamingUrl = BunnyService.getStreamingUrl(
             lecture.cloudinaryPublicId,
           );
-          signedVideoUrl = BunnyService.getSignedUrl(
+          signedVideoUrl = BunnyService.generateSignedUrl(
             lecture.cloudinaryPublicId,
-            86400,
+            { expiresIn: 86400 },
           );
         }
         return successResponse(

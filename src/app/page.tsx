@@ -127,11 +127,11 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
               >
-                በአዲስ መልኩ{" "}
+                ከ6 ሚሊዮን በላይ ሰዎች የሚያውቁት{" "}
                 <span className="text-gradient bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
-                  መማር
+                  የፐርሰናል ብራንዲንግ
                 </span>{" "}
-                ይጀምሩ
+                እና TikTok እድገት ባለሙያ
               </motion.h1>
               <motion.p
                 className="text-base sm:text-lg text-white/80 mb-8 max-w-xl mx-auto leading-relaxed"
@@ -139,8 +139,8 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                AD LMS ለሁሉም ሰው ተደራሽ የሆነ ዘመናዊ የመስመር ላይ ትምህርት መድረክ ነው። በቀላሉ ይማሩ፣
-                ዕውቀትዎን ያሳድጉ።
+                ቢሊዮኖች እይታዎችን ያመጡ ስልቶችን ይማሩ፣ ብራንድዎን ይገንቡ፣ እና ሰዎች ሊረሱት የማይችሉት ሰው
+                ይሁኑ።
               </motion.p>
             </motion.div>
 

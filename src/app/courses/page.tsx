@@ -126,6 +126,10 @@ export default function CoursesPage() {
   const [enrollmentMap, setEnrollmentMap] = useState<Map<string, any>>(
     new Map(),
   );
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
   useEffect(() => {
     setToken(localStorage.getItem("token") || "");
@@ -194,26 +198,37 @@ export default function CoursesPage() {
   }, [token, courses]);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/courses")
-        .then((r) => r.json())
-        .then((d) => d.data?.data || [])
-        .catch(() => []),
-      fetch("/api/courses/samples")
-        .then((r) => r.json())
-        .then((d) => d.data || [])
-        .catch(() => []),
-    ])
-      .then(([dbData, cloudData]) => {
-        const dbIds = new Set(dbData.map((c: Course) => c.id));
-        const uniqueCloud = cloudData.filter((c: Course) => !dbIds.has(c.id));
-        setCourses([...uniqueCloud, ...dbData]);
-      })
+    fetch("/api/courses")
+      .then((r) => r.json())
+      .then((d) => setCourses(d.data?.data || []))
+      .catch(() => setCourses([]))
       .finally(() => setLoading(false));
   }, []);
 
   const isLoaded = !loading;
   const totalCount = courses.length;
+
+  // Compute unique categories from courses
+  const categories = Array.from(
+    new Set(courses.map((c) => c.category).filter(Boolean)),
+  ).sort();
+
+  // Client-side filtering
+  const filteredCourses = courses.filter((course) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        course.title.toLowerCase().includes(q) ||
+        course.shortDescription?.toLowerCase().includes(q) ||
+        course.category?.toLowerCase().includes(q) ||
+        course.instructor?.fullName?.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+    if (filterLevel !== "all" && course.level !== filterLevel) return false;
+    if (filterCategory !== "all" && course.category !== filterCategory)
+      return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-surface">
@@ -253,6 +268,88 @@ export default function CoursesPage() {
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface to-transparent" />
       </section>
 
+      {/* ── Search & Filter Bar ──────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search */}
+            <div className="relative flex-1">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search courses by title, category, instructor..."
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-gray-200"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Level Filter */}
+            <select
+              value={filterLevel}
+              onChange={(e) => setFilterLevel(e.target.value)}
+              className="px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer min-w-[130px]"
+            >
+              <option value="all">All Levels</option>
+              <option value="beginner">ጀማሪ (Beginner)</option>
+              <option value="intermediate">መካከለኛ (Intermediate)</option>
+              <option value="advanced">ከፍተኛ (Advanced)</option>
+            </select>
+
+            {/* Category Filter */}
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer min-w-[130px]"
+            >
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            {/* Result count */}
+            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap px-2">
+              {filteredCourses.length} / {courses.length} courses
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── All Courses Grid ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="flex items-center justify-between mb-6">
@@ -262,7 +359,11 @@ export default function CoursesPage() {
           </h2>
           {isLoaded && (
             <span className="text-xs text-text-muted">
-              {courses.length} ኮርሶች ተገኝተዋል
+              {filteredCourses.length}{" "}
+              {filteredCourses.length !== courses.length
+                ? `of ${courses.length}`
+                : ""}{" "}
+              ኮርሶች ተገኝተዋል
             </span>
           )}
         </div>
@@ -277,10 +378,52 @@ export default function CoursesPage() {
         )}
 
         {/* Empty */}
-        {isLoaded && courses.length === 0 && <EmptyState />}
+        {isLoaded && filteredCourses.length === 0 && (
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+              <svg
+                className="w-10 h-10 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">
+              {searchQuery || filterLevel !== "all" || filterCategory !== "all"
+                ? "No courses match your filters"
+                : "እስካሁን ኮርሶች የሉም"}
+            </h3>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+              {searchQuery || filterLevel !== "all" || filterCategory !== "all"
+                ? "Try adjusting your search or filter criteria"
+                : "በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን"}
+            </p>
+            {(searchQuery ||
+              filterLevel !== "all" ||
+              filterCategory !== "all") && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilterLevel("all");
+                  setFilterCategory("all");
+                }}
+                className="text-sm text-primary hover:underline"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Grid */}
-        {isLoaded && courses.length > 0 && (
+        {isLoaded && filteredCourses.length > 0 && (
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             variants={staggerContainer}
@@ -288,7 +431,7 @@ export default function CoursesPage() {
             whileInView="visible"
             viewport={{ once: true, margin: "-30px" }}
           >
-            {courses.map((course) => (
+            {filteredCourses.map((course) => (
               <motion.div
                 key={course.id}
                 variants={staggerItem}
