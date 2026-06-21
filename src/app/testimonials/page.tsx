@@ -435,31 +435,61 @@ function ImageTestimonialsSection() {
 }
 
 // Main Testimonials Page
+import { motion, AnimatePresence } from "framer-motion";
+
 export default function TestimonialsPage() {
   const [activeTab, setActiveTab] = useState<"video" | "text" | "image">(
     "video",
   );
 
+  const tabs = [
+    { id: "video" as const, label: "Video Testimonials", icon: "🎥" },
+    { id: "text" as const, label: "Text Testimonials", icon: "💬" },
+    { id: "image" as const, label: "Image Testimonials", icon: "🖼️" },
+  ];
+
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-surface dark:bg-gray-900">
       {/* Hero Banner */}
       <section className="relative bg-gradient-to-br from-primary via-primary-light to-secondary overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-secondary/10 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-white/5 blur-3xl" />
+          <motion.div
+            className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl"
+            animate={{ y: [0, -15, 0] }}
+            transition={{ duration: 8, repeat: Infinity }}
+          />
+          <motion.div
+            className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-secondary/10 blur-3xl"
+            animate={{ y: [0, 15, 0] }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
+            <motion.h1
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               Student Testimonials
-            </h1>
-            <p className="text-base sm:text-lg text-white/90 mb-8 max-w-xl mx-auto">
+            </motion.h1>
+            <motion.p
+              className="text-base sm:text-lg text-white/90 mb-8 max-w-xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
               Learn from real students who grew their skills and careers with AD
               LMS. Explore video, text, and image testimonials from our
               community.
-            </p>
-            <div className="flex justify-center items-center gap-4 flex-wrap">
+            </motion.p>
+            <motion.div
+              className="flex justify-center items-center gap-4 flex-wrap"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <div className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
                   10,000+
@@ -484,7 +514,7 @@ export default function TestimonialsPage() {
                   certificates earned
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface to-transparent" />
@@ -493,116 +523,83 @@ export default function TestimonialsPage() {
       {/* Tab Navigation */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center gap-3 flex-wrap">
-          {[
-            {
-              id: "video",
-              label: "Video Testimonials",
-              icon: "🎥",
-            },
-            { id: "text", label: "Text Testimonials", icon: "💬" },
-            { id: "image", label: "Image Testimonials", icon: "🖼️" },
-          ].map((tab) => (
-            <button
+          {tabs.map((tab) => (
+            <motion.button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all duration-300 ${
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all duration-300 ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg"
-                  : "bg-white text-primary border-2 border-border-light hover:border-primary"
+                  ? "text-white shadow-lg"
+                  : "bg-white dark:bg-gray-800 text-primary dark:text-gray-200 border-2 border-border-light dark:border-gray-700 hover:border-primary"
               }`}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
             >
-              <span>{tab.icon}</span>
-              {tab.label}
-            </button>
+              {activeTab === tab.id && (
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-primary to-secondary rounded-full"
+                  layoutId="activeTab"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">{tab.icon}</span>
+              <span className="relative z-10">{tab.label}</span>
+            </motion.button>
           ))}
         </div>
       </section>
 
       {/* Content Sections */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {activeTab === "video" && (
-          <div className="animate-fadeIn">
-            <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
-              Video Testimonials
-            </h2>
-            <VideoTestimonialsSection />
-          </div>
-        )}
-
-        {activeTab === "text" && (
-          <div className="animate-fadeIn">
-            <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
-              Text Testimonials
-            </h2>
-            <TextTestimonialsSection />
-          </div>
-        )}
-
-        {activeTab === "image" && (
-          <div className="animate-fadeIn">
-            <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
-              Image Testimonials
-            </h2>
-            <ImageTestimonialsSection />
-          </div>
-        )}
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-primary to-secondary py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            Ready to learn more?
-          </h2>
-          <p className="text-white/90 mb-8">
-            Join AD LMS today and start building your skills with expert-led
-            courses and real learner success stories.
-          </p>
-          <Link
-            href="/courses"
-            className="inline-flex items-center gap-2 bg-white text-secondary px-8 py-3.5 rounded-full font-semibold hover:shadow-lg transition-all"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        <AnimatePresence mode="wait">
+          {activeTab === "video" && (
+            <motion.div
+              key="video"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
-            Explore courses
-          </Link>
-        </div>
-      </section>
+              <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-8 flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+                Video Testimonials
+              </h2>
+              <VideoTestimonialsSection />
+            </motion.div>
+          )}
 
-      {/* Footer Stats */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {[
-            { label: "Happy learners", value: "10,000+" },
-            { label: "Course enrollments", value: "50,000+" },
-            { label: "Average rating", value: "4.9★" },
-            { label: "Certificates earned", value: "1,500+" },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className="text-center p-6 rounded-xl bg-gradient-to-br from-border-light to-accent-light border border-primary/20"
+          {activeTab === "text" && (
+            <motion.div
+              key="text"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
             >
-              <p className="text-text-muted text-sm mb-2">{stat.label}</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                {stat.value}
-              </p>
-            </div>
-          ))}
-        </div>
+              <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-8 flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+                Text Testimonials
+              </h2>
+              <TextTestimonialsSection />
+            </motion.div>
+          )}
+
+          {activeTab === "image" && (
+            <motion.div
+              key="image"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-8 flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+                Image Testimonials
+              </h2>
+              <ImageTestimonialsSection />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
     </div>
   );

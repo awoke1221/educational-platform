@@ -1,7 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.07 } },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" as const },
+  },
+};
 
 interface Course {
   id: string;
@@ -103,8 +118,14 @@ export default function CoursesPage() {
   const [pendingCourseIds, setPendingCourseIds] = useState<Set<string>>(
     new Set<string>(),
   );
+  const [rejectedCourseIds, setRejectedCourseIds] = useState<Set<string>>(
+    new Set<string>(),
+  );
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [enrollmentMap, setEnrollmentMap] = useState<Map<string, any>>(
+    new Map(),
+  );
 
   useEffect(() => {
     setToken(localStorage.getItem("token") || "");
@@ -134,18 +155,36 @@ export default function CoursesPage() {
           courseId?: string;
           course?: { id?: string };
           status?: string;
+          paymentStatus?: string;
+          payment?: any;
         }>;
 
-        const activeIds: string[] = items
-          .filter((e) => e.status === "active")
-          .map((e) => String(e.courseId || e.course?.id));
+        const activeIds: string[] = [];
+        const pendingIds: string[] = [];
+        const rejectedIds: string[] = [];
+        const enrollments = new Map();
 
-        const pendingIds: string[] = items
-          .filter((e) => e.status === "processing")
-          .map((e) => String(e.courseId || e.course?.id));
+        items.forEach((e) => {
+          const cId = String(e.courseId || e.course?.id);
+          enrollments.set(cId, e);
 
+          if (e.status === "active") {
+            activeIds.push(cId);
+          } else if (
+            e.status === "processing" ||
+            e.paymentStatus === "submitted" ||
+            e.paymentStatus === "pending"
+          ) {
+            pendingIds.push(cId);
+          } else if (e.paymentStatus === "rejected") {
+            rejectedIds.push(cId);
+          }
+        });
+
+        setEnrollmentMap(enrollments);
         setEnrolledIds(new Set(activeIds));
         setPendingCourseIds(new Set(pendingIds));
+        setRejectedCourseIds(new Set(rejectedIds));
       } catch (e) {
         console.warn("Failed to load enrollments", e);
       }
@@ -242,11 +281,18 @@ export default function CoursesPage() {
 
         {/* Grid */}
         {isLoaded && courses.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-30px" }}
+          >
             {courses.map((course) => (
-              <div
+              <motion.div
                 key={course.id}
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border-light hover:border-primary"
+                variants={staggerItem}
+                className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border-light dark:border-gray-700 hover:border-primary dark:hover:border-secondary card-hover"
               >
                 <div className="relative h-44 bg-gradient-to-br from-primary to-secondary overflow-hidden">
                   <img
@@ -309,7 +355,7 @@ export default function CoursesPage() {
                   {!enrolledIds.has(course.id) && !isAdmin && (
                     <>
                       <div className="absolute inset-0 bg-black/20 pointer-events-none transition-opacity duration-300" />
-                      <div className="absolute top-3 right-3 inline-flex items-center gap-2 bg-white/90 text-primary text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm pointer-events-none">
+                      <div className="absolute top-3 right-3 inline-flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 text-primary dark:text-gray-200 text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm pointer-events-none">
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -330,79 +376,113 @@ export default function CoursesPage() {
                 </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] text-primary bg-border-light px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] text-primary dark:text-gray-300 bg-border-light dark:bg-gray-700 px-2 py-0.5 rounded-full">
                       {course.category}
                     </span>
                   </div>
-                  <h3 className="font-bold text-primary mb-1.5 line-clamp-2 group-hover:text-secondary transition-colors">
+                  <h3 className="font-bold text-primary dark:text-gray-100 mb-1.5 line-clamp-2 group-hover:text-secondary transition-colors">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-text-muted line-clamp-2 leading-relaxed mb-4">
+                  <p className="text-sm text-text-muted dark:text-gray-400 line-clamp-2 leading-relaxed mb-4">
                     {course.shortDescription}
                   </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-border-light">
+                  <div className="flex items-center justify-between pt-3 border-t border-border-light dark:border-gray-700">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[10px] text-white font-bold">
                         {course.instructor?.fullName?.charAt(0) || "A"}
                       </div>
-                      <span className="text-xs text-text-muted truncate max-w-[100px]">
+                      <span className="text-xs text-text-muted dark:text-gray-400 truncate max-w-[100px]">
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="text-sm font-semibold text-primary">
-                        {enrolledIds.has(course.id) ? (
-                          <span className="inline-flex items-center gap-2 text-primary">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                            Enrolled
+                      <div className="text-sm font-semibold text-primary dark:text-gray-200">
+                        {rejectedCourseIds.has(course.id) ? (
+                          <span className="inline-flex flex-col gap-1">
+                            <span className="inline-flex items-center gap-2 text-[#B91C1C]">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                              Payment rejected
+                            </span>
+                            <span className="text-[10px] text-text-muted dark:text-gray-400">
+                              Re-submit payment
+                            </span>
+                          </span>
+                        ) : enrolledIds.has(course.id) ? (
+                          <span className="inline-flex flex-col gap-1">
+                            <span className="inline-flex items-center gap-2 text-emerald-600">
+                              <svg
+                                className="w-4 h-4"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                              </svg>
+                              Active access
+                            </span>
                           </span>
                         ) : pendingCourseIds.has(course.id) ? (
-                          <span className="inline-flex items-center gap-2 text-[#CA8A04]">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            Pending admin review
+                          <span className="inline-flex flex-col gap-1">
+                            <span className="inline-flex items-center gap-2 text-amber-600">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              Payment pending
+                            </span>
+                            {enrollmentMap.get(course.id)?.payment && (
+                              <span className="text-[10px] text-text-muted">
+                                {enrollmentMap.get(course.id).payment
+                                  .paymentMethod || "Unknown method"}{" "}
+                                • {enrollmentMap.get(course.id).payment.amount}{" "}
+                                {enrollmentMap.get(course.id).payment
+                                  .currency || "ETB"}
+                              </span>
+                            )}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-2 text-secondary">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11zm-7 0h14v10H5V11z"
-                              />
-                            </svg>
-                            {(course.currency || "ETB") +
-                              " " +
-                              (course.price ?? 0)}
+                          <span className="inline-flex flex-col gap-1">
+                            <span className="inline-flex items-center gap-2 text-secondary">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                />
+                              </svg>
+                              {(course.currency || "ETB") +
+                                " " +
+                                (course.price ?? 0)}
+                            </span>
+                            <span className="text-[10px] text-text-muted">
+                              Payment required
+                            </span>
                           </span>
                         )}
                       </div>
@@ -461,30 +541,30 @@ export default function CoursesPage() {
                       )}
                     </div>
                   </div>
-                  {/* Lock overlay for not-enrolled */}
-                  {!enrolledIds.has(course.id) && (
-                    <div className="absolute inset-0 flex items-start justify-end p-3 pointer-events-none">
-                      <div className="bg-white/80 rounded-full p-2 shadow">
-                        <svg
-                          className="w-5 h-5 text-secondary"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11z M5 11h14v10H5V11z"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
+                {/* Lock overlay for not-enrolled */}
+                {!enrolledIds.has(course.id) && (
+                  <div className="absolute inset-0 flex items-start justify-end p-3 pointer-events-none">
+                    <div className="bg-white/80 rounded-full p-2 shadow">
+                      <svg
+                        className="w-5 h-5 text-secondary"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11z M5 11h14v10H5V11z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </section>
     </div>

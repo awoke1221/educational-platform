@@ -28,13 +28,28 @@ export async function GET(request: NextRequest) {
           count,
         } = await supabaseAdmin!
           .from("Enrollment")
-          .select("*, course:Course(*)", { count: "exact" })
+          .select(
+            "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
+            {
+              count: "exact",
+            },
+          )
           .eq("userId", auth.userId);
 
         if (!error && enrollments && enrollments.length > 0) {
+          const normalized = enrollments.map((enrollment: any) => {
+            const payment = Array.isArray(enrollment.payment)
+              ? enrollment.payment[0]
+              : enrollment.payment;
+            return {
+              ...enrollment,
+              paymentStatus: payment?.status,
+              payment: payment,
+            };
+          });
           return paginatedResponse(
-            enrollments,
-            count || enrollments.length,
+            normalized,
+            count || normalized.length,
             1,
             50,
             "Enrollments retrieved",

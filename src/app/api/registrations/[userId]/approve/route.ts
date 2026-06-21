@@ -81,10 +81,18 @@ export async function POST(
         );
       }
 
-      await supabaseAdmin!
+      const { error: userError } = await supabaseAdmin!
         .from("User")
         .update({ isApproved: true, paymentStatus: "approved" })
         .eq("id", userId);
+
+      if (userError) {
+        console.error("[APPROVE USER ERROR]", userError);
+        return NextResponse.json(
+          { error: "Failed to update user approval status" },
+          { status: 500 },
+        );
+      }
 
       const { data: course } = await supabaseAdmin!
         .from("Course")

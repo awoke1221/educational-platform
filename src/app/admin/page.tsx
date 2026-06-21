@@ -1,7 +1,34 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
+import {
+  AnimatedSection,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/AnimatedSection";
+
+const COLORS = [
+  "#c9952a",
+  "#1b2a4a",
+  "#d4a843",
+  "#2c3e6b",
+  "#22c55e",
+  "#ef4444",
+];
 
 export default function AdminPage() {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -30,130 +57,339 @@ export default function AdminPage() {
 
   if (!token)
     return (
-      <div className="text-center py-20">
-        <Link
-          href="/auth/login"
-          className="bg-primary text-white px-6 py-3 rounded-lg"
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          Login
-        </Link>
+          <Link
+            href="/auth/login"
+            className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all inline-flex items-center gap-2"
+          >
+            Login
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
+          </Link>
+        </motion.div>
       </div>
     );
   if (loading)
-    return <div className="text-center py-20 text-gray-500">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          className="w-12 h-12 border-4 border-primary/20 border-t-secondary rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+    );
 
   const sections = [
     {
       title: "Users",
+      icon: "👥",
       items: [
-        { label: "Total", value: analytics?.users?.total },
-        { label: "Active", value: analytics?.users?.active },
-        { label: "Instructors", value: analytics?.users?.instructors },
+        {
+          label: "Total",
+          value: analytics?.users?.total,
+          color: "text-primary",
+        },
+        {
+          label: "Active",
+          value: analytics?.users?.active,
+          color: "text-green-600",
+        },
+        {
+          label: "Instructors",
+          value: analytics?.users?.instructors,
+          color: "text-secondary",
+        },
       ],
+      chartData: analytics?.users
+        ? [
+            { name: "Active", value: analytics.users.active || 0 },
+            {
+              name: "Inactive",
+              value:
+                (analytics.users.total || 0) - (analytics.users.active || 0),
+            },
+          ]
+        : [],
     },
     {
       title: "Courses",
+      icon: "📚",
       items: [
-        { label: "Total", value: analytics?.courses?.total },
-        { label: "Published", value: analytics?.courses?.published },
-        { label: "Draft", value: analytics?.courses?.draft },
+        {
+          label: "Total",
+          value: analytics?.courses?.total,
+          color: "text-primary",
+        },
+        {
+          label: "Published",
+          value: analytics?.courses?.published,
+          color: "text-green-600",
+        },
+        {
+          label: "Draft",
+          value: analytics?.courses?.draft,
+          color: "text-amber-600",
+        },
       ],
+      chartData: analytics?.courses
+        ? [
+            { name: "Published", value: analytics.courses.published || 0 },
+            { name: "Draft", value: analytics.courses.draft || 0 },
+          ]
+        : [],
     },
     {
       title: "Payments",
+      icon: "💰",
       items: [
-        { label: "Pending", value: analytics?.payments?.pending },
-        { label: "Approved", value: analytics?.payments?.approved },
-        { label: "Rejected", value: analytics?.payments?.rejected },
-      ],
-    },
-    {
-      title: "Other",
-      items: [
-        { label: "Certificates", value: analytics?.certificates?.total },
         {
-          label: "Revenue",
-          value: `${Number(analytics?.revenue?.total || 0).toLocaleString()} ETB`,
+          label: "Pending",
+          value: analytics?.payments?.pending,
+          color: "text-amber-600",
+        },
+        {
+          label: "Approved",
+          value: analytics?.payments?.approved,
+          color: "text-green-600",
+        },
+        {
+          label: "Rejected",
+          value: analytics?.payments?.rejected,
+          color: "text-red-600",
         },
       ],
+      chartData: analytics?.payments
+        ? [
+            { name: "Pending", value: analytics.payments.pending || 0 },
+            { name: "Approved", value: analytics.payments.approved || 0 },
+            { name: "Rejected", value: analytics.payments.rejected || 0 },
+          ]
+        : [],
+    },
+    {
+      title: "Revenue",
+      icon: "📊",
+      items: [
+        {
+          label: "Total Revenue",
+          value: `${Number(analytics?.revenue?.total || 0).toLocaleString()} ETB`,
+          color: "text-secondary",
+        },
+        {
+          label: "Certificates",
+          value: analytics?.certificates?.total || 0,
+          color: "text-primary",
+        },
+      ],
+      chartData: analytics?.revenue?.monthly
+        ? analytics.revenue.monthly.map((m: any) => ({
+            name: m.month?.slice(0, 3) || m.month,
+            revenue: m.amount || m.revenue || 0,
+          }))
+        : [],
     },
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Admin Dashboard</h1>
-          <p className="text-gray-500 text-sm">
-            Platform Administration Center
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/users"
-            className="text-sm bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200"
+    <div className="min-h-screen bg-surface dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-primary via-primary-light to-secondary text-white">
+        <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10">
+          <motion.div
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
           >
-            👥 Users
-          </Link>
-          <Link
-            href="/admin/registrations"
-            className="text-sm bg-orange-100 text-orange-700 px-4 py-2 rounded-lg hover:bg-orange-200"
-          >
-            📝 Pending Registrations
-          </Link>
-          <Link
-            href="/admin/courses"
-            className="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-light transition-colors"
-          >
-            📚 Courses
-          </Link>
-          <Link
-            href="/admin/courses/new"
-            className="text-sm bg-secondary text-white px-4 py-2 rounded-lg hover:brightness-90 transition-colors"
-          >
-            ➕ New Course
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {sections.map((section, i) => (
-          <div key={i} className="bg-white rounded-xl p-5 shadow-sm">
-            <h3 className="font-semibold text-primary mb-3">{section.title}</h3>
-            <div className="space-y-2">
-              {section.items.map((item, j) => (
-                <div key={j} className="flex justify-between text-sm">
-                  <span className="text-gray-500">{item.label}</span>
-                  <span className="font-semibold">{item.value ?? "-"}</span>
-                </div>
-              ))}
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                Admin Dashboard
+              </h1>
+              <p className="text-white/70 text-sm mt-1">
+                Platform Administration Center
+              </p>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Recent Activity */}
-      {analytics?.recentActivity && (
-        <div className="mt-8 bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="font-semibold text-primary mb-4">Recent Activity</h3>
-          {analytics.recentActivity.users?.slice(0, 5).map((u: any) => (
-            <div
-              key={u.id}
-              className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
-            >
-              <div>
-                <p className="text-sm font-medium">{u.fullName}</p>
-                <p className="text-xs text-gray-400">{u.email}</p>
-              </div>
-              <span
-                className={`text-xs px-2 py-1 rounded ${u.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/admin/users"
+                className="text-sm bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all"
               >
-                {u.isActive ? "Active" : "Inactive"}
-              </span>
+                👥 Users
+              </Link>
+              <Link
+                href="/admin/registrations"
+                className="text-sm bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all"
+              >
+                📝 Pending Registrations
+              </Link>
+              <Link
+                href="/admin/courses"
+                className="text-sm bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all"
+              >
+                📚 Courses
+              </Link>
+              <Link
+                href="/admin/courses/new"
+                className="text-sm bg-secondary text-white px-4 py-2 rounded-lg hover:brightness-110 transition-all"
+              >
+                ➕ New Course
+              </Link>
             </div>
-          ))}
+          </motion.div>
         </div>
-      )}
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
+        {/* Overview Cards */}
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {sections.map((section, i) => (
+            <StaggerItem key={i}>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-border-light dark:border-gray-700 card-hover">
+                <h3 className="font-semibold text-primary dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span>{section.icon}</span>
+                  {section.title}
+                </h3>
+                <div className="space-y-2 mb-4">
+                  {section.items.map((item, j) => (
+                    <div key={j} className="flex justify-between text-sm">
+                      <span className="text-text-muted dark:text-gray-400">
+                        {item.label}
+                      </span>
+                      <span
+                        className={`font-semibold ${item.color} dark:text-gray-200`}
+                      >
+                        {typeof item.value === "number" ? (
+                          <AnimatedCounter to={item.value} duration={1500} />
+                        ) : (
+                          (item.value ?? "-")
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {/* Mini chart */}
+                {section.chartData.length > 0 && (
+                  <div className="h-24">
+                    <ResponsiveContainer width="100%" height="100%">
+                      {section.title === "Revenue" ? (
+                        <BarChart data={section.chartData}>
+                          <XAxis
+                            dataKey="name"
+                            tick={{ fontSize: 10 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: 8,
+                              border: "1px solid #e8ecf4",
+                              fontSize: 12,
+                            }}
+                          />
+                          <Bar
+                            dataKey="revenue"
+                            fill="#c9952a"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      ) : (
+                        <PieChart>
+                          <Pie
+                            data={section.chartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={20}
+                            outerRadius={35}
+                            paddingAngle={2}
+                            dataKey="value"
+                          >
+                            {section.chartData.map((_: any, idx: number) => (
+                              <Cell
+                                key={idx}
+                                fill={COLORS[idx % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: 8,
+                              border: "1px solid #e8ecf4",
+                              fontSize: 12,
+                            }}
+                          />
+                        </PieChart>
+                      )}
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </StaggerItem>
+          ))}
+        </StaggerContainer>
+
+        {/* Recent Activity */}
+        {analytics?.recentActivity && (
+          <AnimatedSection direction="up" delay={0.3}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-border-light dark:border-gray-700 mb-8">
+              <h3 className="font-semibold text-primary dark:text-gray-100 mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+                Recent Activity
+              </h3>
+              {analytics.recentActivity.users
+                ?.slice(0, 5)
+                .map((u: any, idx: number) => (
+                  <motion.div
+                    key={u.id}
+                    className="flex items-center justify-between py-3 border-b border-border-light dark:border-gray-700 last:border-0"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold">
+                        {u.fullName?.charAt(0) || "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-primary dark:text-gray-100">
+                          {u.fullName}
+                        </p>
+                        <p className="text-xs text-text-muted dark:text-gray-400">
+                          {u.email}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-xs px-3 py-1 rounded-full font-medium ${
+                        u.isActive
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                          : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                      }`}
+                    >
+                      {u.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </motion.div>
+                ))}
+            </div>
+          </AnimatedSection>
+        )}
+      </div>
     </div>
   );
 }

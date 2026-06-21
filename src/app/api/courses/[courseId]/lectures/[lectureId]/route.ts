@@ -60,6 +60,39 @@ export async function GET(
     const { courseId, lectureId } = await params;
     const auth = await verifyAuth(request);
 
+    // Require authentication
+    if (!auth) {
+      return errorResponse("Unauthorized. Please log in first.", 401);
+    }
+
+    // Check enrollment (admin and instructor bypass)
+    let isAdminOrInstructor = auth.role === "admin";
+
+    if (!isAdminOrInstructor) {
+      const { data: course } = await supabaseAdmin!
+        .from("Course")
+        .select("instructorId")
+        .eq("id", courseId)
+        .maybeSingle();
+      isAdminOrInstructor = course?.instructorId === auth.userId;
+    }
+
+    if (!isAdminOrInstructor) {
+      const { data: enrollment } = await supabaseAdmin!
+        .from("Enrollment")
+        .select("status")
+        .eq("userId", auth.userId)
+        .eq("courseId", courseId)
+        .maybeSingle();
+
+      if (!enrollment || enrollment.status !== "active") {
+        return errorResponse(
+          "You don't have active access to this course. Please complete payment and wait for admin approval.",
+          403,
+        );
+      }
+    }
+
     // Try DB first
     try {
       const { data: lecture } = await supabaseAdmin!

@@ -11,6 +11,9 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pendingReceiptUrl" TEXT;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "paymentMethod" TEXT;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "paymentStatus" TEXT NOT NULL DEFAULT 'none';
 
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "payerName" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "payerPhone" TEXT;
+
 -- Create indexes for fast queries
 CREATE INDEX IF NOT EXISTS "User_isApproved_idx" ON "User"("isApproved");
 CREATE INDEX IF NOT EXISTS "User_paymentStatus_idx" ON "User"("paymentStatus");

@@ -16,6 +16,7 @@ interface PendingRegistration {
   paymentMethod: string | null;
   paymentType?: string | null;
   paymentStatus: string;
+  enrollmentStatus?: string | null;
   createdAt: string;
   courseId?: string | null;
   courseTitle?: string | null;
@@ -240,11 +241,13 @@ export default function AdminRegistrationsPage() {
   // ── Payment method display helper ──
   const paymentLabel = (method: string | null) => {
     switch (method) {
+      case "telebirr":
       case "local":
         return {
           label: "Local (Telebirr)",
           color: "bg-blue-100 text-blue-800",
         };
+      case "paypal":
       case "diaspora":
         return {
           label: "Diaspora (PayPal)",
@@ -252,6 +255,35 @@ export default function AdminRegistrationsPage() {
         };
       default:
         return { label: method || "N/A", color: "bg-gray-100 text-gray-800" };
+    }
+  };
+
+  const paymentStatusLabel = (status: string) => {
+    switch (status) {
+      case "submitted":
+        return "Payment in progress";
+      case "pending":
+        return "Pending payment review";
+      case "approved":
+        return "Payment approved";
+      case "rejected":
+        return "Payment rejected";
+      default:
+        return status?.replace(/_/g, " ") || "Unknown status";
+    }
+  };
+
+  const paymentStatusColor = (status: string) => {
+    switch (status) {
+      case "submitted":
+      case "pending":
+        return "bg-amber-100 text-amber-800";
+      case "approved":
+        return "bg-emerald-100 text-emerald-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-slate-100 text-slate-800";
     }
   };
 
@@ -401,14 +433,16 @@ export default function AdminRegistrationsPage() {
                         ? "Course enrollment"
                         : "Account registration"}
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                      {it.paymentStatus === "submitted"
-                        ? "Receipt submitted"
-                        : it.paymentStatus}
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${paymentStatusColor(
+                        it.paymentStatus,
+                      )}`}
+                    >
+                      {paymentStatusLabel(it.paymentStatus)}
                     </span>
                     {it.paymentType && (
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-800">
-                        {it.paymentType}
+                        {it.paymentType === "diaspora" ? "Diaspora" : "Local"}
                       </span>
                     )}
                   </div>
@@ -427,7 +461,24 @@ export default function AdminRegistrationsPage() {
                     <span className="text-gray-400">Course:</span>{" "}
                     <span className="text-gray-700">
                       {it.courseTitle || "(not specified)"}
-                      {it.coursePrice ? ` — ETB ${it.coursePrice}` : ""}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Price:</span>{" "}
+                    <span className="text-gray-700">
+                      {it.coursePrice != null ? `ETB ${it.coursePrice}` : "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Payment method:</span>{" "}
+                    <span className="text-gray-700">
+                      {paymentLabel(it.paymentMethod).label}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Status:</span>{" "}
+                    <span className="text-gray-700">
+                      {paymentStatusLabel(it.paymentStatus)}
                     </span>
                   </div>
                   <div>

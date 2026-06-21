@@ -17,12 +17,32 @@ export async function POST(
       fileBase64,
       courseId,
       transactionId,
+      fullName,
+      phoneNumber,
     } = body;
 
     // ── Validate required fields ──
     if (!userId || !fileBase64 || !filename) {
       return NextResponse.json(
         { error: "Missing required fields: userId, filename, fileBase64" },
+        { status: 400 },
+      );
+    }
+
+    if (!fullName || typeof fullName !== "string" || !fullName.trim()) {
+      return NextResponse.json(
+        { error: "Full name is required" },
+        { status: 400 },
+      );
+    }
+
+    if (
+      !phoneNumber ||
+      typeof phoneNumber !== "string" ||
+      !phoneNumber.trim()
+    ) {
+      return NextResponse.json(
+        { error: "Phone number is required" },
         { status: 400 },
       );
     }
@@ -80,6 +100,8 @@ export async function POST(
         pendingReceiptUrl: uploadResult.publicUrl,
         paymentMethod: paymentChannel || paymentMethod,
         paymentStatus: "submitted",
+        fullName: fullName.trim(),
+        phoneNumber: phoneNumber.trim(),
       })
       .eq("id", userId);
 
@@ -162,10 +184,12 @@ export async function POST(
 
         enrollment = updatedEnrollment;
       } else {
+        const newEnrollmentId = crypto.randomUUID();
         const { data: newEnrollment, error: createEnrollErr } =
           await supabaseAdmin!
             .from("Enrollment")
             .insert({
+              id: newEnrollmentId,
               userId,
               courseId,
               status: "processing",
@@ -199,12 +223,14 @@ export async function POST(
           courseId,
           amount: course.price || 0,
           currency: course.currency || "ETB",
-          paymentType: "local",
+          paymentType: paymentMethod || "local",
           paymentMethod: paymentChannel || paymentMethod || "telebirr",
           status: "pending",
           transactionId: transactionId || null,
           receiptScreenshotUrl: uploadResult.publicUrl,
           receiptScreenshotKey: uploadResult.storagePath,
+          payerName: fullName.trim(),
+          payerPhone: phoneNumber.trim(),
           updatedAt: new Date().toISOString(),
         };
 
@@ -227,15 +253,55 @@ export async function POST(
 
           paymentRecord = updatedPayment;
         } else {
-          const { data: newPayment, error: createPaymentErr } =
-            await supabaseAdmin!
+          const newPaymentId = crypto.randomUUID();
+          // Try inserting with full paymentData first
+          let newPayment = null;
+          let createPaymentErr = null;
+
+          try {
+            const res = await supabaseAdmin!
               .from("Payment")
-              .insert(paymentData)
+              .insert({ ...paymentData, id: newPaymentId })
               .select()
               .single();
 
+            newPayment = res.data;
+            createPaymentErr = res.error;
+          } catch (e) {
+            createPaymentErr = e as any;
+          }
+
           if (createPaymentErr) {
             console.error("[RECEIPT] Payment create error:", createPaymentErr);
+
+            // If schema cache is missing payerName/payerPhone (PGRST204), retry without those fields
+            if (createPaymentErr.code === "PGRST204") {
+              console.warn(
+                "[RECEIPT] Schema cache missing payer fields; retrying without payerName/payerPhone",
+              );
+              const { payerName, payerPhone, ...paymentDataNoPayer } =
+                paymentData as any;
+
+              try {
+                const retryRes = await supabaseAdmin!
+                  .from("Payment")
+                  .insert({ ...paymentDataNoPayer, id: newPaymentId })
+                  .select()
+                  .single();
+
+                newPayment = retryRes.data;
+                createPaymentErr = retryRes.error;
+              } catch (e) {
+                createPaymentErr = e as any;
+              }
+            }
+          }
+
+          if (createPaymentErr) {
+            console.error(
+              "[RECEIPT] Payment create error after retry:",
+              createPaymentErr,
+            );
             return NextResponse.json(
               { error: "Failed to create payment record" },
               { status: 500 },

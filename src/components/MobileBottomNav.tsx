@@ -142,7 +142,7 @@ export default function MobileBottomNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-50">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const active = isActive(item.path);
@@ -152,13 +152,13 @@ export default function MobileBottomNav() {
               href={item.path}
               className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-colors ${
                 active
-                  ? "bg-accent-warm text-secondary"
-                  : "text-gray-600 hover:bg-gray-50"
+                  ? "bg-accent-warm dark:bg-gray-700 text-secondary"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
               {item.icon(active)}
               <span
-                className={`text-xs mt-1 text-center ${active ? "text-secondary font-semibold" : "text-gray-600"}`}
+                className={`text-xs mt-1 text-center ${active ? "text-secondary font-semibold" : "text-gray-600 dark:text-gray-400"}`}
               >
                 {item.label}
               </span>

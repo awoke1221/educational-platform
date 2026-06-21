@@ -53,23 +53,46 @@ export async function GET(
       return notFoundResponse("Course");
     }
 
-    // Check authentication for unpublished courses
+    // Check authentication
     const auth = await verifyAuth(request);
-    const isOwner = auth
-      ? await canManageCourse(courseId, auth.userId, auth.role)
-      : false;
+    if (!auth) {
+      return errorResponse("Unauthorized. Please log in first.", 401);
+    }
 
-    // Only show published lectures to non-owners
-    const lectureWhere: Record<string, any> = { courseId };
+    // Check enrollment (admin and instructor bypass)
+    let isOwner = auth.role === "admin";
+
+    if (!isOwner) {
+      const { data: courseData } = await supabaseAdmin!
+        .from("Course")
+        .select("instructorId")
+        .eq("id", courseId)
+        .maybeSingle();
+      isOwner = courseData?.instructorId === auth.userId;
+    }
 
     if (!course.isPublished && !isOwner) {
       return errorResponse("Course is not published", 403);
     }
 
+    // Non-owner/non-instructor users must have active enrollment
     if (!isOwner) {
-      lectureWhere.isPublished = true;
+      const { data: enrollment } = await supabaseAdmin!
+        .from("Enrollment")
+        .select("status")
+        .eq("userId", auth.userId)
+        .eq("courseId", courseId)
+        .maybeSingle();
+
+      if (!enrollment || enrollment.status !== "active") {
+        return errorResponse(
+          "You don't have active access to this course. Please complete payment and wait for admin approval.",
+          403,
+        );
+      }
     }
 
+    // Only show published lectures to non-owners
     const lectureSelect: Record<string, any> = {
       id: true,
       title: true,

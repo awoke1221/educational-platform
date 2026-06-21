@@ -187,6 +187,8 @@ CREATE TABLE "Payment" (
     "transactionId" TEXT,
     "receiptScreenshotUrl" TEXT,
     "receiptScreenshotKey" TEXT,
+    "payerName" TEXT,
+    "payerPhone" TEXT,
     "lakiPayTransactionId" TEXT,
     "lakiPayStatus" TEXT,
     "paymentGatewayResponse" JSONB,

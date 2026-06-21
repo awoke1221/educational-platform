@@ -80,6 +80,19 @@ export async function POST(
         );
       }
 
+      const { error: userError } = await supabaseAdmin!
+        .from("User")
+        .update({ isApproved: false, paymentStatus: "rejected" })
+        .eq("id", userId);
+
+      if (userError) {
+        console.error("[REJECT USER ERROR]", userError);
+        return NextResponse.json(
+          { error: "Failed to update user status" },
+          { status: 500 },
+        );
+      }
+
       console.log(
         `[REJECT] Enrollment rejected for user ${userId} course ${courseId}`,
       );

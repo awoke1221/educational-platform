@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { requireRole } from "@/lib/auth/middleware";
 
 export async function GET(request: NextRequest) {
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
           courseId: e.courseId,
           courseTitle: e.course?.title || null,
           coursePrice: e.course?.price || null,
+          enrollmentStatus: e.status,
         };
       });
 
@@ -74,4 +75,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
-

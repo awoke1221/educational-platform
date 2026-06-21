@@ -37,10 +37,13 @@ function PaymentForm() {
   const [courseStatus, setCourseStatus] = useState<
     "active" | "processing" | "none"
   >("none");
+  const [fullName, setFullName] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [step, setStep] = useState<"details" | "receipt">("details");
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token") || "";
-    setToken(storedToken);
+    setToken(localStorage.getItem("token") || "");
   }, []);
 
   useEffect(() => {
@@ -58,10 +61,11 @@ function PaymentForm() {
             method: "GET",
           });
           if (profileResult.response.ok) {
-            setProfile(profileResult.data.data || null);
-            setResolvedUserId(
-              (prev) => prev || profileResult.data.data?.id || null,
-            );
+            const profileData = profileResult.data.data || null;
+            setProfile(profileData);
+            setResolvedUserId((prev) => prev || profileData?.id || null);
+            setFullName(profileData?.fullName || "");
+            setPhoneNumber(profileData?.phoneNumber || "");
           }
         }
 
@@ -77,8 +81,7 @@ function PaymentForm() {
           const enrResult = await authFetchJson(`/api/enrollments`, {
             method: "GET",
           });
-          const enrData = enrResult.data;
-          const items = enrData.data?.data || enrData.data || [];
+          const items = enrResult.data?.data || enrResult.data || [];
           const active = items.some(
             (e: any) =>
               (e.courseId || e.course?.id) === courseId &&
@@ -143,6 +146,19 @@ function PaymentForm() {
     setFile(f);
   };
 
+  const proceedToReceipt = () => {
+    setError(null);
+    if (!fullName.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      setError("Please enter your phone number.");
+      return;
+    }
+    setStep("receipt");
+  };
+
   const uploadReceipt = async () => {
     if (!file) return setError("Please select a receipt image");
     setLoading(true);
@@ -162,6 +178,8 @@ function PaymentForm() {
               filename: file.name,
               fileBase64: base64,
               courseId,
+              fullName: fullName.trim(),
+              phoneNumber: phoneNumber.trim(),
             }),
           },
         );
@@ -170,12 +188,9 @@ function PaymentForm() {
           setError(data.error || "Upload failed");
         } else {
           setMessage(
-            `Receipt submitted for ${course?.title || "this course"}. Awaiting admin review.`,
+            `Thank you for your payment. We have received your receipt for ${course?.title || "this course"}. Once verified, your course access will become active.`,
           );
-          // optionally redirect after a short delay
-          setTimeout(() => {
-            router.push(redirectTo as string);
-          }, 2500);
+          setSuccess(true);
         }
       };
       reader.readAsDataURL(file);
@@ -206,7 +221,7 @@ function PaymentForm() {
             {courseStatus === "active"
               ? "You already have access to this course. Continue learning from your dashboard."
               : courseStatus === "processing"
-                ? "Your receipt is under review. Admin will approve access shortly and then you can access the course content."
+                ? "Your receipt is under review. Admin approval is required before course access becomes active."
                 : queryUserId
                   ? "Complete payment for your new registration by uploading a receipt."
                   : "Select a payment method, upload your receipt, and our admin team will review it."}
@@ -229,157 +244,241 @@ function PaymentForm() {
           )}
         </div>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setMethod("local");
-                setChannel("telebirr");
-              }}
-              className={`rounded-2xl border p-4 text-left transition-all ${
-                method === "local"
-                  ? "border-primary bg-border-light shadow-sm"
-                  : "border-gray-200 bg-white"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex h-9 w-9 rounded-full bg-primary text-white items-center justify-center">
-                  T
-                </span>
-                <div>
-                  <h3 className="font-semibold text-sm">Local payment</h3>
-                  <p className="text-xs text-gray-500">
-                    Telebirr / bank transfer
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-600">
-                Upload a local payment receipt. This is reviewed and approved by
-                admin before you gain access.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMethod("diaspora");
-                setChannel("paypal");
-              }}
-              className={`rounded-2xl border p-4 text-left transition-all ${
-                method === "diaspora"
-                  ? "border-[#7C3AED] bg-[#F3E8FF] shadow-sm"
-                  : "border-gray-200 bg-white"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex h-9 w-9 rounded-full bg-[#7C3AED] text-white items-center justify-center">
-                  D
-                </span>
-                <div>
-                  <h3 className="font-semibold text-sm">Diaspora payment</h3>
-                  <p className="text-xs text-gray-500">
-                    PayPal / international transfer
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-600">
-                Use the international payment method and then upload the receipt
-                for admin approval.
-              </p>
-            </button>
+        {success ? (
+          <div className="rounded-3xl bg-emerald-50 border border-emerald-200 p-6 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-emerald-900 mb-2">
+              Thank you for your payment!
+            </h2>
+            <p className="text-sm text-emerald-700 max-w-xl mx-auto">
+              We have received your receipt for {course?.title || "the course"}.
+              The payment will be verified by admin, and your course access will
+              become active once approved.
+            </p>
+            <div className="mt-6 flex justify-center gap-3 flex-wrap">
+              <button
+                onClick={() => router.push(redirectTo as string)}
+                className="px-4 py-2 bg-primary text-white rounded-full"
+              >
+                Back to dashboard
+              </button>
+              <button
+                onClick={() => setSuccess(false)}
+                className="px-4 py-2 border border-border-light rounded-full"
+              >
+                Submit another receipt
+              </button>
+            </div>
           </div>
-
-          <div className="p-4 border rounded">
-            {method === "local" ? (
-              <div>
-                <p className="font-semibold">Pay with Telebirr</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Scan the Telebirr QR or send to phone number:{" "}
-                  <strong>+2519XXXXXXX</strong>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setMethod("local");
+                  setChannel("telebirr");
+                }}
+                className={`rounded-2xl border p-4 text-left transition-all ${
+                  method === "local"
+                    ? "border-primary bg-border-light shadow-sm"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex h-9 w-9 rounded-full bg-primary text-white items-center justify-center">
+                    T
+                  </span>
+                  <div>
+                    <h3 className="font-semibold text-sm">Local payment</h3>
+                    <p className="text-xs text-gray-500">
+                      Telebirr / bank transfer
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Pay locally, then upload the receipt for admin verification.
                 </p>
-                <div className="mt-3">
-                  <img
-                    src="/telebirr qrcode.jpeg"
-                    alt="telebirr-qr"
-                    className="w-48 h-48 object-contain"
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMethod("diaspora");
+                  setChannel("paypal");
+                }}
+                className={`rounded-2xl border p-4 text-left transition-all ${
+                  method === "diaspora"
+                    ? "border-[#7C3AED] bg-[#F3E8FF] shadow-sm"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex h-9 w-9 rounded-full bg-[#7C3AED] text-white items-center justify-center">
+                    D
+                  </span>
+                  <div>
+                    <h3 className="font-semibold text-sm">Diaspora payment</h3>
+                    <p className="text-xs text-gray-500">
+                      PayPal / international transfer
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Send the international payment and upload the receipt.
+                </p>
+              </button>
+            </div>
+
+            <div className="p-4 border rounded bg-surface">
+              {method === "local" ? (
+                <div>
+                  <p className="font-semibold">Pay with Telebirr</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Scan the Telebirr QR or send to phone number:{" "}
+                    <strong>+2519XXXXXXX</strong>
+                  </p>
+                  <p className="mt-3 text-sm">
+                    <span className="font-semibold">Amount:</span>{" "}
+                    {(course?.currency || "ETB") + " " + course?.price}
+                  </p>
+                  <div className="mt-3">
+                    <img
+                      src="/telebirr qrcode.jpeg"
+                      alt="telebirr-qr"
+                      className="w-48 h-48 object-contain"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-semibold">Pay with PayPal</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Send payment to: <strong>payments@example.com</strong>
+                  </p>
+                  <p className="mt-3 text-sm">
+                    <span className="font-semibold">Amount:</span>{" "}
+                    {(course?.currency || "ETB") + " " + course?.price}
+                  </p>
+                  <div className="mt-3">
+                    <img
+                      src="/paypal qrcode.png"
+                      alt="paypal-qr"
+                      className="w-48 h-48 object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl bg-white p-4 border border-border-light">
+              <p className="text-sm text-gray-700 mb-3">
+                Step 1: Confirm your contact details. Admin will use this
+                information for verification.
+              </p>
+              <div className="grid gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-primary mb-1">
+                    Full name
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full rounded-xl border border-border-light px-4 py-3 text-sm"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-primary mb-1">
+                    Phone number
+                  </label>
+                  <input
+                    type="text"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full rounded-xl border border-border-light px-4 py-3 text-sm"
+                    placeholder="Enter your phone number"
                   />
                 </div>
               </div>
-            ) : (
-              <div>
-                <p className="font-semibold">Pay with PayPal</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Send payment to: <strong>payments@example.com</strong>
-                </p>
-                <div className="mt-3">
-                  <img
-                    src="/paypal qrcode.png"
-                    alt="paypal-qr"
-                    className="w-48 h-48 object-contain"
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={proceedToReceipt}
+                disabled={loading || courseStatus !== "none"}
+                className="px-4 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl disabled:opacity-50"
+              >
+                Continue to receipt upload
+              </button>
+              <button
+                onClick={() => router.push(redirectTo as string)}
+                className="px-4 py-3 border border-border-light rounded-xl"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {step === "receipt" && (
+              <div className="space-y-4">
+                <div className="rounded-2xl bg-surface p-4 border border-border-light">
+                  <p className="font-semibold text-sm">
+                    Step 2: Upload your receipt
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Choose the receipt image you received from the payment
+                    provider.
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                    className="mt-3"
                   />
+                  {file && (
+                    <p className="text-sm text-gray-700 mt-2">
+                      Selected file: <strong>{file.name}</strong>
+                    </p>
+                  )}
+                </div>
+
+                {error && <p className="text-red-600">{error}</p>}
+                {message && <p className="text-emerald-700">{message}</p>}
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={uploadReceipt}
+                    disabled={loading || courseStatus !== "none"}
+                    className="px-4 py-3 bg-primary text-white rounded-xl disabled:opacity-50"
+                  >
+                    {loading ? "Uploading..." : "Send payment receipt"}
+                  </button>
+                  <button
+                    onClick={() => setStep("details")}
+                    className="px-4 py-3 border border-border-light rounded-xl"
+                  >
+                    Back to details
+                  </button>
                 </div>
               </div>
             )}
           </div>
-
-          {courseStatus === "active" ? (
-            <div className="rounded-2xl bg-white p-4 border border-border-light text-sm text-[#334155]">
-              <p className="font-semibold">Course access already active</p>
-              <p className="mt-2 text-text-muted">
-                No receipt upload is required because you already have access to
-                this course.
-              </p>
-            </div>
-          ) : courseStatus === "processing" ? (
-            <div className="rounded-2xl bg-white p-4 border border-[#FEE2E2] text-sm text-[#7F1D1D]">
-              <p className="font-semibold">Receipt already submitted</p>
-              <p className="mt-2 text-[#7F1D1D]">
-                Your receipt is under review. If you need to update it, please
-                contact support or wait for admin approval.
-              </p>
-            </div>
-          ) : (
-            <div>
-              <label className="block text-sm font-medium text-primary mb-1">
-                Upload receipt image
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-              />
-              <p className="text-xs text-text-muted mt-2">
-                Upload the receipt after you pay via the selected method. Admin
-                will verify and approve your enrollment.
-              </p>
-              {error && <p className="text-red-600 mt-2">{error}</p>}
-              {message && <p className="text-green-600 mt-2">{message}</p>}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={uploadReceipt}
-              disabled={loading || courseStatus !== "none"}
-              className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded disabled:opacity-50"
-            >
-              {courseStatus === "active"
-                ? "Already active"
-                : courseStatus === "processing"
-                  ? "Receipt submitted"
-                  : loading
-                    ? "Uploading..."
-                    : "Submit Receipt"}
-            </button>
-            <button
-              onClick={() => router.push(redirectTo as string)}
-              className="px-4 py-2 border rounded"
-            >
-              Skip / Back
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
