@@ -187,13 +187,13 @@ function PaymentForm() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#F0FEFF] to-white">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-8 border-t-4 border-[#00BCD4]">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-surface to-white">
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-8 border-t-4 border-primary">
         <h1 className="text-2xl font-bold text-center mb-4">
           Complete Payment
         </h1>
 
-        <div className="rounded-3xl bg-[#F0FEFF] border border-[#E0F7FA] p-4 text-sm text-[#0D3B4A] mb-4">
+        <div className="rounded-3xl bg-surface border border-border-light p-4 text-sm text-primary mb-4">
           <div className="flex flex-wrap items-center gap-3 mb-3">
             <p className="font-semibold">{courseLabel}</p>
             <span
@@ -212,7 +212,7 @@ function PaymentForm() {
                   : "Select a payment method, upload your receipt, and our admin team will review it."}
           </p>
           {(courseStatus === "active" || courseStatus === "processing") && (
-            <div className="mt-4 rounded-2xl bg-white p-4 border border-[#E0F7FA] text-sm text-[#334155]">
+            <div className="mt-4 rounded-2xl bg-white p-4 border border-border-light text-sm text-[#334155]">
               <p className="font-semibold mb-2">Current course status</p>
               {courseStatus === "active" ? (
                 <p>
@@ -239,12 +239,12 @@ function PaymentForm() {
               }}
               className={`rounded-2xl border p-4 text-left transition-all ${
                 method === "local"
-                  ? "border-[#00BCD4] bg-[#E0F7FA] shadow-sm"
+                  ? "border-primary bg-border-light shadow-sm"
                   : "border-gray-200 bg-white"
               }`}
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex h-9 w-9 rounded-full bg-[#00BCD4] text-white items-center justify-center">
+                <span className="inline-flex h-9 w-9 rounded-full bg-primary text-white items-center justify-center">
                   T
                 </span>
                 <div>
@@ -324,9 +324,9 @@ function PaymentForm() {
           </div>
 
           {courseStatus === "active" ? (
-            <div className="rounded-2xl bg-white p-4 border border-[#E0F7FA] text-sm text-[#334155]">
+            <div className="rounded-2xl bg-white p-4 border border-border-light text-sm text-[#334155]">
               <p className="font-semibold">Course access already active</p>
-              <p className="mt-2 text-[#4A7278]">
+              <p className="mt-2 text-text-muted">
                 No receipt upload is required because you already have access to
                 this course.
               </p>
@@ -341,7 +341,7 @@ function PaymentForm() {
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+              <label className="block text-sm font-medium text-primary mb-1">
                 Upload receipt image
               </label>
               <input
@@ -349,7 +349,7 @@ function PaymentForm() {
                 accept="image/*"
                 onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
               />
-              <p className="text-xs text-[#4A7278] mt-2">
+              <p className="text-xs text-text-muted mt-2">
                 Upload the receipt after you pay via the selected method. Admin
                 will verify and approve your enrollment.
               </p>
@@ -362,7 +362,7 @@ function PaymentForm() {
             <button
               onClick={uploadReceipt}
               disabled={loading || courseStatus !== "none"}
-              className="px-4 py-2 bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white rounded disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded disabled:opacity-50"
             >
               {courseStatus === "active"
                 ? "Already active"

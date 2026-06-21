@@ -64,7 +64,7 @@ export default function DashboardPage() {
         <p className="text-gray-500 mb-4">እባክዎ ይግቡ</p>
         <Link
           href="/auth/login"
-          className="bg-[#1B2A4A] text-white px-6 py-3 rounded-lg"
+          className="bg-primary text-white px-6 py-3 rounded-lg"
         >
           ግባ
         </Link>
@@ -77,7 +77,7 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-[#1B2A4A] mb-6">የእኔ ትምህርት</h1>
+      <h1 className="text-2xl font-bold text-primary mb-6">የእኔ ትምህርት</h1>
 
       {/* Stats */}
       {stats && (
@@ -99,7 +99,7 @@ export default function DashboardPage() {
               key={i}
               className="bg-white p-4 rounded-xl shadow-sm text-center"
             >
-              <div className="text-2xl font-bold text-[#1B2A4A]">{s.value}</div>
+              <div className="text-2xl font-bold text-primary">{s.value}</div>
               <div className="text-xs text-gray-500 mt-1">{s.label}</div>
             </div>
           ))}
@@ -113,7 +113,7 @@ export default function DashboardPage() {
           <p className="text-gray-500 mb-4">እስካሁን ኮርስ አልተመዘገቡም</p>
           <Link
             href="/courses"
-            className="bg-[#C9952A] text-white px-6 py-3 rounded-lg"
+            className="bg-secondary text-white px-6 py-3 rounded-lg"
           >
             ኮርሶችን ይመልከቱ
           </Link>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                   href={`/courses/${enr.course?.id || enr.courseId}`}
                   className="block"
                 >
-                  <div className="h-32 bg-gradient-to-br from-[#1B2A4A] to-[#2C3E6B] rounded-lg flex items-center justify-center mb-3">
+                  <div className="h-32 bg-gradient-to-br from-primary to-primary-light rounded-lg flex items-center justify-center mb-3">
                     <span className="text-white text-2xl font-bold">
                       {enr.course?.title?.charAt(0) || "?"}
                     </span>
@@ -150,7 +150,7 @@ export default function DashboardPage() {
               )}
               <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
                 <div
-                  className="bg-[#C9952A] h-2 rounded-full transition-all"
+                  className="bg-secondary h-2 rounded-full transition-all"
                   style={{
                     width: `${enr.completionPercentage || enr.progressPercentage || 0}%`,
                   }}
@@ -162,7 +162,7 @@ export default function DashboardPage() {
               {enr.status === "active" && (
                 <Link
                   href={`/courses/${enr.course?.id || enr.courseId}`}
-                  className="block w-full text-center bg-[#C9952A] text-white text-sm py-2 rounded-lg font-medium hover:bg-[#b8862a] transition-colors"
+                  className="block w-full text-center bg-secondary text-white text-sm py-2 rounded-lg font-medium hover:brightness-90 transition-colors"
                 >
                   ቪዲዮ ይመልከቱ →
                 </Link>

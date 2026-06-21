@@ -51,9 +51,9 @@ function SkeletonCard() {
 function EmptyState() {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#00BCD4]/10 to-[#FF1744]/10 flex items-center justify-center mb-6 ring-1 ring-[#00BCD4]/20">
+      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center mb-6 ring-1 ring-primary/20">
         <svg
-          className="w-12 h-12 text-[#00BCD4]"
+          className="w-12 h-12 text-primary"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -66,13 +66,13 @@ function EmptyState() {
           />
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-[#0D3B4A] mb-2">እስካሁን ኮርሶች የሉም</h3>
-      <p className="text-[#4A7278] max-w-md mb-6">
+      <h3 className="text-xl font-bold text-primary mb-2">እስካሁን ኮርሶች የሉም</h3>
+      <p className="text-text-muted max-w-md mb-6">
         በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን
       </p>
       <Link
         href="/auth/register"
-        className="inline-flex items-center gap-2 bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg transition-all text-sm"
+        className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg transition-all text-sm"
       >
         <svg
           className="w-4 h-4"
@@ -178,12 +178,12 @@ export default function CoursesPage() {
   const totalCount = courses.length;
 
   return (
-    <div className="min-h-screen bg-[#F0FEFF]">
+    <div className="min-h-screen bg-surface">
       {/* ── Hero Banner ─────────────────────────────── */}
-      <section className="relative bg-gradient-to-br from-[#00BCD4] via-[#0097A7] to-[#FF1744] overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary via-primary-light to-secondary overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-[#FF1744]/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-secondary/10 blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-white/5 blur-3xl" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
@@ -212,18 +212,18 @@ export default function CoursesPage() {
             </div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#F0FEFF] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface to-transparent" />
       </section>
 
       {/* ── All Courses Grid ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#0D3B4A] flex items-center gap-2">
-            <span className="w-1.5 h-6 bg-gradient-to-b from-[#00BCD4] to-[#FF1744] rounded-full inline-block" />
+          <h2 className="text-xl sm:text-2xl font-bold text-primary flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
             ሁሉም ኮርሶች
           </h2>
           {isLoaded && (
-            <span className="text-xs text-[#4A7278]">
+            <span className="text-xs text-text-muted">
               {courses.length} ኮርሶች ተገኝተዋል
             </span>
           )}
@@ -247,9 +247,9 @@ export default function CoursesPage() {
             {courses.map((course) => (
               <div
                 key={course.id}
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#E0F7FA] hover:border-[#00BCD4]"
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border-light hover:border-primary"
               >
-                <div className="relative h-44 bg-gradient-to-br from-[#00BCD4] to-[#FF1744] overflow-hidden">
+                <div className="relative h-44 bg-gradient-to-br from-primary to-secondary overflow-hidden">
                   <img
                     src={course.coverImage}
                     alt={course.title}
@@ -260,9 +260,9 @@ export default function CoursesPage() {
                     <span
                       className={`text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm ${
                         course.level === "beginner"
-                          ? "bg-[#00BCD4]/90 text-white"
+                          ? "bg-primary/90 text-white"
                           : course.level === "intermediate"
-                            ? "bg-[#FF1744]/90 text-white"
+                            ? "bg-secondary/90 text-white"
                             : "bg-purple-500/90 text-white"
                       }`}
                     >
@@ -307,7 +307,7 @@ export default function CoursesPage() {
                   )}
                   {/* Cloudinary badge */}
                   {(course as any).isFromCloudinary && (
-                    <div className="absolute bottom-3 left-3 bg-[#FF1744]/90 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full">
+                    <div className="absolute bottom-3 left-3 bg-secondary/90 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full">
                       ቪዲዮ ኮርስ
                     </div>
                   )}
@@ -316,7 +316,7 @@ export default function CoursesPage() {
                   {!enrolledIds.has(course.id) && !isAdmin && (
                     <>
                       <div className="absolute inset-0 bg-black/20 pointer-events-none transition-opacity duration-300" />
-                      <div className="absolute top-3 right-3 inline-flex items-center gap-2 bg-white/90 text-[#0D3B4A] text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm pointer-events-none">
+                      <div className="absolute top-3 right-3 inline-flex items-center gap-2 bg-white/90 text-primary text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm pointer-events-none">
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -337,29 +337,29 @@ export default function CoursesPage() {
                 </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] text-[#0D3B4A] bg-[#E0F7FA] px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] text-primary bg-border-light px-2 py-0.5 rounded-full">
                       {course.category}
                     </span>
                   </div>
-                  <h3 className="font-bold text-[#0D3B4A] mb-1.5 line-clamp-2 group-hover:text-[#FF1744] transition-colors">
+                  <h3 className="font-bold text-primary mb-1.5 line-clamp-2 group-hover:text-secondary transition-colors">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-[#4A7278] line-clamp-2 leading-relaxed mb-4">
+                  <p className="text-sm text-text-muted line-clamp-2 leading-relaxed mb-4">
                     {course.shortDescription}
                   </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-[#E0F7FA]">
+                  <div className="flex items-center justify-between pt-3 border-t border-border-light">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#00BCD4] to-[#FF1744] flex items-center justify-center text-[10px] text-white font-bold">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[10px] text-white font-bold">
                         {course.instructor?.fullName?.charAt(0) || "A"}
                       </div>
-                      <span className="text-xs text-[#4A7278] truncate max-w-[100px]">
+                      <span className="text-xs text-text-muted truncate max-w-[100px]">
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="text-sm font-semibold text-[#0D3B4A]">
+                      <div className="text-sm font-semibold text-primary">
                         {enrolledIds.has(course.id) ? (
-                          <span className="inline-flex items-center gap-2 text-[#00BCD4]">
+                          <span className="inline-flex items-center gap-2 text-primary">
                             <svg
                               className="w-4 h-4"
                               fill="none"
@@ -393,7 +393,7 @@ export default function CoursesPage() {
                             Pending admin review
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-2 text-[#FF1744]">
+                          <span className="inline-flex items-center gap-2 text-secondary">
                             <svg
                               className="w-4 h-4"
                               fill="none"
@@ -417,14 +417,14 @@ export default function CoursesPage() {
                       {isAdmin ? (
                         <Link
                           href={`/courses/${course.id}`}
-                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
+                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
                         >
                           View course
                         </Link>
                       ) : enrolledIds.has(course.id) ? (
                         <Link
                           href={`/courses/${course.id}`}
-                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
+                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
                         >
                           Continue learning
                         </Link>
@@ -439,7 +439,7 @@ export default function CoursesPage() {
                       ) : token ? (
                         <Link
                           href={`/auth/register/payment?${userId ? `userId=${userId}&` : ""}redirect=/courses/${course.id}&courseId=${course.id}`}
-                          className="mt-0 inline-flex items-center justify-center bg-white border border-[#FFCDD2] text-[#FF1744] text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
+                          className="mt-0 inline-flex items-center justify-center bg-white border border-border-light text-secondary text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
                         >
                           <svg
                             className="w-4 h-4 mr-2"
@@ -461,7 +461,7 @@ export default function CoursesPage() {
                           href={`/auth/register?redirect=${encodeURIComponent(
                             `/auth/register/payment?courseId=${course.id}&redirect=/courses/${course.id}`,
                           )}`}
-                          className="mt-0 inline-flex items-center justify-center bg-white border border-[#FFCDD2] text-[#FF1744] text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
+                          className="mt-0 inline-flex items-center justify-center bg-white border border-border-light text-secondary text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
                         >
                           Register and pay to take course
                         </Link>
@@ -473,7 +473,7 @@ export default function CoursesPage() {
                     <div className="absolute inset-0 flex items-start justify-end p-3 pointer-events-none">
                       <div className="bg-white/80 rounded-full p-2 shadow">
                         <svg
-                          className="w-5 h-5 text-[#FF1744]"
+                          className="w-5 h-5 text-secondary"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"

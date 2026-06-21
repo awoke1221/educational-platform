@@ -61,7 +61,7 @@ export default function VerifyPage() {
             <p className="text-gray-500 text-sm">{error}</p>
           </div>
         ) : cert ? (
-          <div className="bg-white rounded-2xl shadow-sm p-8 text-center border-2 border-[#C9952A]">
+          <div className="bg-white rounded-2xl shadow-sm p-8 text-center border-2 border-secondary">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">✓</span>
             </div>

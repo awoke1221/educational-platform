@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import PaymentService from "@/lib/payment";
 import {
   successResponse,
@@ -168,3 +168,4 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+

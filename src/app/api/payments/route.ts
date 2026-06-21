@@ -7,7 +7,7 @@ import {
   localPaymentSchema,
   diasporaPaymentSchema,
 } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import PaymentService from "@/lib/payment";
 import {
   successResponse,
@@ -149,3 +149,4 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+

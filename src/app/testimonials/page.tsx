@@ -111,17 +111,17 @@ function VideoTestimonialsSection() {
         {videoTestimonials.map((testimonial) => (
           <div
             key={testimonial.id}
-            className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#E0F7FA] hover:border-[#00BCD4] cursor-pointer"
+            className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border-light hover:border-primary cursor-pointer"
             onClick={() => setSelectedVideo(testimonial)}
           >
-            <div className="relative h-48 bg-gradient-to-br from-[#00BCD4] to-[#FF1744] overflow-hidden">
+            <div className="relative h-48 bg-gradient-to-br from-primary to-secondary overflow-hidden">
               <video
                 src={testimonial.videoUrl}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 poster={`https://res.cloudinary.com/dikm1x43c/video/upload/c_fill,h_192,q_auto,w_340,so_0s/${testimonial.cloudinaryPublicId}.jpg`}
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                <button className="bg-white/90 hover:bg-white text-[#FF1744] p-3 rounded-full transition-all transform group-hover:scale-110">
+                <button className="bg-white/90 hover:bg-white text-secondary p-3 rounded-full transition-all transform group-hover:scale-110">
                   <svg
                     className="w-6 h-6"
                     fill="currentColor"
@@ -136,11 +136,13 @@ function VideoTestimonialsSection() {
               </div>
             </div>
             <div className="p-5">
-              <h3 className="font-bold text-[#0D3B4A] mb-1">
+              <h3 className="font-bold text-primary mb-1">
                 {testimonial.name}
               </h3>
-              <p className="text-sm text-[#4A7278] mb-3">{testimonial.title}</p>
-              <p className="text-xs text-[#00BCD4] font-medium">ቪዲዮ ምስክርነት</p>
+              <p className="text-sm text-text-muted mb-3">
+                {testimonial.title}
+              </p>
+              <p className="text-xs text-primary font-medium">ቪዲዮ ምስክርነት</p>
             </div>
           </div>
         ))}
@@ -168,9 +170,9 @@ function VideoTestimonialsSection() {
             </div>
 
             {/* Info Section */}
-            <div className="bg-gradient-to-br from-[#0D3B4A] to-[#1a505a] p-6 text-white">
+            <div className="bg-gradient-to-br from-primary to-primary-light p-6 text-white">
               <h2 className="text-2xl font-bold mb-2">{selectedVideo.name}</h2>
-              <p className="text-[#00BCD4] font-medium mb-3">
+              <p className="text-secondary font-medium mb-3">
                 {selectedVideo.title}
               </p>
               <p className="text-gray-300 text-sm">
@@ -180,7 +182,7 @@ function VideoTestimonialsSection() {
               {/* Close Button */}
               <button
                 onClick={() => setSelectedVideo(null)}
-                className="mt-4 bg-[#FF1744] hover:bg-[#ff2a5e] text-white px-6 py-2.5 rounded-lg font-semibold transition-all inline-flex items-center gap-2"
+                className="mt-4 bg-secondary hover:brightness-90 text-white px-6 py-2.5 rounded-lg font-semibold transition-all inline-flex items-center gap-2"
               >
                 <svg
                   className="w-4 h-4"
@@ -273,13 +275,13 @@ function TextTestimonialsSection() {
       {textTestimonials.map((testimonial) => (
         <div
           key={testimonial.id}
-          className="group bg-gradient-to-br from-white to-[#F0FEFF] rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-[#E0F7FA] hover:border-[#00BCD4]"
+          className="group bg-gradient-to-br from-white to-surface rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-border-light hover:border-primary"
         >
           <div className="flex items-center gap-1 mb-3">
             {[...Array(5)].map((_, i) => (
               <svg
                 key={i}
-                className={`w-4 h-4 ${i < testimonial.rating ? "text-[#FF1744]" : "text-gray-300"}`}
+                className={`w-4 h-4 ${i < testimonial.rating ? "text-secondary" : "text-gray-300"}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -287,15 +289,15 @@ function TextTestimonialsSection() {
               </svg>
             ))}
           </div>
-          <p className="text-[#4A7278] text-sm leading-relaxed mb-4 italic">
+          <p className="text-text-muted text-sm leading-relaxed mb-4 italic">
             "{testimonial.text}"
           </p>
-          <div className="border-t border-[#E0F7FA] pt-4">
-            <p className="font-semibold text-[#0D3B4A]">{testimonial.name}</p>
-            <p className="text-xs text-[#00BCD4] font-medium">
+          <div className="border-t border-border-light pt-4">
+            <p className="font-semibold text-primary">{testimonial.name}</p>
+            <p className="text-xs text-primary font-medium">
               {testimonial.title}
             </p>
-            <p className="text-xs text-[#4A7278]">{testimonial.company}</p>
+            <p className="text-xs text-text-muted">{testimonial.company}</p>
           </div>
         </div>
       ))}
@@ -386,9 +388,9 @@ function ImageTestimonialsSection() {
       {imageTestimonials.map((testimonial) => (
         <div
           key={testimonial.id}
-          className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#E0F7FA] hover:border-[#00BCD4]"
+          className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border-light hover:border-primary"
         >
-          <div className="relative h-64 bg-gradient-to-br from-[#00BCD4] to-[#FF1744] overflow-hidden">
+          <div className="relative h-64 bg-gradient-to-br from-primary to-secondary overflow-hidden">
             <img
               src={testimonial.image}
               alt={testimonial.name}
@@ -401,7 +403,7 @@ function ImageTestimonialsSection() {
               {[...Array(5)].map((_, i) => (
                 <svg
                   key={i}
-                  className={`w-3 h-3 ${i < testimonial.rating ? "text-[#FF1744]" : "text-gray-300"}`}
+                  className={`w-3 h-3 ${i < testimonial.rating ? "text-secondary" : "text-gray-300"}`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -409,14 +411,14 @@ function ImageTestimonialsSection() {
                 </svg>
               ))}
             </div>
-            <p className="text-sm text-[#4A7278] line-clamp-3 mb-3 italic">
+            <p className="text-sm text-text-muted line-clamp-3 mb-3 italic">
               "{testimonial.text}"
             </p>
-            <div className="border-t border-[#E0F7FA] pt-3">
-              <p className="font-bold text-[#0D3B4A] text-sm">
+            <div className="border-t border-border-light pt-3">
+              <p className="font-bold text-primary text-sm">
                 {testimonial.name}
               </p>
-              <p className="text-xs text-[#00BCD4] font-medium">
+              <p className="text-xs text-primary font-medium">
                 {testimonial.title}
               </p>
             </div>
@@ -434,12 +436,12 @@ export default function TestimonialsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F0FEFF]">
+    <div className="min-h-screen bg-surface">
       {/* Hero Banner */}
-      <section className="relative bg-gradient-to-br from-[#00BCD4] via-[#0097A7] to-[#FF1744] overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary via-primary-light to-secondary overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-[#FF1744]/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-secondary/10 blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-white/5 blur-3xl" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
@@ -478,7 +480,7 @@ export default function TestimonialsPage() {
             </div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#F0FEFF] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface to-transparent" />
       </section>
 
       {/* Tab Navigation */}
@@ -494,8 +496,8 @@ export default function TestimonialsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all duration-300 ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white shadow-lg"
-                  : "bg-white text-[#0D3B4A] border-2 border-[#E0F7FA] hover:border-[#00BCD4]"
+                  ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg"
+                  : "bg-white text-primary border-2 border-border-light hover:border-primary"
               }`}
             >
               <span>{tab.icon}</span>
@@ -509,8 +511,8 @@ export default function TestimonialsPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {activeTab === "video" && (
           <div className="animate-fadeIn">
-            <h2 className="text-2xl font-bold text-[#0D3B4A] mb-8 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-[#00BCD4] to-[#FF1744] rounded-full inline-block" />
+            <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
+              <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
               ቪዲዮ ምስክርነቶች
             </h2>
             <VideoTestimonialsSection />
@@ -519,8 +521,8 @@ export default function TestimonialsPage() {
 
         {activeTab === "text" && (
           <div className="animate-fadeIn">
-            <h2 className="text-2xl font-bold text-[#0D3B4A] mb-8 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-[#00BCD4] to-[#FF1744] rounded-full inline-block" />
+            <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
+              <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
               ጽሑፍ ምስክርነቶች
             </h2>
             <TextTestimonialsSection />
@@ -529,8 +531,8 @@ export default function TestimonialsPage() {
 
         {activeTab === "image" && (
           <div className="animate-fadeIn">
-            <h2 className="text-2xl font-bold text-[#0D3B4A] mb-8 flex items-center gap-2">
-              <span className="w-1.5 h-8 bg-gradient-to-b from-[#00BCD4] to-[#FF1744] rounded-full inline-block" />
+            <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
+              <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
               ምስል ምስክርነቶች
             </h2>
             <ImageTestimonialsSection />
@@ -539,7 +541,7 @@ export default function TestimonialsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-[#00BCD4] to-[#FF1744] py-16">
+      <section className="bg-gradient-to-r from-primary to-secondary py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
             ወደ ምስክርነት ታሪክ ዶ?
@@ -549,7 +551,7 @@ export default function TestimonialsPage() {
           </p>
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 bg-white text-[#FF1744] px-8 py-3.5 rounded-full font-semibold hover:shadow-lg transition-all"
+            className="inline-flex items-center gap-2 bg-white text-secondary px-8 py-3.5 rounded-full font-semibold hover:shadow-lg transition-all"
           >
             <svg
               className="w-5 h-5"
@@ -580,10 +582,10 @@ export default function TestimonialsPage() {
           ].map((stat, i) => (
             <div
               key={i}
-              className="text-center p-6 rounded-xl bg-gradient-to-br from-[#E0F7FA] to-[#FFF3E0] border border-[#00BCD4]/20"
+              className="text-center p-6 rounded-xl bg-gradient-to-br from-border-light to-accent-light border border-primary/20"
             >
-              <p className="text-[#4A7278] text-sm mb-2">{stat.label}</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-[#00BCD4] to-[#FF1744] bg-clip-text text-transparent">
+              <p className="text-text-muted text-sm mb-2">{stat.label}</p>
+              <p className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 {stat.value}
               </p>
             </div>

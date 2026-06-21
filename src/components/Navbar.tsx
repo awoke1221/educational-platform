@@ -88,7 +88,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-white to-[#F0FEFF] border-b-2 border-[#00BCD4] sticky top-0 z-50 shadow-sm">
+    <nav className="bg-gradient-to-r from-surface-warm to-accent-light border-b-2 border-secondary sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
@@ -96,45 +96,16 @@ export default function Navbar() {
             href="/"
             className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity"
           >
-            <svg
-              width={40}
-              height={40}
-              className="h-8 sm:h-10 w-8 sm:w-10 rounded-full"
-              viewBox="0 0 200 200"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="100"
-                cy="100"
-                r="100"
-                fill="#FFFFFF"
-                stroke="#F0F0F0"
-                strokeWidth="2"
+            <span className="relative h-10 w-10 sm:h-12 sm:w-12 overflow-hidden rounded-full bg-logo-bg shadow-sm ring-1 ring-border-light">
+              <Image
+                src="/logo-adlms.jpg"
+                alt="AD LMS"
+                fill
+                sizes="48px"
+                className="object-cover"
               />
-              <circle
-                cx="100"
-                cy="100"
-                r="95"
-                fill="none"
-                stroke="#00BCD4"
-                strokeWidth="3"
-                opacity="0.8"
-              />
-              <path
-                d="M 100 20 A 80 80 0 0 1 156.57 156.57"
-                fill="none"
-                stroke="#FF1744"
-                strokeWidth="4"
-                strokeLinecap="round"
-                opacity="0.9"
-              />
-              <polygon
-                points="85,75 85,125 120,100"
-                fill="#FF1744"
-                opacity="0.95"
-              />
-            </svg>
-            <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-[#00BCD4] to-[#FF1744] bg-clip-text text-transparent hidden sm:block">
+            </span>
+            <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent hidden sm:block">
               AD LMS
             </span>
           </Link>
@@ -143,13 +114,13 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3 sm:gap-6">
             <Link
               href="/courses"
-              className="text-xs sm:text-sm text-[#0D3B4A] hover:text-[#00BCD4] transition-colors font-medium"
+              className="text-xs sm:text-sm text-primary hover:text-secondary transition-colors font-medium"
             >
               ኮርሶች
             </Link>
             <Link
               href="/testimonials"
-              className="text-xs sm:text-sm text-[#0D3B4A] hover:text-[#00BCD4] transition-colors font-medium"
+              className="text-xs sm:text-sm text-primary hover:text-secondary transition-colors font-medium"
             >
               ምስክርነቶች
             </Link>
@@ -162,7 +133,7 @@ export default function Navbar() {
                   className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors"
                 >
                   {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00BCD4] to-[#FF1744] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center text-white text-xs font-bold ring-2 ring-white shadow-sm">
                     {getInitials(user.fullName)}
                   </div>
                   {/* Name (hidden on mobile) */}
@@ -285,13 +256,13 @@ export default function Navbar() {
               <div className="hidden md:flex items-center gap-3 sm:gap-6">
                 <Link
                   href="/auth/login"
-                  className="text-xs sm:text-sm text-[#0D3B4A] hover:text-[#00BCD4] transition-colors font-medium"
+                  className="text-xs sm:text-sm text-primary hover:text-secondary transition-colors font-medium"
                 >
                   ግባ
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="text-xs sm:text-sm bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:shadow-lg transition-all font-medium whitespace-nowrap"
+                  className="text-xs sm:text-sm bg-gradient-to-r from-secondary to-accent text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:shadow-lg transition-all font-medium whitespace-nowrap"
                 >
                   ተመዝገብ
                 </Link>

@@ -312,25 +312,25 @@ export default function NewCoursePage() {
             />
           </svg>
         </Link>
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00BCD4] to-[#FF1744] bg-clip-text text-transparent">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Create New Course
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Cloudinary Video Upload */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E0F7FA]">
-          <h3 className="font-semibold text-[#0D3B4A] mb-4">🎬 Upload Video</h3>
-          <div className="border-2 border-dashed border-[#E0F7FA] rounded-xl p-8 text-center hover:border-[#00BCD4]/50 transition-colors">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-border-light">
+          <h3 className="font-semibold text-primary mb-4">🎬 Upload Video</h3>
+          <div className="border-2 border-dashed border-border-light rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
             {uploading ? (
               <div>
-                <div className="w-full bg-[#F0FEFF] rounded-full h-3 mb-3">
+                <div className="w-full bg-surface rounded-full h-3 mb-3">
                   <div
-                    className="bg-gradient-to-r from-[#00BCD4] to-[#FF1744] h-3 rounded-full transition-all"
+                    className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
-                <p className="text-sm text-[#4A7278]">
+                <p className="text-sm text-text-muted">
                   Uploading video... {uploadProgress}%
                 </p>
               </div>
@@ -399,13 +399,11 @@ export default function NewCoursePage() {
         </div>
 
         {/* Course Details */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E0F7FA] space-y-4">
-          <h3 className="font-semibold text-[#0D3B4A] mb-2">
-            📝 Course Details
-          </h3>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-border-light space-y-4">
+          <h3 className="font-semibold text-primary mb-2">📝 Course Details</h3>
 
           <div>
-            <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+            <label className="block text-sm font-medium text-primary mb-1">
               Course Title *
             </label>
             <input
@@ -417,7 +415,7 @@ export default function NewCoursePage() {
               className={`w-full border-2 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 transition-all ${
                 touched.title && fieldErrors.title
                   ? "border-red-400 bg-red-50 focus:ring-red-300 focus:border-red-400"
-                  : "border-gray-200 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4]"
+                  : "border-gray-200 focus:ring-primary/30 focus:border-primary"
               }`}
             />
             {touched.title && fieldErrors.title && (
@@ -440,7 +438,7 @@ export default function NewCoursePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+              <label className="block text-sm font-medium text-primary mb-1">
                 Price (ETB)
               </label>
               <input
@@ -453,7 +451,7 @@ export default function NewCoursePage() {
                 className={`w-full border-2 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 transition-all ${
                   touched.price && fieldErrors.price
                     ? "border-red-400 bg-red-50 focus:ring-red-300 focus:border-red-400"
-                    : "border-gray-200 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4]"
+                    : "border-gray-200 focus:ring-primary/30 focus:border-primary"
                 }`}
               />
               {touched.price && fieldErrors.price && (
@@ -474,14 +472,14 @@ export default function NewCoursePage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+              <label className="block text-sm font-medium text-primary mb-1">
                 Level
               </label>
               <select
                 name="level"
                 value={form.level}
                 onChange={handleChange}
-                className="w-full border-2 border-[#E0F7FA] rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4] bg-[#F0FEFF]"
+                className="w-full border-2 border-border-light rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-surface"
               >
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
@@ -491,7 +489,7 @@ export default function NewCoursePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+            <label className="block text-sm font-medium text-primary mb-1">
               Category
             </label>
             <input
@@ -503,7 +501,7 @@ export default function NewCoursePage() {
               className={`w-full border-2 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 transition-all ${
                 touched.category && fieldErrors.category
                   ? "border-red-400 bg-red-50 focus:ring-red-300 focus:border-red-400"
-                  : "border-gray-200 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4]"
+                  : "border-gray-200 focus:ring-primary/30 focus:border-primary"
               }`}
             />
             {touched.category && fieldErrors.category && (
@@ -525,7 +523,7 @@ export default function NewCoursePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+            <label className="block text-sm font-medium text-primary mb-1">
               Short Description
             </label>
             <input
@@ -536,7 +534,7 @@ export default function NewCoursePage() {
               className={`w-full border-2 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 transition-all ${
                 touched.shortDescription && fieldErrors.shortDescription
                   ? "border-red-400 bg-red-50 focus:ring-red-300 focus:border-red-400"
-                  : "border-gray-200 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4]"
+                  : "border-gray-200 focus:ring-primary/30 focus:border-primary"
               }`}
             />
             {touched.shortDescription && fieldErrors.shortDescription && (
@@ -558,7 +556,7 @@ export default function NewCoursePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+            <label className="block text-sm font-medium text-primary mb-1">
               Detailed Description
             </label>
             <textarea
@@ -570,7 +568,7 @@ export default function NewCoursePage() {
               className={`w-full border-2 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 transition-all ${
                 touched.description && fieldErrors.description
                   ? "border-red-400 bg-red-50 focus:ring-red-300 focus:border-red-400"
-                  : "border-gray-200 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4]"
+                  : "border-gray-200 focus:ring-primary/30 focus:border-primary"
               }`}
             />
             {touched.description && fieldErrors.description && (
@@ -599,7 +597,7 @@ export default function NewCoursePage() {
             disabled={
               loading || !form.title || Object.keys(fieldErrors).length > 0
             }
-            className="flex-1 bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Creating..." : "Create Course"}
           </button>

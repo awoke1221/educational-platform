@@ -3,7 +3,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { updateCourseSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,

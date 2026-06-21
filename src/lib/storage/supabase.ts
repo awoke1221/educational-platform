@@ -3,7 +3,7 @@
 // Professional implementation with signed URLs, bucket management, and validation
 
 import { randomUUID } from "crypto";
-import { supabaseAdmin, getSupabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin, getSupabaseAdmin  } from "@/lib/db/supabaseAdmin";
 
 // ============================================
 // Configuration
@@ -327,3 +327,4 @@ export class StorageService {
 }
 
 export default StorageService;
+

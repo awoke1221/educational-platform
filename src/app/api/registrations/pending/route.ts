@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import { requireRole } from "@/lib/auth/middleware";
 
 export async function GET(request: NextRequest) {
@@ -74,3 +74,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
+

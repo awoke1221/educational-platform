@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { registerSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import { jwtService } from "@/lib/auth/jwt";
 import { passwordService } from "@/lib/auth/password";
 
@@ -30,21 +30,17 @@ export async function POST(request: NextRequest) {
     const { username, email, fullName, phoneNumber, password } =
       validation.data;
 
-    // ============================================
-    // STEP 2: Check Password Strength
-    // ============================================
-    const passwordStrength = passwordService.validatePasswordStrength(password);
-
-    if (!passwordStrength.isValid) {
-      return NextResponse.json(
-        {
-          error: "Password does not meet security requirements",
-          issues: passwordStrength.errors,
-          suggestions: passwordStrength.suggestions,
-        },
-        { status: 400 },
-      );
-    }
+    const normalizedPhone = phoneNumber.trim();
+    const sanitizedBaseUsername = (username?.trim().toLowerCase() || "")
+      .replace(/[^a-z0-9_-]/g, "")
+      .slice(0, 50);
+    const generatedUsername =
+      sanitizedBaseUsername || `user${normalizedPhone.replace(/\D/g, "")}`;
+    const finalUsername = generatedUsername || `user${Date.now()}`;
+    const finalEmail = (
+      email?.trim().toLowerCase() || `${finalUsername}@phone.local`
+    ).slice(0, 255);
+    const finalFullName = fullName?.trim() || normalizedPhone;
 
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -58,8 +54,10 @@ export async function POST(request: NextRequest) {
     // ============================================
     const { data: existingUser, error: findError } = await supabaseAdmin!
       .from("User")
-      .select("id, email, username")
-      .or(`email.eq.${email.toLowerCase()},username.eq.${username}`)
+      .select("id, email, username, phoneNumber")
+      .or(
+        `email.eq.${finalEmail},username.eq.${finalUsername},phoneNumber.eq.${normalizedPhone}`,
+      )
       .maybeSingle();
 
     if (findError) {
@@ -72,7 +70,11 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       const conflictField =
-        existingUser.email === email.toLowerCase() ? "email" : "username";
+        existingUser.phoneNumber === normalizedPhone
+          ? "phoneNumber"
+          : existingUser.email === finalEmail
+            ? "email"
+            : "username";
       return NextResponse.json(
         {
           error: `This ${conflictField} is already registered`,
@@ -85,7 +87,9 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 4: Hash Password with bcrypt
     // ============================================
-    const passwordHash = await passwordService.hashPassword(password);
+    const passwordHash = password
+      ? await passwordService.hashPassword(password)
+      : "";
 
     // ============================================
     // STEP 5: Create User in Database
@@ -94,10 +98,10 @@ export async function POST(request: NextRequest) {
       .from("User")
       .insert({
         id: crypto.randomUUID(),
-        username: username.toLowerCase(),
-        email: email.toLowerCase(),
-        fullName,
-        phoneNumber: phoneNumber || "",
+        username: finalUsername.toLowerCase(),
+        email: finalEmail,
+        fullName: finalFullName,
+        phoneNumber: normalizedPhone,
         passwordHash,
         role: "user",
         isActive: true,
@@ -206,3 +210,4 @@ function getDeviceInfo(request: NextRequest): {
     ipAddress,
   };
 }
+

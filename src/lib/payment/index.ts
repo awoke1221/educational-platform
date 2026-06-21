@@ -1,7 +1,7 @@
 // src/lib/payment/index.ts
 // Payment Service - Unified Payment Processing
 
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import LakiPayService from "./lakiPay";
 
 // ============================================
@@ -549,3 +549,4 @@ export class PaymentService {
 }
 
 export default PaymentService;
+

@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { jwtService } from "@/lib/auth/jwt";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,3 +79,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Logout failed" }, { status: 500 });
   }
 }
+

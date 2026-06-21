@@ -271,37 +271,18 @@ export const validateLoginForm = (data: {
  * Validate registration form
  */
 export const validateRegisterForm = (data: {
-  fullName: string;
-  username: string;
-  email: string;
+  fullName?: string;
+  username?: string;
+  email?: string;
   phoneNumber?: string;
-  password: string;
-  confirmPassword: string;
+  password?: string;
+  confirmPassword?: string;
 }): ValidationResult => {
   const errors: ValidationError[] = [];
 
-  const fullNameValidation = validateFullName(data.fullName);
-  if (!fullNameValidation.valid) {
-    errors.push({
-      field: "fullName",
-      message: fullNameValidation.message || "",
-    });
-  }
-
-  const usernameValidation = validateUsername(data.username);
-  if (!usernameValidation.valid) {
-    errors.push({
-      field: "username",
-      message: usernameValidation.message || "",
-    });
-  }
-
-  const emailValidation = validateEmail(data.email);
-  if (!emailValidation.valid) {
-    errors.push({ field: "email", message: emailValidation.message || "" });
-  }
-
-  if (data.phoneNumber) {
+  if (!data.phoneNumber || data.phoneNumber.trim() === "") {
+    errors.push({ field: "phoneNumber", message: "ስልክ ቁጥር አስገባ" });
+  } else {
     const phoneValidation = validatePhoneNumber(data.phoneNumber);
     if (!phoneValidation.valid) {
       errors.push({
@@ -311,23 +292,52 @@ export const validateRegisterForm = (data: {
     }
   }
 
-  const passwordValidation = validatePassword(data.password);
-  if (!passwordValidation.valid) {
-    errors.push({
-      field: "password",
-      message: passwordValidation.message || "",
-    });
+  if (data.username) {
+    const usernameValidation = validateUsername(data.username);
+    if (!usernameValidation.valid) {
+      errors.push({
+        field: "username",
+        message: usernameValidation.message || "",
+      });
+    }
   }
 
-  const passwordMatchValidation = validatePasswordMatch(
-    data.password,
-    data.confirmPassword,
-  );
-  if (!passwordMatchValidation.valid) {
-    errors.push({
-      field: "confirmPassword",
-      message: passwordMatchValidation.message || "",
-    });
+  if (data.fullName) {
+    const fullNameValidation = validateFullName(data.fullName);
+    if (!fullNameValidation.valid) {
+      errors.push({
+        field: "fullName",
+        message: fullNameValidation.message || "",
+      });
+    }
+  }
+
+  if (data.email) {
+    const emailValidation = validateEmail(data.email);
+    if (!emailValidation.valid) {
+      errors.push({ field: "email", message: emailValidation.message || "" });
+    }
+  }
+
+  if (data.password || data.confirmPassword) {
+    const passwordValidation = validatePassword(data.password || "");
+    if (!passwordValidation.valid) {
+      errors.push({
+        field: "password",
+        message: passwordValidation.message || "",
+      });
+    }
+
+    const passwordMatchValidation = validatePasswordMatch(
+      data.password || "",
+      data.confirmPassword || "",
+    );
+    if (!passwordMatchValidation.valid) {
+      errors.push({
+        field: "confirmPassword",
+        message: passwordMatchValidation.message || "",
+      });
+    }
   }
 
   return {

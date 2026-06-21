@@ -93,7 +93,7 @@ export default function AdminUsersPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Link
           href="/auth/login"
-          className="bg-[#1B2A4A] text-white px-6 py-3 rounded-lg"
+          className="bg-primary text-white px-6 py-3 rounded-lg"
         >
           Login
         </Link>
@@ -105,12 +105,12 @@ export default function AdminUsersPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B2A4A]">User Management</h1>
+          <h1 className="text-2xl font-bold text-primary">User Management</h1>
           <p className="text-sm text-gray-500">{total} users found</p>
         </div>
         <Link
           href="/admin"
-          className="text-sm text-gray-500 hover:text-[#1B2A4A]"
+          className="text-sm text-gray-500 hover:text-primary"
         >
           ← Back to Admin
         </Link>
@@ -122,7 +122,7 @@ export default function AdminUsersPage() {
           <input
             type="text"
             placeholder="Search users..."
-            className="flex-1 min-w-[200px] border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9952A]/30"
+            className="flex-1 min-w-[200px] border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/30"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
                   >
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B2A4A] to-[#2C3E6B] flex items-center justify-center text-white text-xs font-bold">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-white text-xs font-bold">
                           {user.fullName?.charAt(0) || "?"}
                         </div>
                         <div>
@@ -287,7 +287,7 @@ export default function AdminUsersPage() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="text-sm text-gray-500 hover:text-[#1B2A4A] disabled:opacity-30"
+              className="text-sm text-gray-500 hover:text-primary disabled:opacity-30"
             >
               ← Previous
             </button>
@@ -295,7 +295,7 @@ export default function AdminUsersPage() {
             <button
               disabled={page * limit >= total}
               onClick={() => setPage((p) => p + 1)}
-              className="text-sm text-gray-500 hover:text-[#1B2A4A] disabled:opacity-30"
+              className="text-sm text-gray-500 hover:text-primary disabled:opacity-30"
             >
               Next →
             </button>
@@ -309,9 +309,7 @@ export default function AdminUsersPage() {
           href="/admin/courses"
           className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
         >
-          <h3 className="font-semibold text-[#1B2A4A] mb-1">
-            Course Management
-          </h3>
+          <h3 className="font-semibold text-primary mb-1">Course Management</h3>
           <p className="text-sm text-gray-400">
             Create, edit and publish courses
           </p>
@@ -320,7 +318,7 @@ export default function AdminUsersPage() {
           href="/admin"
           className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
         >
-          <h3 className="font-semibold text-[#1B2A4A] mb-1">Dashboard</h3>
+          <h3 className="font-semibold text-primary mb-1">Dashboard</h3>
           <p className="text-sm text-gray-400">Platform overview</p>
         </Link>
       </div>

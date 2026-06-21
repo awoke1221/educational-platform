@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import { successResponse, errorResponse } from "@/lib/utils/api";
 
 // ============================================
@@ -83,3 +83,4 @@ export async function DELETE(request: NextRequest) {
     return errorResponse("Failed to logout device", 500);
   }
 }
+

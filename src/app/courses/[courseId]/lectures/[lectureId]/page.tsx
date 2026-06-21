@@ -433,7 +433,7 @@ export default function LecturePlayerPage() {
     return (
       <div className="flex items-center justify-center min-h-[80vh] bg-gray-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#1B2A4A] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-500">በመጫን ላይ...</p>
         </div>
       </div>
@@ -476,13 +476,13 @@ export default function LecturePlayerPage() {
               <>
                 <Link
                   href="/auth/login"
-                  className="bg-[#1B2A4A] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#2C3E6B] transition-colors"
+                  className="bg-primary text-white px-6 py-2.5 rounded-lg font-medium hover:bg-primary-light transition-colors"
                 >
                   ግባ
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="bg-[#C9952A] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#b8862a] transition-colors"
+                  className="bg-secondary text-white px-6 py-2.5 rounded-lg font-medium hover:brightness-90 transition-colors"
                 >
                   ተመዝገብ
                 </Link>
@@ -490,7 +490,7 @@ export default function LecturePlayerPage() {
             ) : (
               <Link
                 href={`/courses/${courseId}`}
-                className="bg-[#1B2A4A] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#2C3E6B] transition-colors"
+                className="bg-primary text-white px-6 py-2.5 rounded-lg font-medium hover:bg-primary-light transition-colors"
               >
                 ወደ ኮርሱ ተመለስ
               </Link>
@@ -528,7 +528,7 @@ export default function LecturePlayerPage() {
           <p className="text-gray-500 mb-6">ይህን ቪዲዮ ለማየት በመጀመሪያ ለኮርሱ ይመዝገቡ።</p>
           <Link
             href={`/courses/${courseId}`}
-            className="bg-[#C9952A] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#b8862a] transition-colors"
+            className="bg-secondary text-white px-6 py-2.5 rounded-lg font-medium hover:brightness-90 transition-colors"
           >
             ወደ ኮርሱ ተመለስ
           </Link>
@@ -543,7 +543,7 @@ export default function LecturePlayerPage() {
 
   const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
   const videoUrl =
-    lecture.videoUrl || lecture.signedVideoUrl || lecture.streamingUrl;
+    lecture.videoUrl || lecture.signedVideoUrl || lecture.streamingUrl || "";
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -635,7 +635,7 @@ export default function LecturePlayerPage() {
                 className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer transition-opacity hover:bg-black/50"
                 onClick={togglePlay}
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#C9952A]/90 rounded-full flex items-center justify-center transition-transform hover:scale-110">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-secondary/90 rounded-full flex items-center justify-center transition-transform hover:scale-110">
                   <svg
                     className="w-8 h-8 sm:w-10 sm:h-10 text-white ml-1"
                     fill="currentColor"
@@ -663,10 +663,10 @@ export default function LecturePlayerPage() {
                   onChange={handleSeek}
                   className="w-full h-1 appearance-none bg-gray-600 rounded-full cursor-pointer
                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
-                    [&::-webkit-slider-thumb]:bg-[#C9952A] [&::-webkit-slider-thumb]:rounded-full
+                    [&::-webkit-slider-thumb]:bg-secondary [&::-webkit-slider-thumb]:rounded-full
                     [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-pointer
                     [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3
-                    [&::-moz-range-thumb]:bg-[#C9952A] [&::-moz-range-thumb]:rounded-full
+                    [&::-moz-range-thumb]:bg-secondary [&::-moz-range-thumb]:rounded-full
                     [&::-moz-range-thumb]:border-0"
                   style={{
                     background: `linear-gradient(to right, #C9952A ${progress}%, #4B5563 ${progress}%)`,
@@ -680,7 +680,7 @@ export default function LecturePlayerPage() {
                   {/* Play/Pause */}
                   <button
                     onClick={togglePlay}
-                    className="text-white hover:text-[#C9952A] transition-colors"
+                    className="text-white hover:text-secondary transition-colors"
                   >
                     {isPlaying ? (
                       <svg
@@ -712,7 +712,7 @@ export default function LecturePlayerPage() {
                   <div className="flex items-center gap-1.5 group/vol">
                     <button
                       onClick={toggleMute}
-                      className="text-white hover:text-[#C9952A] transition-colors"
+                      className="text-white hover:text-secondary transition-colors"
                     >
                       {isMuted || volume === 0 ? (
                         <svg
@@ -755,7 +755,7 @@ export default function LecturePlayerPage() {
                   {/* Fullscreen */}
                   <button
                     onClick={toggleFullscreen}
-                    className="text-white hover:text-[#C9952A] transition-colors"
+                    className="text-white hover:text-secondary transition-colors"
                   >
                     <svg
                       className="w-5 h-5"
@@ -792,7 +792,7 @@ export default function LecturePlayerPage() {
               <div className="flex-1 bg-gray-100 rounded-full h-2 max-w-xs">
                 <div
                   className={`h-2 rounded-full transition-all duration-500 ${
-                    isCompleted ? "bg-green-500" : "bg-[#C9952A]"
+                    isCompleted ? "bg-green-500" : "bg-secondary"
                   }`}
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
@@ -815,7 +815,7 @@ export default function LecturePlayerPage() {
             {prevLecture ? (
               <Link
                 href={`/courses/${courseId}/lectures/${prevLecture.id}`}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#1B2A4A] transition-colors group"
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors group"
               >
                 <svg
                   className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
@@ -842,7 +842,7 @@ export default function LecturePlayerPage() {
             {nextLecture ? (
               <Link
                 href={`/courses/${courseId}/lectures/${nextLecture.id}`}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#1B2A4A] transition-colors group"
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition-colors group"
               >
                 <span className="truncate max-w-[120px] sm:max-w-[200px]">
                   {nextLecture.title}
@@ -894,7 +894,7 @@ export default function LecturePlayerPage() {
                     href={`/courses/${courseId}/lectures/${lec.id}`}
                     className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-50 transition-colors hover:bg-gray-50 ${
                       isActive
-                        ? "bg-[#1B2A4A]/5 border-l-2 border-l-[#C9952A]"
+                        ? "bg-primary/5 border-l-2 border-l-secondary"
                         : "border-l-2 border-l-transparent"
                     }`}
                   >
@@ -904,7 +904,7 @@ export default function LecturePlayerPage() {
                         lecCompleted
                           ? "bg-green-100 text-green-700"
                           : isActive
-                            ? "bg-[#C9952A] text-white"
+                            ? "bg-secondary text-white"
                             : "bg-gray-100 text-gray-500"
                       }`}
                     >
@@ -916,7 +916,7 @@ export default function LecturePlayerPage() {
                       <p
                         className={`text-sm leading-snug ${
                           isActive
-                            ? "font-semibold text-[#1B2A4A]"
+                            ? "font-semibold text-primary"
                             : lecCompleted
                               ? "font-medium text-green-700"
                               : "font-medium text-gray-700"
@@ -932,7 +932,7 @@ export default function LecturePlayerPage() {
                           <span className="text-xs text-green-500">ተጠናቋል</span>
                         )}
                         {!lecCompleted && lecPct > 0 && (
-                          <span className="text-xs text-[#C9952A]">
+                          <span className="text-xs text-secondary">
                             {lecPct}%
                           </span>
                         )}
@@ -941,7 +941,7 @@ export default function LecturePlayerPage() {
                       {!lecCompleted && lecPct > 0 && (
                         <div className="w-full bg-gray-100 rounded-full h-1 mt-1.5">
                           <div
-                            className="bg-[#C9952A] h-1 rounded-full"
+                            className="bg-secondary h-1 rounded-full"
                             style={{ width: `${lecPct}%` }}
                           />
                         </div>
@@ -951,7 +951,7 @@ export default function LecturePlayerPage() {
                     {/* Active indicator */}
                     {isActive && (
                       <svg
-                        className="w-4 h-4 text-[#C9952A] flex-shrink-0 mt-0.5"
+                        className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >

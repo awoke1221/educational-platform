@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -257,3 +257,4 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+

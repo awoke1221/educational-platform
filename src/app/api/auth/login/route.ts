@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { loginSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import { jwtService } from "@/lib/auth/jwt";
 import { passwordService } from "@/lib/auth/password";
 
@@ -125,3 +125,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

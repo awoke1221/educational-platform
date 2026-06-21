@@ -62,14 +62,14 @@ export default function ProgressPage() {
       {/* Progress Bar */}
       <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-[#1B2A4A]">የእኔ እድገት</h1>
+          <h1 className="text-xl font-bold text-primary">የእኔ እድገት</h1>
           <span className="text-sm text-gray-500">
             {data.stats.completedLectures}/{data.stats.totalLectures} ተጠናቋል
           </span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-4 mb-2">
           <div
-            className="bg-[#C9952A] h-4 rounded-full transition-all duration-500"
+            className="bg-secondary h-4 rounded-full transition-all duration-500"
             style={{ width: `${data.stats.progressPercentage}%` }}
           />
         </div>
@@ -83,13 +83,13 @@ export default function ProgressPage() {
       {data.nextLecture && data.stats.progressPercentage < 100 && (
         <Link
           href={`/courses/${courseId}/lectures/${data.nextLecture.id}`}
-          className="bg-[#1B2A4A] text-white rounded-xl p-4 mb-6 flex items-center justify-between hover:bg-[#2C3E6B] transition-colors group"
+          className="bg-primary text-white rounded-xl p-4 mb-6 flex items-center justify-between hover:bg-primary-light transition-colors group"
         >
           <div>
             <p className="text-xs text-gray-300">ቀጣይ ትምህርት</p>
             <p className="font-semibold">{data.nextLecture.title}</p>
           </div>
-          <span className="bg-[#C9952A] px-4 py-2 rounded-lg text-sm font-medium group-hover:bg-[#b8862a] transition-colors">
+          <span className="bg-secondary px-4 py-2 rounded-lg text-sm font-medium group-hover:brightness-90 transition-colors">
             ቀጥል →
           </span>
         </Link>

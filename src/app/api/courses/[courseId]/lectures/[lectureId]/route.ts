@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import CloudinaryService from "@/lib/cloudinary";
 import {
   successResponse,

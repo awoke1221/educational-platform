@@ -2,7 +2,7 @@
 // Seed database with initial course and enrollment data
 
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 
 const COURSES = [
   {
@@ -136,3 +136,4 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

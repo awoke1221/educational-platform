@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { jwtService, JWTPayload } from "./jwt";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 
 /**
  * Verify JWT token from Authorization header
@@ -42,7 +42,7 @@ export async function hasRole(
  */
 export async function isUserActive(userId: string): Promise<boolean> {
   try {
-    const { supabaseAdmin } = await import("@/lib/db/supabase");
+    const { supabaseAdmin } = await import("@/lib/db/supabaseAdmin");
     if (!supabaseAdmin) return true; // Default allow if no DB
 
     const { data, error } = await supabaseAdmin!

@@ -2,7 +2,7 @@
 // Certificate Generation & Verification Service
 
 import crypto from "node:crypto";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 
 // ============================================
 // Certificate Types
@@ -303,3 +303,4 @@ export class CertificateService {
 }
 
 export default CertificateService;
+

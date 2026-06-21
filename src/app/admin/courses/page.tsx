@@ -284,7 +284,7 @@ export default function AdminCoursesPage() {
                 />
               </svg>
             </Link>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00BCD4] to-[#FF1744] bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Course Management
             </h1>
           </div>
@@ -294,7 +294,7 @@ export default function AdminCoursesPage() {
         </div>
         <Link
           href="/admin"
-          className="text-sm text-gray-500 hover:text-[#00BCD4] transition-colors"
+          className="text-sm text-gray-500 hover:text-primary transition-colors"
         >
           ← Back to Dashboard
         </Link>
@@ -305,7 +305,7 @@ export default function AdminCoursesPage() {
         <StatCard
           label="Total"
           value={stats.total || total}
-          color="text-[#0D3B4A]"
+          color="text-primary"
         />
         <StatCard
           label="Published"
@@ -344,12 +344,12 @@ export default function AdminCoursesPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search by title or category..."
-                className="w-full pl-9 pr-3 py-2 border-2 border-[#E0F7FA] rounded-lg text-sm focus:ring-2 focus:ring-[#00BCD4]/30 focus:border-[#00BCD4] outline-none bg-[#F0FEFF]"
+                className="w-full pl-9 pr-3 py-2 border-2 border-border-light rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none bg-surface"
               />
             </div>
             <button
               type="submit"
-              className="bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all"
+              className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all"
             >
               Search
             </button>
@@ -371,7 +371,7 @@ export default function AdminCoursesPage() {
                 }}
                 className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   statusFilter === f.value
-                    ? "bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white"
+                    ? "bg-gradient-to-r from-primary to-secondary text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -386,7 +386,7 @@ export default function AdminCoursesPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
-            <div className="w-8 h-8 border-4 border-[#00BCD4] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-gray-500 text-sm">Loading...</p>
           </div>
         ) : courses.length === 0 ? (
@@ -429,7 +429,7 @@ export default function AdminCoursesPage() {
                 <div className="md:col-span-4">
                   <Link
                     href={`/admin/courses/${course.id}`}
-                    className="font-medium text-sm text-[#0D3B4A] hover:text-[#00BCD4] transition-colors line-clamp-1"
+                    className="font-medium text-sm text-primary hover:text-secondary transition-colors line-clamp-1"
                   >
                     {course.title}
                   </Link>
@@ -486,7 +486,7 @@ export default function AdminCoursesPage() {
                 <div className="md:col-span-2 flex justify-end gap-1.5">
                   <Link
                     href={`/admin/courses/${course.id}`}
-                    className="p-1.5 text-gray-400 hover:text-[#FF1744] transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-secondary transition-colors"
                     title="Manage"
                   >
                     <svg

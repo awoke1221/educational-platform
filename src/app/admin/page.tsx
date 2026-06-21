@@ -33,7 +33,7 @@ export default function AdminPage() {
       <div className="text-center py-20">
         <Link
           href="/auth/login"
-          className="bg-[#1B2A4A] text-white px-6 py-3 rounded-lg"
+          className="bg-primary text-white px-6 py-3 rounded-lg"
         >
           Login
         </Link>
@@ -83,7 +83,7 @@ export default function AdminPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B2A4A]">Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold text-primary">Admin Dashboard</h1>
           <p className="text-gray-500 text-sm">
             Platform Administration Center
           </p>
@@ -103,13 +103,13 @@ export default function AdminPage() {
           </Link>
           <Link
             href="/admin/courses"
-            className="text-sm bg-[#1B2A4A] text-white px-4 py-2 rounded-lg hover:bg-[#2C3E6B] transition-colors"
+            className="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-light transition-colors"
           >
             📚 Courses
           </Link>
           <Link
             href="/admin/courses/new"
-            className="text-sm bg-[#C9952A] text-white px-4 py-2 rounded-lg hover:bg-[#b8862a] transition-colors"
+            className="text-sm bg-secondary text-white px-4 py-2 rounded-lg hover:brightness-90 transition-colors"
           >
             ➕ New Course
           </Link>
@@ -119,9 +119,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {sections.map((section, i) => (
           <div key={i} className="bg-white rounded-xl p-5 shadow-sm">
-            <h3 className="font-semibold text-[#1B2A4A] mb-3">
-              {section.title}
-            </h3>
+            <h3 className="font-semibold text-primary mb-3">{section.title}</h3>
             <div className="space-y-2">
               {section.items.map((item, j) => (
                 <div key={j} className="flex justify-between text-sm">
@@ -137,7 +135,7 @@ export default function AdminPage() {
       {/* Recent Activity */}
       {analytics?.recentActivity && (
         <div className="mt-8 bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="font-semibold text-[#1B2A4A] mb-4">Recent Activity</h3>
+          <h3 className="font-semibold text-primary mb-4">Recent Activity</h3>
           {analytics.recentActivity.users?.slice(0, 5).map((u: any) => (
             <div
               key={u.id}

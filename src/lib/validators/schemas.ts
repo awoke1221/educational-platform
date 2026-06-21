@@ -16,28 +16,30 @@ export const registerSchema = z
       .regex(
         /^[a-zA-Z0-9_-]+$/,
         "Username can only contain letters, numbers, underscores, and hyphens",
-      ),
+      )
+      .optional(),
 
-    email: z.string().email("Invalid email address").toLowerCase(),
+    email: z.string().email("Invalid email address").toLowerCase().optional(),
 
     fullName: z
       .string()
       .min(2, "Full name must be at least 2 characters")
-      .max(255, "Full name must not exceed 255 characters"),
+      .max(255, "Full name must not exceed 255 characters")
+      .optional(),
 
     phoneNumber: z
       .string()
-      .regex(/^(\+?\d{1,15})?$/, "Invalid phone number format")
-      .optional(),
+      .regex(/^\+?\d{7,15}$/, "Invalid phone number format"),
 
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .max(128, "Password must not exceed 128 characters"),
+      .max(128, "Password must not exceed 128 characters")
+      .optional(),
 
-    confirmPassword: z.string(),
+    confirmPassword: z.string().optional(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data) => !data.password || data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });

@@ -33,7 +33,7 @@ export default async function Home() {
   return (
     <div>
       {/* Hero - Video Section */}
-      <section className="bg-gradient-to-br from-[#00BCD4] via-[#0097A7] to-[#FF1744] text-white min-h-[calc(100vh-4rem)] flex items-center">
+      <section className="bg-gradient-to-br from-primary via-primary-light to-secondary text-white min-h-[calc(100vh-4rem)] flex items-center">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="flex flex-col items-center gap-8 lg:gap-10">
             <div className="text-center max-w-3xl">
@@ -87,7 +87,7 @@ export default async function Home() {
             <div className="flex justify-center mt-2 w-full max-w-md mx-auto">
               <Link
                 href="/courses"
-                className="bg-[#FF1744] text-white px-8 py-3.5 rounded-lg text-center font-semibold hover:bg-[#FF3366] transition-all shadow-lg hover:shadow-xl w-full"
+                className="bg-secondary text-white px-8 py-3.5 rounded-lg text-center font-semibold hover:brightness-90 transition-all shadow-lg hover:shadow-xl w-full"
               >
                 ኮርሶችን ይመልከቱ
               </Link>

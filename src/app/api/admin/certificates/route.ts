@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import CertificateService from "@/lib/certificate";
 import {
   successResponse,
@@ -157,3 +157,4 @@ export async function DELETE(request: NextRequest) {
     return handleApiError(error);
   }
 }
+

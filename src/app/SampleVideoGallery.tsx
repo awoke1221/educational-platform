@@ -19,7 +19,7 @@ export default function SampleVideoGallery({
   return (
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-[#1B2A4A] mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-2">
           የናሙና ቪዲዮዎች
         </h2>
         <p className="text-gray-500 text-center text-sm mb-10">
@@ -47,7 +47,7 @@ export default function SampleVideoGallery({
                   }
                 />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
-                  <div className="w-12 h-12 bg-[#C9952A]/90 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-secondary/90 rounded-full flex items-center justify-center">
                     <svg
                       className="w-6 h-6 text-white ml-0.5"
                       fill="currentColor"

@@ -124,8 +124,8 @@ export default function CourseDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-[#E0F7FA]">
-        <div className="bg-gradient-to-br from-[#00BCD4] via-[#0097A7] to-[#FF1744] p-8 text-white">
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-border-light">
+        <div className="bg-gradient-to-br from-primary via-primary-light to-secondary p-8 text-white">
           <span className="bg-white/20 backdrop-blur-sm text-xs px-3 py-1 rounded-full text-white font-medium">
             {levelLabels[course.level] || course.level}
           </span>
@@ -153,7 +153,7 @@ export default function CourseDetailPage() {
                   ? `/courses/${courseId}/lectures/${course.lectures[0].id}`
                   : `/progress/${courseId}`
               }
-              className="inline-block mt-4 bg-white text-[#00BCD4] px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+              className="inline-block mt-4 bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
             >
               Continue learning
             </Link>
@@ -180,7 +180,7 @@ export default function CourseDetailPage() {
                   }
                 }}
                 disabled={enrolling}
-                className="bg-white text-[#FF1744] px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                className="bg-white text-secondary px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50"
               >
                 {enrolling
                   ? "በመመዝገብ ላይ..."
@@ -200,12 +200,12 @@ export default function CourseDetailPage() {
         </div>
 
         <div className="p-6">
-          <h2 className="font-semibold text-lg mb-3 text-[#0D3B4A]">ስለ ኮርሱ</h2>
-          <p className="text-[#4A7278] text-sm leading-relaxed whitespace-pre-line">
+          <h2 className="font-semibold text-lg mb-3 text-primary">ስለ ኮርሱ</h2>
+          <p className="text-text-muted text-sm leading-relaxed whitespace-pre-line">
             {course.description}
           </p>
 
-          <h2 className="font-semibold text-lg mt-8 mb-4 text-[#0D3B4A]">
+          <h2 className="font-semibold text-lg mt-8 mb-4 text-primary">
             ትምህርቶች ({course.lectures?.length || 0})
           </h2>
           <div className="space-y-2">
@@ -214,7 +214,7 @@ export default function CourseDetailPage() {
                 key={lec.id}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
                   isEnrolled
-                    ? "bg-gradient-to-r from-[#E0F7FA] to-[#FFF3E0] hover:from-[#B2EBF2] hover:to-[#FFECB3] cursor-pointer"
+                    ? "bg-gradient-to-r from-border-light to-accent-light hover:from-[#D0D8E8] hover:to-[#F5E8C8] cursor-pointer"
                     : "bg-gray-50/50 cursor-default"
                 }`}
                 onClick={() => {
@@ -226,7 +226,7 @@ export default function CourseDetailPage() {
                 <span
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${
                     isEnrolled
-                      ? "bg-gradient-to-br from-[#00BCD4] to-[#FF1744] text-white"
+                      ? "bg-gradient-to-br from-primary to-secondary text-white"
                       : "bg-gray-300 text-gray-500"
                   }`}
                 >
@@ -251,18 +251,18 @@ export default function CourseDetailPage() {
                 <div className="flex-1 min-w-0">
                   <p
                     className={`font-medium text-sm ${
-                      isEnrolled ? "text-[#0D3B4A]" : "text-gray-400"
+                      isEnrolled ? "text-primary" : "text-gray-400"
                     }`}
                   >
                     {lec.title}
                   </p>
-                  <p className="text-xs text-[#4A7278]">
+                  <p className="text-xs text-text-muted">
                     {lec.duration || 0} ደቂቃ
                   </p>
                 </div>
                 {isEnrolled ? (
                   <svg
-                    className="w-4 h-4 text-[#00BCD4] flex-shrink-0"
+                    className="w-4 h-4 text-primary flex-shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -282,7 +282,7 @@ export default function CourseDetailPage() {
               </div>
             ))}
             {(!course.lectures || course.lectures.length === 0) && (
-              <div className="text-center py-8 text-[#4A7278] text-sm">
+              <div className="text-center py-8 text-text-muted text-sm">
                 ምንም ትምህርቶች የሉም
               </div>
             )}

@@ -327,7 +327,7 @@ export default function AdminCourseDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-[#1B2A4A] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-gray-500 text-sm">Loading...</p>
         </div>
       </div>
@@ -340,7 +340,7 @@ export default function AdminCourseDetailPage() {
         <p className="text-gray-500 mb-4">Course not found</p>
         <Link
           href="/admin/courses"
-          className="text-[#1B2A4A] hover:underline text-sm"
+          className="text-primary hover:underline text-sm"
         >
           ← Back to Courses
         </Link>
@@ -386,9 +386,7 @@ export default function AdminCourseDetailPage() {
                 />
               </svg>
             </Link>
-            <h1 className="text-2xl font-bold text-[#1B2A4A]">
-              {course.title}
-            </h1>
+            <h1 className="text-2xl font-bold text-primary">{course.title}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 ml-7">
             <span
@@ -415,7 +413,7 @@ export default function AdminCourseDetailPage() {
         </div>
         <Link
           href={`/courses/${courseId}`}
-          className="text-sm text-[#1B2A4A] hover:underline"
+          className="text-sm text-primary hover:underline"
           target="_blank"
         >
           Open →
@@ -428,7 +426,7 @@ export default function AdminCourseDetailPage() {
           onClick={() => setActiveTab("lectures")}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "lectures"
-              ? "border-[#C9952A] text-[#1B2A4A]"
+              ? "border-secondary text-primary"
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
@@ -438,7 +436,7 @@ export default function AdminCourseDetailPage() {
           onClick={() => setActiveTab("settings")}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "settings"
-              ? "border-[#C9952A] text-[#1B2A4A]"
+              ? "border-secondary text-primary"
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
@@ -468,7 +466,7 @@ export default function AdminCourseDetailPage() {
                     value={newLectureTitle}
                     onChange={(e) => setNewLectureTitle(e.target.value)}
                     placeholder="ለምሳሌ፡ መግቢያ እና መሰረታዊ ፅንሰ ሀሳቦች"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A] outline-none"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                     required
                   />
                 </div>
@@ -481,7 +479,7 @@ export default function AdminCourseDetailPage() {
                     onChange={(e) => setNewLectureDesc(e.target.value)}
                     placeholder="ስለ ምዕራፉ አጭር መግለጫ..."
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A] outline-none resize-none"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
@@ -495,7 +493,7 @@ export default function AdminCourseDetailPage() {
                   <button
                     type="submit"
                     disabled={creating || !newLectureTitle.trim()}
-                    className="px-5 py-2 bg-[#1B2A4A] text-white text-sm font-medium rounded-lg hover:bg-[#2C3E6B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-5 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {creating ? (
                       <span className="flex items-center gap-2">
@@ -511,7 +509,7 @@ export default function AdminCourseDetailPage() {
             ) : (
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="flex items-center gap-2 bg-[#C9952A] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[#b8862a] transition-colors"
+                className="flex items-center gap-2 bg-secondary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:brightness-90 transition-colors"
               >
                 <svg
                   className="w-4 h-4"
@@ -577,7 +575,7 @@ export default function AdminCourseDetailPage() {
                           {/* Lecture Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="w-7 h-7 bg-[#1B2A4A] text-white rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                              <span className="w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
                                 {index + 1}
                               </span>
                               <h3 className="font-semibold text-gray-900 text-sm truncate">
@@ -637,7 +635,7 @@ export default function AdminCourseDetailPage() {
                             {isUploading && (
                               <div className="mt-3 ml-9">
                                 <div className="flex items-center justify-between text-xs mb-1">
-                                  <span className="text-[#C9952A] font-medium">
+                                  <span className="text-secondary font-medium">
                                     ቪዲዮ እየጫነ ነው...
                                   </span>
                                   <span className="text-gray-500">
@@ -646,7 +644,7 @@ export default function AdminCourseDetailPage() {
                                 </div>
                                 <div className="w-full bg-gray-100 rounded-full h-2">
                                   <div
-                                    className="bg-[#C9952A] h-2 rounded-full transition-all duration-300"
+                                    className="bg-secondary h-2 rounded-full transition-all duration-300"
                                     style={{
                                       width: `${uploadState.progress}%`,
                                     }}
@@ -690,7 +688,7 @@ export default function AdminCourseDetailPage() {
                               className={`p-2 rounded-lg transition-colors ${
                                 lecture.cloudinaryPublicId
                                   ? "text-green-600 hover:bg-green-50"
-                                  : "text-gray-400 hover:bg-gray-100 hover:text-[#1B2A4A]"
+                                  : "text-gray-400 hover:bg-gray-100 hover:text-primary"
                               } disabled:opacity-50 disabled:cursor-not-allowed`}
                               title={
                                 lecture.cloudinaryPublicId
@@ -718,7 +716,7 @@ export default function AdminCourseDetailPage() {
                               <Link
                                 href={`/courses/${courseId}/lectures/${lecture.id}`}
                                 target="_blank"
-                                className="p-2 text-gray-400 hover:text-[#1B2A4A] hover:bg-gray-100 rounded-lg transition-colors"
+                                className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
                                 title="ተመልከት"
                               >
                                 <svg
@@ -814,7 +812,7 @@ export default function AdminCourseDetailPage() {
             <Link
               href={`/courses/${courseId}`}
               target="_blank"
-              className="text-sm text-[#1B2A4A] hover:underline"
+              className="text-sm text-primary hover:underline"
             >
               ኮርሱን በይፋ ይመልከቱ →
             </Link>

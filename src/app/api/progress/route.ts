@@ -4,7 +4,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
 import { updateProgressSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -343,3 +343,4 @@ export async function PATCH(request: NextRequest) {
     return handleApiError(error);
   }
 }
+

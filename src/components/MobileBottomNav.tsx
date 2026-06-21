@@ -24,8 +24,8 @@ export default function MobileBottomNav() {
       label: "ቤት",
       icon: (active: boolean) => (
         <svg
-          className={`w-6 h-6 ${active ? "text-[#FF1744]" : "text-gray-600"}`}
-          fill={active ? "#FF1744" : "none"}
+          className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
+          fill={active ? "#C9952A" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -43,8 +43,8 @@ export default function MobileBottomNav() {
       label: "ኮርሶች",
       icon: (active: boolean) => (
         <svg
-          className={`w-6 h-6 ${active ? "text-[#FF1744]" : "text-gray-600"}`}
-          fill={active ? "#FF1744" : "none"}
+          className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
+          fill={active ? "#C9952A" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -62,8 +62,8 @@ export default function MobileBottomNav() {
       label: "አስተያየቶች",
       icon: (active: boolean) => (
         <svg
-          className={`w-6 h-6 ${active ? "text-[#FF1744]" : "text-gray-600"}`}
-          fill={active ? "#FF1744" : "none"}
+          className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
+          fill={active ? "#C9952A" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -81,8 +81,8 @@ export default function MobileBottomNav() {
       label: token ? "ፕሮፋይል" : "ግቤት",
       icon: (active: boolean) => (
         <svg
-          className={`w-6 h-6 ${active ? "text-[#FF1744]" : "text-gray-600"}`}
-          fill={active ? "#FF1744" : "none"}
+          className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
+          fill={active ? "#C9952A" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -108,13 +108,13 @@ export default function MobileBottomNav() {
               href={item.path}
               className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-colors ${
                 active
-                  ? "bg-[#FFF3E0] text-[#FF1744]"
+                  ? "bg-accent-warm text-secondary"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
               {item.icon(active)}
               <span
-                className={`text-xs mt-1 text-center ${active ? "text-[#FF1744] font-semibold" : "text-gray-600"}`}
+                className={`text-xs mt-1 text-center ${active ? "text-secondary font-semibold" : "text-gray-600"}`}
               >
                 {item.label}
               </span>

@@ -268,7 +268,7 @@ export default function AdminRegistrationsPage() {
         </p>
         <a
           href="/auth/login"
-          className="inline-block bg-[#1B2A4A] text-white px-6 py-3 rounded-lg hover:bg-[#2C3E6B] transition-colors"
+          className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-light transition-colors"
         >
           Go to Login
         </a>
@@ -280,7 +280,7 @@ export default function AdminRegistrationsPage() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-[#00BCD4] border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
         <span className="ml-3 text-gray-600">
           Loading pending registrations...
         </span>
@@ -297,7 +297,7 @@ export default function AdminRegistrationsPage() {
           {error.includes("login again") ? (
             <a
               href="/auth/login"
-              className="mt-3 inline-block px-4 py-2 bg-[#1B2A4A] text-white rounded-lg hover:bg-[#2C3E6B]"
+              className="mt-3 inline-block px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light"
             >
               Login Again
             </a>
@@ -369,7 +369,7 @@ export default function AdminRegistrationsPage() {
                         username: it.fullName,
                       })
                     }
-                    className="block w-40 h-32 rounded-lg overflow-hidden border border-gray-200 hover:border-[#00BCD4] transition-colors group"
+                    className="block w-40 h-32 rounded-lg overflow-hidden border border-gray-200 hover:border-primary transition-colors group"
                     title="Click to zoom"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}

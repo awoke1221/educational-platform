@@ -2,7 +2,7 @@
 // Course Categories & Levels API
 
 import { NextRequest } from "next/server";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import { successResponse, handleApiError } from "@/lib/utils/api";
 
 // Helper: count courses with filters
@@ -86,3 +86,4 @@ export async function GET(request: NextRequest) {
     return handleApiError(error);
   }
 }
+

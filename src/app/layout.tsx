@@ -25,14 +25,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="am"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col pb-20 md:pb-0">
+    <html lang="am" className="h-full antialiased" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col pb-20 md:pb-0`}
+      >
         <Navbar />
         <main className="flex-1">{children}</main>
-        <footer className="bg-gradient-to-r from-[#00BCD4] to-[#FF1744] text-white py-6 sm:py-8 mt-auto">
+        <footer className="bg-gradient-to-r from-secondary to-accent text-white py-6 sm:py-8 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs sm:text-sm text-white/90">
             <p>© 2026 AD LMS. ሁሉስ መብት የተጠበቀ ነው።</p>
           </div>

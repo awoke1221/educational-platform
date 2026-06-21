@@ -41,13 +41,13 @@ export const FormField: React.FC<FormFieldProps> = ({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-[#0D3B4A] mb-1">
+      <label className="block text-sm font-medium text-primary mb-1">
         {label} {required && "*"}
       </label>
 
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A7278]">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
             {icon}
           </div>
         )}
@@ -61,7 +61,7 @@ export const FormField: React.FC<FormFieldProps> = ({
               ? "border-red-400 bg-red-50 focus:ring-red-300 focus:border-red-400"
               : isValid
                 ? "border-green-400 bg-green-50 focus:ring-green-300 focus:border-green-400"
-                : "border-[#E0F7FA] bg-[#F0FEFF] focus:ring-[#00BCD4] focus:border-[#00BCD4]"
+                : "border-border-light bg-surface focus:ring-primary focus:border-primary"
           }`}
           placeholder={placeholder}
           value={value}
@@ -96,7 +96,7 @@ export const FormField: React.FC<FormFieldProps> = ({
         )}
       </div>
 
-      {hint && !error && <p className="text-[#4A7278] text-xs mt-1">{hint}</p>}
+      {hint && !error && <p className="text-text-muted text-xs mt-1">{hint}</p>}
 
       {hasError && (
         <p className="text-red-600 text-xs mt-1 flex items-center gap-1">

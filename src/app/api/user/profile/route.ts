@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
 import { updateProfileSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabase";
+import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -114,3 +114,4 @@ export async function PUT(request: NextRequest) {
     return errorResponse("Failed to update profile", 500);
   }
 }
+
