@@ -15,6 +15,12 @@ function createSupabaseAdminClient(): SupabaseClient {
     );
   }
 
+  // The singleton pattern (re-used across all requests within one server instance)
+  // is the connection-pooling mechanism for the JS client — it ensures only one
+  // HTTP client exists per process, preventing connection exhaustion at the
+  // Supabase Kong gateway layer.
+  // Database-level pooling is handled by Supabase's built-in PgBouncer.
+
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,

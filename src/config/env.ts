@@ -194,6 +194,29 @@ export const env = {
     enabled: process.env.RATE_LIMIT_ENABLED !== "false",
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"), // 15 minutes
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"),
+    // Auth-specific limits (override general maxRequests)
+    login: {
+      ipMaxAttempts: parseInt(process.env.RATE_LIMIT_LOGIN_IP_MAX || "10"), // per IP
+      accountMaxAttempts: parseInt(
+        process.env.RATE_LIMIT_LOGIN_ACCOUNT_MAX || "5",
+      ), // per email
+      windowMs: parseInt(process.env.RATE_LIMIT_LOGIN_WINDOW_MS || "900000"),
+    },
+    register: {
+      ipMaxAttempts: parseInt(process.env.RATE_LIMIT_REGISTER_IP_MAX || "5"),
+      emailMaxAttempts: parseInt(
+        process.env.RATE_LIMIT_REGISTER_EMAIL_MAX || "3",
+      ),
+      windowMs: parseInt(
+        process.env.RATE_LIMIT_REGISTER_WINDOW_MS || "3600000",
+      ), // 1 hour
+    },
+  },
+
+  redis: {
+    host: process.env.REDIS_HOST || "localhost",
+    port: parseInt(process.env.REDIS_PORT || "6379", 10),
+    password: process.env.REDIS_PASSWORD || undefined,
   },
 
   // ============================================

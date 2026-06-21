@@ -1,11 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { jwtService } from "@/lib/auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+function getDb() {
+  try {
+    return getSupabaseAdmin();
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,8 +33,16 @@ export async function GET(req: NextRequest) {
 
     const offset = (page - 1) * limit;
 
+    const db = getDb();
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database not configured" },
+        { status: 500 },
+      );
+    }
+
     // Build query
-    let query = supabase
+    let query = db
       .from("User")
       .select("*", { count: "exact" })
       .eq("isApproved", false)
@@ -93,16 +104,21 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
+    const db = getDb();
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database not configured" },
+        { status: 500 },
+      );
+    }
+
     // Update user approval status
     const updateData =
       action === "approve"
         ? { isApproved: true, paymentStatus: "approved" }
         : { paymentStatus: "rejected" };
 
-    const { error } = await supabase
-      .from("User")
-      .update(updateData)
-      .eq("id", userId);
+    const { error } = await db.from("User").update(updateData).eq("id", userId);
 
     if (error) {
       console.error("[ADMIN REGISTRATIONS PATCH]", error);

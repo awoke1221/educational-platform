@@ -3,12 +3,43 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { loginSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { jwtService } from "@/lib/auth/jwt";
 import { passwordService } from "@/lib/auth/password";
+import { env } from "@/config/env";
+import { rateLimit, resetRateLimit } from "@/lib/rateLimiter";
 
 export async function POST(request: NextRequest) {
   try {
+    // ── Rate limit by IP ──────────────────────────────────────────
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "127.0.0.1";
+    const ipKey = `login:ip:${ip}`;
+
+    const ipLimit = await rateLimit(ipKey, {
+      limit: env.rateLimit.login.ipMaxAttempts,
+      windowMs: env.rateLimit.login.windowMs,
+    });
+
+    if (!ipLimit.success) {
+      return NextResponse.json(
+        {
+          error: "Too many login attempts. Please try again later.",
+          retryAfter: Math.ceil((ipLimit.reset - Date.now() / 1000) / 60),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil(ipLimit.reset - Date.now() / 1000)),
+            "X-RateLimit-Limit": String(ipLimit.limit),
+            "X-RateLimit-Remaining": String(ipLimit.remaining),
+          },
+        },
+      );
+    }
+
     const body = await request.json();
 
     const validation = loginSchema.safeParse(body);
@@ -23,6 +54,34 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password } = validation.data;
+
+    // ── Rate limit by account (email) after validation ─────────────
+    const emailKey = `login:email:${email.toLowerCase()}`;
+
+    const emailLimit = await rateLimit(emailKey, {
+      limit: env.rateLimit.login.accountMaxAttempts,
+      windowMs: env.rateLimit.login.windowMs,
+    });
+
+    if (!emailLimit.success) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many login attempts for this account. Please try again later.",
+          retryAfter: Math.ceil((emailLimit.reset - Date.now() / 1000) / 60),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.ceil(emailLimit.reset - Date.now() / 1000),
+            ),
+            "X-RateLimit-Limit": String(emailLimit.limit),
+            "X-RateLimit-Remaining": String(emailLimit.remaining),
+          },
+        },
+      );
+    }
 
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -97,6 +156,9 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", user.id);
 
+    // Reset rate-limit counters on successful login
+    await Promise.allSettled([resetRateLimit(ipKey), resetRateLimit(emailKey)]);
+
     return NextResponse.json(
       {
         success: true,
@@ -125,4 +187,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

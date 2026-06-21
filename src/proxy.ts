@@ -22,9 +22,19 @@ const publicPaths = ["/api/auth/register", "/api/auth/login", "/api/health"];
 // CORS Configuration
 // ============================================
 
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS || "http://localhost:3000"
+).split(",");
+
+function getOriginHeader(request: NextRequest): string {
+  const origin = request.headers.get("origin");
+  if (origin && allowedOrigins.some((o) => o.trim() === origin)) {
+    return origin;
+  }
+  return allowedOrigins[0]?.trim() || "http://localhost:3000";
+}
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin":
-    process.env.ALLOWED_ORIGINS || "http://localhost:3000",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Credentials": "true",
@@ -63,6 +73,8 @@ export function proxy(request: NextRequest) {
     const response = NextResponse.next();
 
     // Add CORS headers to all responses
+    const originHeader = getOriginHeader(request);
+    response.headers.set("Access-Control-Allow-Origin", originHeader);
     Object.entries(corsHeaders).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
@@ -72,6 +84,8 @@ export function proxy(request: NextRequest) {
 
   // Handle Frontend Routes
   const response = NextResponse.next();
+  const originHeader = getOriginHeader(request);
+  response.headers.set("Access-Control-Allow-Origin", originHeader);
   Object.entries(corsHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });

@@ -4,12 +4,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { registerSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { jwtService } from "@/lib/auth/jwt";
 import { passwordService } from "@/lib/auth/password";
+import { rateLimit } from "@/lib/rateLimiter";
+import { env } from "@/config/env";
 
 export async function POST(request: NextRequest) {
   try {
+    // ── Rate limit by IP ──────────────────────────────────────────
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "127.0.0.1";
+    const ipKey = `register:ip:${ip}`;
+
+    const ipLimit = await rateLimit(ipKey, {
+      limit: env.rateLimit.register.ipMaxAttempts,
+      windowMs: env.rateLimit.register.windowMs,
+    });
+
+    if (!ipLimit.success) {
+      return NextResponse.json(
+        {
+          error: "Too many registration attempts. Please try again later.",
+          retryAfter: Math.ceil((ipLimit.reset - Date.now() / 1000) / 60),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil(ipLimit.reset - Date.now() / 1000)),
+            "X-RateLimit-Limit": String(ipLimit.limit),
+            "X-RateLimit-Remaining": String(ipLimit.remaining),
+          },
+        },
+      );
+    }
+
     const body = await request.json();
 
     // ============================================
@@ -41,6 +72,34 @@ export async function POST(request: NextRequest) {
       email?.trim().toLowerCase() || `${finalUsername}@phone.local`
     ).slice(0, 255);
     const finalFullName = fullName?.trim() || normalizedPhone;
+
+    // ── Rate limit by email ────────────────────────────────────────
+    const emailKey = `register:email:${finalEmail}`;
+
+    const emailLimit = await rateLimit(emailKey, {
+      limit: env.rateLimit.register.emailMaxAttempts,
+      windowMs: env.rateLimit.register.windowMs,
+    });
+
+    if (!emailLimit.success) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many registration attempts for this email. Please try again later.",
+          retryAfter: Math.ceil((emailLimit.reset - Date.now() / 1000) / 60),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.ceil(emailLimit.reset - Date.now() / 1000),
+            ),
+            "X-RateLimit-Limit": String(emailLimit.limit),
+            "X-RateLimit-Remaining": String(emailLimit.remaining),
+          },
+        },
+      );
+    }
 
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -210,4 +269,3 @@ function getDeviceInfo(request: NextRequest): {
     ipAddress,
   };
 }
-
