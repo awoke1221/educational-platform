@@ -14,7 +14,6 @@ interface Course {
   currency: string;
   enrollmentCount: number;
   instructor: { fullName: string };
-  isFromCloudinary?: boolean;
   videoDuration?: number;
   videoUrl?: string;
 }
@@ -269,7 +268,7 @@ export default function CoursesPage() {
                       {LEVEL_LABELS[course.level] || course.level}
                     </span>
                   </div>
-                  {/* Duration badge for Cloudinary courses */}
+                  {/* Duration badge */}
                   {(course as any).videoDuration ? (
                     <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1.5">
                       <svg
@@ -303,12 +302,6 @@ export default function CoursesPage() {
                         />
                       </svg>
                       {course.enrollmentCount || 0}
-                    </div>
-                  )}
-                  {/* Cloudinary badge */}
-                  {(course as any).isFromCloudinary && (
-                    <div className="absolute bottom-3 left-3 bg-secondary/90 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full">
-                      ቪዲዮ ኮርስ
                     </div>
                   )}
 

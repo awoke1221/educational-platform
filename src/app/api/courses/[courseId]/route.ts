@@ -61,80 +61,60 @@ export async function GET(
         );
       }
     } catch {
-      /* DB unavailable, try Cloudinary fallback */
+      /* DB unavailable, try Bunny demo fallback */
     }
 
-    // Fallback: check if this is a Cloudinary course
-    if (courseId.startsWith("cloudinary-")) {
-      const { default: CloudinaryService } = await import("@/lib/cloudinary");
-      const allVideos = await CloudinaryService.searchResources(
-        "resource_type:video",
-        { maxResults: 10, resourceType: "video" },
-      );
+    // Fallback: check if this is a Bunny demo course
+    if (courseId.startsWith("bunny-demo-")) {
+      const { env } = await import("@/config/env");
 
-      const courseMap: Record<
-        string,
-        {
-          title: string;
-          desc: string;
-          level: string;
-          category: string;
-          price: number;
-        }
-      > = {
-        elephants: {
+      const demoCourses: Record<string, any> = {
+        "bunny-demo-1": {
           title: "የዱር አንስታይ ጥናት",
-          desc: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ። የዱር አንስታይ ፍቅር ያላቸው ሁሉ መመዝገብ ይኖርባቸዋል",
+          desc: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ",
           level: "beginner",
           category: "Science",
           price: 599,
         },
-        "dance-2": {
+        "bunny-demo-2": {
           title: "ዘመናዊ ዳንስ ስልጠና",
-          desc: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ። በዘመናዊ የአካል ብቃት እንቅስቃሴ ጤናዎን ይጠብቁ",
+          desc: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ",
           level: "intermediate",
           category: "Arts",
           price: 799,
         },
-        "cld-sample-video": {
+        "bunny-demo-3": {
           title: "የቪዲዮ ኤዲቲንግ መሰረቶች",
-          desc: "የቪዲዮ አርትዖት መሰረታዊ መርሆችን ይማሩ። ከመጀመሪያ እስከ መጨረሻ የቪዲዮ አርትዖት ስልጠና",
+          desc: "የቪዲዮ አርትዖት መሰረታዊ መርሆችን ይማሩ",
           level: "beginner",
           category: "Technology",
           price: 1299,
         },
-        "sea-turtle": {
+        "bunny-demo-4": {
           title: "የባህር ህይወት ጥናት",
-          desc: "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ። የባህር ስነ-ምህዳርን ይረዱ",
+          desc: "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ኮርስ",
           level: "intermediate",
           category: "Science",
           price: 699,
         },
       };
 
-      // Extract the video key from courseId (e.g., "cloudinary-samples-elephants" -> "elephants")
-      const parts = courseId.replace("cloudinary-", "").split("-");
-      const videoKey = parts[parts.length - 1];
-      const video = allVideos.find((v: any) => v.public_id?.includes(videoKey));
-      const info = courseMap[videoKey] || courseMap["elephants"];
+      const info = demoCourses[courseId] || demoCourses["bunny-demo-1"];
 
-      if (video) {
+      if (env.bunny.demoVideoUrl) {
         return successResponse(
           {
             id: courseId,
             title: info.title,
             description: info.desc,
             shortDescription: info.desc,
-            coverImage: CloudinaryService.getVideoThumbnail(video.public_id, {
-              width: 1280,
-              height: 720,
-            }),
+            coverImage: env.bunny.demoVideoUrl,
             price: info.price,
             currency: "ETB",
             level: info.level,
             category: info.category,
             tags: [info.category],
-            duration: video.duration ? Math.round(video.duration) : 0,
+            duration: 60,
             videoCount: 1,
             enrollmentCount: Math.floor(Math.random() * 150) + 20,
             isPublished: true,
@@ -143,14 +123,14 @@ export async function GET(
               {
                 id: `lec-${courseId}`,
                 title: info.title,
-                duration: video.duration ? Math.round(video.duration) : 0,
+                duration: 60,
                 orderIndex: 1,
               },
             ],
             _count: { lectures: 1, enrollments: 0 },
-            videoUrl: video.secure_url,
+            videoUrl: env.bunny.demoVideoUrl,
           },
-          "Course retrieved from Cloudinary",
+          "Demo course retrieved from Bunny",
         );
       }
     }

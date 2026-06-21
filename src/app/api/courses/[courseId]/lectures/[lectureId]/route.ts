@@ -1,10 +1,8 @@
-// src/app/api/courses/[courseId]/lectures/[lectureId]/route.ts
-// Single Lecture API (GET, PUT, DELETE)
-
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import CloudinaryService from "@/lib/cloudinary";
+import { BunnyService } from "@/lib/bunny";
+import { env } from "@/config/env";
 import {
   successResponse,
   errorResponse,
@@ -74,12 +72,12 @@ export async function GET(
         let streamingUrl = null;
         let signedVideoUrl = null;
         if (lecture.cloudinaryPublicId) {
-          streamingUrl = CloudinaryService.getStreamingUrl(
+          streamingUrl = BunnyService.getStreamingUrl(
             lecture.cloudinaryPublicId,
           );
-          signedVideoUrl = CloudinaryService.getSignedUrl(
+          signedVideoUrl = BunnyService.getSignedUrl(
             lecture.cloudinaryPublicId,
-            { expiresIn: 86400 },
+            86400,
           );
         }
         return successResponse(
@@ -91,50 +89,31 @@ export async function GET(
       /* DB unavailable, fallback to Cloudinary */
     }
 
-    // Cloudinary fallback: generate lecture from Cloudinary video
-    const allVideos = await CloudinaryService.searchResources(
-      "resource_type:video",
-      { maxResults: 10, resourceType: "video" },
-    );
-
-    // Extract video key from courseId (e.g., "cloudinary-samples-elephants" -> "elephants")
-    const parts = courseId.replace("cloudinary-", "").split("-");
-    const videoKey = parts[parts.length - 1];
-    const video =
-      allVideos.find((v: any) => v.public_id?.includes(videoKey)) ||
-      allVideos[0];
-
-    if (!video) return notFoundResponse("Lecture");
-
-    const videoUrl = video.secure_url;
-    const publicId = video.public_id;
-    const streamingUrl = CloudinaryService.getStreamingUrl(publicId);
-
-    return successResponse(
-      {
-        id: lectureId,
-        title:
-          parts
-            .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1))
-            .join(" ") || "Course Video",
-        description: "ይህን ቪዲዮ በመመልከት ትምህርትዎን ይቀጥሉ",
-        duration: video.duration ? Math.round(video.duration) : 0,
-        orderIndex: 1,
-        videoUrl,
-        cloudinaryPublicId: publicId,
-        streamingUrl,
-        signedVideoUrl: streamingUrl,
-        isPublished: true,
-        courseId,
-        course: {
-          id: courseId,
-          title: "Course",
-          instructorId: auth?.userId || "",
+    // Bunny fallback: generate lecture from Bunny demo video
+    if (courseId.startsWith("bunny-demo-") && env.bunny.demoVideoUrl) {
+      return successResponse(
+        {
+          id: lectureId,
+          title: courseId.replace("bunny-demo-", "").replace(/-/g, " "),
+          description: "ይህን ቪዲዮ በመመልከት ትምህርትዎን ይቀጥሉ",
+          duration: 60,
+          orderIndex: 1,
+          videoUrl: env.bunny.demoVideoUrl,
+          cloudinaryPublicId: "demo-bunny",
+          streamingUrl: env.bunny.demoVideoUrl,
+          signedVideoUrl: env.bunny.demoVideoUrl,
+          isPublished: true,
+          courseId,
+          course: {
+            id: courseId,
+            title: "Demo Course",
+            instructorId: auth?.userId || "",
+          },
+          userProgress: null,
         },
-        userProgress: null,
-      },
-      "Lecture retrieved from Cloudinary",
-    );
+        "Demo lecture from Bunny",
+      );
+    }
   } catch (error) {
     console.error("[GET LECTURE ERROR]", error);
     return handleApiError(error);
@@ -270,9 +249,9 @@ export async function DELETE(
       );
     }
 
-    // Delete video from Cloudinary if exists
+    // Delete video from Bunny if exists
     if (lecture.cloudinaryPublicId) {
-      await CloudinaryService.deleteFile(lecture.cloudinaryPublicId, "video");
+      await BunnyService.deleteFile(lecture.cloudinaryPublicId);
     }
 
     await supabaseAdmin!.from("Lecture").delete().eq("id", lectureId);

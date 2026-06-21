@@ -13,6 +13,22 @@ const requiredEnvVars = [
   "JWT_SECRET",
 ];
 
+function normalizeUrl(value: string) {
+  return value ? value.replace(/\/+$|^\s+|\s+$/g, "") : "";
+}
+
+function normalizeBunnyStorageZone(value: string) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    const segments = url.pathname.split("/").filter(Boolean);
+    return segments.length > 0 ? segments[segments.length - 1] : value;
+  } catch {
+    return value;
+  }
+}
+
 // ============================================
 // Environment Configuration Object
 // ============================================
@@ -53,6 +69,22 @@ export const env = {
     apiKey: process.env.CLOUDINARY_API_KEY || "",
     apiSecret: process.env.CLOUDINARY_API_SECRET || "",
     uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || "",
+  },
+
+  // ============================================
+  // Bunny Storage + Pull Zone Configuration
+  // ============================================
+  bunny: {
+    accessKey: process.env.BUNNY_ACCESS_KEY || "",
+    storageZone: normalizeBunnyStorageZone(
+      process.env.BUNNY_STORAGE_ZONE || "",
+    ),
+    pullZoneUrl: normalizeUrl(
+      process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL || "",
+    ),
+    defaultFolder:
+      process.env.NEXT_PUBLIC_BUNNY_DEFAULT_FOLDER || "educational-platform",
+    demoVideoUrl: process.env.NEXT_PUBLIC_BUNNY_DEMO_VIDEO_URL || "",
   },
 
   // ============================================

@@ -4,13 +4,44 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
+interface UserInfo {
+  profileImage?: string;
+}
+
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const [token, setToken] = useState<string>("");
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [userImageFailed, setUserImageFailed] = useState(false);
 
   useEffect(() => {
-    setToken(localStorage.getItem("token") || "");
-  }, []);
+    const syncAuthState = () => {
+      const storedToken = localStorage.getItem("token") || "";
+      const storedUser = localStorage.getItem("user");
+      setToken(storedToken);
+
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+          setUserImageFailed(false);
+        } catch {
+          localStorage.removeItem("user");
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    syncAuthState();
+
+    const handleStorage = () => {
+      syncAuthState();
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [pathname]);
 
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -79,21 +110,34 @@ export default function MobileBottomNav() {
     {
       path: "/dashboard",
       label: token ? "ፕሮፋይል" : "ግቤት",
-      icon: (active: boolean) => (
-        <svg
-          className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
-          fill={active ? "#C9952A" : "none"}
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
-      ),
+      icon: (active: boolean) => {
+        if (user?.profileImage && !userImageFailed) {
+          return (
+            <img
+              src={user.profileImage}
+              alt="Profile"
+              onError={() => setUserImageFailed(true)}
+              className={`w-6 h-6 rounded-full ${active ? "ring-2 ring-secondary" : ""}`}
+            />
+          );
+        }
+
+        return (
+          <svg
+            className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
+            fill={active ? "#C9952A" : "none"}
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        );
+      },
     },
   ];
 

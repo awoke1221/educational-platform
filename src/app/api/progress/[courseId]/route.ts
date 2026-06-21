@@ -54,6 +54,8 @@ export async function GET(
       .eq("isPublished", true)
       .order("orderIndex", { ascending: true });
 
+    // Note: cloudinaryPublicId field is renamed to storagePath in Bunny migration
+
     const { data: progressRecords } = await supabaseAdmin!
       .from("UserProgress")
       .select(

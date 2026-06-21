@@ -11,15 +11,15 @@ import {
   sanitizeInput,
 } from "@/lib/validators/form-validation";
 
+// (No lecture form state here — lectures are added from course detail page)
+
 export default function NewCoursePage() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [cloudinaryVideoUrl, setCloudinaryVideoUrl] = useState("");
-  const [cloudinaryPublicId, setCloudinaryPublicId] = useState("");
-  const [videoDuration, setVideoDuration] = useState(0);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverUploadProgress, setCoverUploadProgress] = useState(0);
+  const [coverUploadError, setCoverUploadError] = useState("");
   const [form, setForm] = useState({
     title: "",
     shortDescription: "",
@@ -119,81 +119,52 @@ export default function NewCoursePage() {
     }
   };
 
-  // Upload video to Cloudinary
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Lectures are managed from the course detail page after creation
+
+  // Course media helpers
+  // Lecture management removed from this page — add lectures in course detail.
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token) return;
 
-    if (!file.type.startsWith("video/")) {
-      alert("Please select a video file");
+    if (!file.type.startsWith("image/")) {
+      setCoverUploadError("Please select an image file");
       return;
     }
 
-    setUploading(true);
-    setUploadProgress(0);
+    setCoverUploadError("");
+    setCoverUploading(true);
+    setCoverUploadProgress(0);
 
     try {
-      // Get upload signature from server
-      const sigRes = await fetch("/api/upload", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const sigData = await sigRes.json();
-
-      // Upload to Cloudinary via unsigned upload
       const formData = new FormData();
       formData.append("file", file);
-      formData.append(
-        "upload_preset",
-        sigData.uploadPreset || "educational-platform",
-      );
-      formData.append("cloud_name", "dikm1x43c");
-      formData.append("resource_type", "video");
-      formData.append("folder", "educational-platform/courses");
+      formData.append("type", "image");
 
-      const xhr = new XMLHttpRequest();
-      xhr.open(
-        "POST",
-        `https://api.cloudinary.com/v1_1/dikm1x43c/video/upload`,
-      );
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          setUploadProgress(Math.round((event.loaded / event.total) * 100));
-        }
-      };
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !uploadData.success) {
+        throw new Error(uploadData.error || "Upload failed");
+      }
 
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          const data = JSON.parse(xhr.responseText);
-          setCloudinaryVideoUrl(data.secure_url);
-          setCloudinaryPublicId(data.public_id);
-          setVideoDuration(Math.round(data.duration || 0));
-          setForm((prev) => ({
-            ...prev,
-            coverImage: data.secure_url.replace(
-              "/upload/",
-              "/upload/c_fill,h_360,w_640/",
-            ),
-          }));
-          setUploading(false);
-          setUploadProgress(100);
-        } else {
-          alert("Upload failed");
-          setUploading(false);
-        }
-      };
-
-      xhr.onerror = () => {
-        alert("Upload error");
-        setUploading(false);
-      };
-
-      xhr.send(formData);
-    } catch {
-      alert("Upload failed");
-      setUploading(false);
+      const data = uploadData.data;
+      setForm((prev) => ({ ...prev, coverImage: data.url }));
+      setCoverUploading(false);
+      setCoverUploadProgress(100);
+    } catch (error: any) {
+      setCoverUploadError(error?.message || "Upload failed");
+      setCoverUploading(false);
+      setCoverUploadProgress(0);
     }
   };
+
+  // Lecture uploads are handled from course detail page.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,12 +232,9 @@ export default function NewCoursePage() {
         price: parseFloat(form.price) || 0,
         level: form.level,
         coverImage: form.coverImage,
-        videoUrl: cloudinaryVideoUrl,
-        cloudinaryPublicId,
-        videoDuration,
       };
 
-      const res = await fetch("/api/admin/courses", {
+      const res = await fetch("/api/courses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -278,7 +246,8 @@ export default function NewCoursePage() {
       const data = await res.json();
       if (data.success) {
         alert("Course created successfully!");
-        router.push("/admin/courses");
+        const created = data.data;
+        router.push(`/admin/courses/${created.id}`);
       } else {
         alert(data.error || "Failed to create course");
       }
@@ -318,84 +287,76 @@ export default function NewCoursePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Cloudinary Video Upload */}
+        {/* Course Cover Image */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-border-light">
-          <h3 className="font-semibold text-primary mb-4">🎬 Upload Video</h3>
-          <div className="border-2 border-dashed border-border-light rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
-            {uploading ? (
-              <div>
-                <div className="w-full bg-surface rounded-full h-3 mb-3">
-                  <div
-                    className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-                <p className="text-sm text-text-muted">
-                  Uploading video... {uploadProgress}%
-                </p>
-              </div>
-            ) : cloudinaryVideoUrl ? (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg
-                    className="w-8 h-8 text-green-500"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <p className="text-sm font-medium text-green-600 mb-1">
-                  Video uploaded!
-                </p>
-                <p className="text-xs text-gray-400 mb-3">
-                  {videoDuration} seconds
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCloudinaryVideoUrl("");
-                    setCloudinaryPublicId("");
-                  }}
-                  className="text-xs text-red-500 hover:text-red-600"
-                >
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <label className="cursor-pointer">
-                <svg
-                  className="w-12 h-12 text-gray-300 mx-auto mb-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-                <p className="text-sm font-medium text-gray-600 mb-1">
-                  Click to upload video
-                </p>
-                <p className="text-xs text-gray-400">
-                  MP4, WebM, MOV (under 100MB)
-                </p>
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={handleVideoUpload}
-                  className="hidden"
-                />
+          <h3 className="font-semibold text-primary mb-4">
+            🖼️ Course Cover Image
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-[1fr_220px] items-start">
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500">
+                Upload a distinct cover image for the course. This image will
+                appear on the course listing and detail pages.
+              </p>
+              <label className="block text-sm font-medium text-gray-700">
+                Cover Image URL (optional)
               </label>
-            )}
+              <input
+                name="coverImage"
+                type="url"
+                value={form.coverImage}
+                onChange={handleChange}
+                onBlur={() => handleBlur("coverImage")}
+                placeholder="https://example.com/cover.jpg"
+                className="w-full border-2 border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              />
+              {touched.coverImage && fieldErrors.coverImage && (
+                <p className="text-red-600 text-xs">{fieldErrors.coverImage}</p>
+              )}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Or upload a file
+                </label>
+                <label className="inline-flex items-center justify-center w-full py-3 px-4 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer text-sm text-gray-600 hover:border-primary hover:text-primary transition-colors">
+                  <span>
+                    {coverUploading ? "Uploading..." : "Select Image"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleCoverUpload}
+                  />
+                </label>
+                {coverUploadError && (
+                  <p className="text-red-600 text-xs">{coverUploadError}</p>
+                )}
+              </div>
+            </div>
+            <div className="rounded-xl overflow-hidden bg-slate-50 border border-gray-200 h-full flex items-center justify-center">
+              {form.coverImage ? (
+                <img
+                  src={form.coverImage}
+                  alt="Course cover"
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="text-center p-6 text-gray-400">
+                  <p className="text-sm">No cover image selected</p>
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* Lectures are added from the course detail page after creation */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-border-light">
+          <h3 className="font-semibold text-primary">🎥 Lectures</h3>
+          <p className="text-sm text-gray-500">
+            Add lectures (videos) after creating the course. You'll be
+            redirected to the course admin page where you can add and upload
+            lectures individually.
+          </p>
         </div>
 
         {/* Course Details */}

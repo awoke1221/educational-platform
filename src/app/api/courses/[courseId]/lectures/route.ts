@@ -83,7 +83,7 @@ export async function GET(
     // Only include video details for course owner
     if (isOwner) {
       lectureSelect.videoUrl = true;
-      lectureSelect.cloudinaryPublicId = true;
+      lectureSelect.cloudinaryPublicId = true; // Bunny storage path
       lectureSelect.videoSize = true;
     }
 

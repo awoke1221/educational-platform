@@ -5,7 +5,79 @@ require("dotenv").config({
 });
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const API_KEY = process.env.SUPABASE_ANON_KEY;
+const API_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const BUNNY_DEMO_VIDEO =
+  process.env.NEXT_PUBLIC_BUNNY_DEMO_VIDEO_URL ||
+  "https://bunny-cdn.example.com/demo.mp4";
+
+function getBunnyStoragePathFromUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.replace(/^\/+/, "");
+  } catch {
+    return url;
+  }
+}
+
+const LECTURES = [
+  {
+    id: "bunny-demo-1-lecture-1",
+    courseId: "bunny-demo-1",
+    title: "የዱር አንስታይ ጥናት የመግቢያ ቪዲዮ",
+    description: "እንኳን ደህና መጡ። ይህን ቪዲዮ በማየት ትምህርቱን ይጀምሩ።",
+    videoUrl: BUNNY_DEMO_VIDEO,
+    cloudinaryPublicId: getBunnyStoragePathFromUrl(BUNNY_DEMO_VIDEO),
+    duration: 60,
+    orderIndex: 1,
+    isPublished: true,
+    videoSize: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "bunny-demo-2-lecture-1",
+    courseId: "bunny-demo-2",
+    title: "ዘመናዊ ዳንስ ስልጠና የመግቢያ ቪዲዮ",
+    description: "በዚህ ቪዲዮ በመጀምር የዳንስ መሠረታዊ እንቅስቃሴዎችን ይማሩ።",
+    videoUrl: BUNNY_DEMO_VIDEO,
+    cloudinaryPublicId: getBunnyStoragePathFromUrl(BUNNY_DEMO_VIDEO),
+    duration: 60,
+    orderIndex: 1,
+    isPublished: true,
+    videoSize: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "bunny-demo-3-lecture-1",
+    courseId: "bunny-demo-3",
+    title: "የቪዲዮ ኤዲቲንግ መሰረቶች የመግቢያ ቪዲዮ",
+    description: "ይህ ቪዲዮ የቪዲዮ ኤዲቲንግ መሰረታዊ ስርዓቶችን ይገልፃል።",
+    videoUrl: BUNNY_DEMO_VIDEO,
+    cloudinaryPublicId: getBunnyStoragePathFromUrl(BUNNY_DEMO_VIDEO),
+    duration: 60,
+    orderIndex: 1,
+    isPublished: true,
+    videoSize: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "bunny-demo-4-lecture-1",
+    courseId: "bunny-demo-4",
+    title: "የባህር ህይወት ጥናት የመግቢያ ቪዲዮ",
+    description: "በዚህ ቪዲዮ የባህር ኤሊዎችን እና የባህር ህይወትን ጥበቃ በቀላሉ ይማሩ።",
+    videoUrl: BUNNY_DEMO_VIDEO,
+    cloudinaryPublicId: getBunnyStoragePathFromUrl(BUNNY_DEMO_VIDEO),
+    duration: 60,
+    orderIndex: 1,
+    isPublished: true,
+    videoSize: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 if (!SUPABASE_URL || !API_KEY) {
   console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY in .env file");
@@ -14,75 +86,79 @@ if (!SUPABASE_URL || !API_KEY) {
 // update the configerations
 const COURSES = [
   {
-    id: "cloudinary-samples-elephants",
+    id: "bunny-demo-1",
     title: "የዱር አንስታይ ጥናት",
     shortDescription: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ",
     description:
       "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ። የዱር አንስታይ ፍቅር ያላቸው ሁሉ መመዝገብ ይኖርባቸዋል",
-    coverImage:
-      "https://res.cloudinary.com/dikm1x43c/video/upload/c_fill,h_360,q_auto,w_640/f_auto/v1/samples/elephants",
+    coverImage: BUNNY_DEMO_VIDEO,
     price: 599,
     currency: "ETB",
     level: "beginner",
     category: "Science",
     instructorId: "adlms",
-    duration: 49,
+    duration: 60,
     videoCount: 1,
     enrollmentCount: 126,
     isPublished: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
-    id: "cloudinary-samples-dance-2",
+    id: "bunny-demo-2",
     title: "ዘመናዊ ዳንስ ስልጠና",
     shortDescription: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ",
     description:
       "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ። በዘመናዊ የአካል ብቃት እንቅስቃሴ ጤናዎን ይጠብቁ",
-    coverImage:
-      "https://res.cloudinary.com/dikm1x43c/video/upload/c_fill,h_360,q_auto,w_640/f_auto/v1/samples/dance-2",
+    coverImage: BUNNY_DEMO_VIDEO,
     price: 799,
     currency: "ETB",
     level: "intermediate",
     category: "Arts",
     instructorId: "adlms",
-    duration: 20,
+    duration: 60,
     videoCount: 1,
     enrollmentCount: 70,
     isPublished: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
-    id: "cloudinary-samples-cld-sample-video",
+    id: "bunny-demo-3",
     title: "የቪዲዮ ኤዲቲንግ መሰረቶች",
-    shortDescription: "የቪዲዮ አርትዖት መሰረታዊ መርሆችን ይማሩ",
-    description: "የቪዲዮ አርትዖት መሰረታዊ መርሆችን ይማሩ። ከመጀመሪያ እስከ መጨረሻ የቪዲዮ አርትዖት ስልጠና",
-    coverImage:
-      "https://res.cloudinary.com/dikm1x43c/video/upload/c_fill,h_360,q_auto,w_640/f_auto/v1/samples/cld-sample-video",
+    shortDescription: "የቪዲዮ አርትዖት መሰረታዊ መርሀዎችን ይማሩ",
+    description: "የቪዲዮ አርትዖት መሰረታዊ መርሀዎችን ይማሩ። ከመጀመሪያ እስከ መጨረሻ የቪዲዮ አርትዖት ስልጠና",
+    coverImage: BUNNY_DEMO_VIDEO,
     price: 1299,
     currency: "ETB",
     level: "beginner",
     category: "Technology",
     instructorId: "adlms",
-    duration: 12,
+    duration: 60,
     videoCount: 1,
     enrollmentCount: 78,
     isPublished: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
-    id: "cloudinary-samples-sea-turtle",
+    id: "bunny-demo-4",
     title: "የባህር ህይወት ጥናት",
     shortDescription: "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ",
     description:
       "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ። የባህር ስነ-ምህዳርን ይረዱ",
-    coverImage:
-      "https://res.cloudinary.com/dikm1x43c/video/upload/c_fill,h_360,q_auto,w_640/f_auto/v1/samples/sea-turtle",
+    coverImage: BUNNY_DEMO_VIDEO,
     price: 699,
     currency: "ETB",
     level: "intermediate",
     category: "Science",
     instructorId: "adlms",
-    duration: 15,
+    duration: 60,
     videoCount: 1,
     enrollmentCount: 40,
     isPublished: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
@@ -140,16 +216,32 @@ async function main() {
     }
   }
 
-  // 2. Create enrollment for test user
+  // 2. Create lectures for demo courses
+  for (const lecture of LECTURES) {
+    try {
+      await supabaseRequest("POST", "/rest/v1/Lecture", lecture);
+      console.log(`✅ Lecture created: ${lecture.title}`);
+    } catch (e) {
+      if (e.message.includes("409")) {
+        console.log(`⏭️  Lecture exists: ${lecture.title}`);
+      } else {
+        console.log(`❌ Failed lecture: ${lecture.title} - ${e.message}`);
+      }
+    }
+  }
+
+  // 3. Create enrollment for test user
   try {
     const enrollment = {
       id: require("crypto").randomUUID(),
       userId: "e0dcfa25-0eb1-476f-a1cb-ae3deba51e17",
-      courseId: "cloudinary-samples-elephants",
+      courseId: "bunny-demo-1",
       status: "active",
       completionPercentage: 0,
-      enrolledAt: new Date().toISOString(),
+      enrollmentDate: new Date().toISOString(),
       lastAccessedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     await supabaseRequest("POST", "/rest/v1/Enrollment", enrollment);
     console.log(`✅ Enrollment created for user in course: የዱር አንስታይ ጥናት`);
@@ -157,7 +249,7 @@ async function main() {
     console.log(`❌ Enrollment failed: ${e.message}`);
   }
 
-  // 3. Verify
+  // 4. Verify
   console.log("\n--- Verification ---");
   const courses = await supabaseRequest(
     "GET",

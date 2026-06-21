@@ -169,10 +169,15 @@ export default function AdminCourseDetailPage() {
 
       const data = result.data;
       if (result.response.ok && data.success) {
+        const created = data.data;
         setNewLectureTitle("");
         setNewLectureDesc("");
         setShowCreateForm(false);
-        fetchData();
+        // Refresh list then open upload dialog for the new lecture
+        fetchData().then(() => {
+          // auto-open upload for the created lecture
+          if (created?.id) handleUploadVideo(created.id);
+        });
       }
     } catch (err) {
       console.error("[ADMIN COURSE] Create lecture error:", err);
@@ -442,6 +447,12 @@ export default function AdminCourseDetailPage() {
         >
           Settings
         </button>
+            )}
+            {!showCreateForm && (
+              <p className="text-xs text-gray-500 mt-2">
+                The upload dialog will open automatically after creating a lecture.
+              </p>
+            )}
       </div>
 
       {/* ============================================ */}
@@ -631,52 +642,7 @@ export default function AdminCourseDetailPage() {
                               </span>
                             </div>
 
-                            {/* Upload Progress */}
-                            {isUploading && (
-                              <div className="mt-3 ml-9">
-                                <div className="flex items-center justify-between text-xs mb-1">
-                                  <span className="text-secondary font-medium">
-                                    ቪዲዮ እየጫነ ነው...
-                                  </span>
-                                  <span className="text-gray-500">
-                                    {uploadState.progress}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-100 rounded-full h-2">
-                                  <div
-                                    className="bg-secondary h-2 rounded-full transition-all duration-300"
-                                    style={{
-                                      width: `${uploadState.progress}%`,
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Upload Error */}
-                            {hasError && (
-                              <div className="mt-2 ml-9 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                                {uploadState.error}
-                              </div>
-                            )}
-
-                            {/* Uploaded Success */}
-                            {isUploaded && (
-                              <div className="mt-2 ml-9 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg flex items-center gap-1">
-                                <svg
-                                  className="w-3.5 h-3.5"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                ቪዲዮ በተሳካ ሁኔታ ተጭኗል!
-                              </div>
-                            )}
+                            {/* Note: progress/error/success shown next to action buttons */}
                           </div>
 
                           {/* Action Buttons */}
@@ -761,6 +727,34 @@ export default function AdminCourseDetailPage() {
                                 />
                               </svg>
                             </button>
+                            {/* Compact upload status near action buttons */}
+                            <div className="ml-3 flex flex-col items-start">
+                              {isUploading && (
+                                <div className="w-36">
+                                  <div className="w-full bg-gray-100 rounded-full h-2">
+                                    <div
+                                      className="bg-secondary h-2 rounded-full transition-all"
+                                      style={{ width: `${uploadState.progress}%` }}
+                                    />
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1 text-left">
+                                    {uploadState.progress}%
+                                  </p>
+                                </div>
+                              )}
+
+                              {hasError && (
+                                <div className="mt-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded-lg">
+                                  {uploadState.error}
+                                </div>
+                              )}
+
+                              {isUploaded && (
+                                <div className="mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                                  Video uploaded
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

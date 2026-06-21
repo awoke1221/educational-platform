@@ -4,7 +4,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth, requireRole } from "@/lib/auth/middleware";
 import { createCourseSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -145,6 +145,7 @@ export async function POST(request: NextRequest) {
       price,
       level,
       category,
+      coverImage,
       tags,
     } = validation.data;
 
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
         title,
         description,
         shortDescription: shortDescription || null,
-        coverImage: "",
+        coverImage: coverImage || null,
         instructorId: auth.userId,
         price,
         currency: "ETB",
@@ -180,4 +181,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
-

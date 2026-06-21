@@ -116,6 +116,38 @@ export const uploadProfileImageSchema = z.object({
 // ============================================
 
 export const createCourseSchema = z.object({
+  lectures: z
+    .array(
+      z.object({
+        title: z
+          .string()
+          .min(3, "Title must be at least 3 characters")
+          .max(255, "Title must not exceed 255 characters"),
+        description: z
+          .string()
+          .max(2000, "Description must not exceed 2000 characters")
+          .optional(),
+        orderIndex: z
+          .number()
+          .int("Order index must be an integer")
+          .min(0, "Order index cannot be negative")
+          .optional(),
+        videoUrl: z.string().url("Invalid video URL").optional(),
+        cloudinaryPublicId: z.string().optional(),
+        duration: z
+          .number()
+          .int()
+          .min(0, "Duration must be a positive integer")
+          .optional(),
+        videoSize: z
+          .number()
+          .int()
+          .min(0, "Video size must be a positive integer")
+          .optional(),
+        isPublished: z.boolean().optional(),
+      }),
+    )
+    .optional(),
   title: z
     .string()
     .min(3, "Title must be at least 3 characters")
@@ -129,7 +161,10 @@ export const createCourseSchema = z.object({
   shortDescription: z
     .string()
     .min(10, "Short description must be at least 10 characters")
-    .max(500, "Short description must not exceed 500 characters"),
+    .max(500, "Short description must not exceed 500 characters")
+    .optional(),
+
+  coverImage: z.string().url("Invalid cover image URL").optional(),
 
   price: z
     .number()
@@ -143,10 +178,7 @@ export const createCourseSchema = z.object({
     .min(1, "Category is required")
     .max(100, "Category must not exceed 100 characters"),
 
-  tags: z
-    .array(z.string())
-    .min(1, "At least one tag is required")
-    .max(10, "Maximum 10 tags allowed"),
+  tags: z.array(z.string()).optional(),
 });
 
 export const updateCourseSchema = createCourseSchema.partial();

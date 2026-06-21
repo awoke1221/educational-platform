@@ -1,34 +1,25 @@
 import Link from "next/link";
-import CloudinaryService from "@/lib/cloudinary";
+import { env } from "@/config/env";
 
-async function getCloudinaryPromo() {
+async function getPromoVideo() {
   try {
-    const allVideos = await CloudinaryService.searchResources(
-      "resource_type:video",
-      { maxResults: 1, resourceType: "video" },
-    );
-
-    if (allVideos.length === 0) return null;
-
-    const promoVideo = allVideos[0];
-    return {
-      url: promoVideo.secure_url,
-      streamingUrl: CloudinaryService.getStreamingUrl(promoVideo.public_id),
-      thumbnail: CloudinaryService.getVideoThumbnail(promoVideo.public_id, {
-        width: 1280,
-        height: 720,
-      }),
-      publicId: promoVideo.public_id,
-      title: promoVideo.public_id?.split("/").pop() || "Promo Video",
-    };
+    if (env.bunny.demoVideoUrl) {
+      return {
+        url: env.bunny.demoVideoUrl,
+        streamingUrl: env.bunny.demoVideoUrl,
+        thumbnail: env.bunny.demoVideoUrl,
+        title: "AD LMS Promo Video",
+      };
+    }
+    return null;
   } catch (error) {
-    console.error("[HOME] Failed to fetch Cloudinary video:", error);
+    console.error("[HOME] Failed to fetch promo video:", error);
     return null;
   }
 }
 
 export default async function Home() {
-  const promo = await getCloudinaryPromo();
+  const promo = await getPromoVideo();
 
   return (
     <div>
@@ -46,7 +37,7 @@ export default async function Home() {
               </p>
             </div>
 
-            {/* Video Player - Cloudinary */}
+            {/* Video Player */}
             <div className="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-black ring-4 ring-white/20">
               {promo ? (
                 <video

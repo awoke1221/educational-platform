@@ -1,103 +1,78 @@
 // src/app/api/courses/samples/route.ts
-// API endpoint to fetch courses from Cloudinary videos
+// API endpoint to fetch demo courses (Bunny-based sample content)
 
 import { NextResponse } from "next/server";
-import CloudinaryService from "@/lib/cloudinary";
+import { env } from "@/config/env";
 
-// Map Cloudinary video public_ids to structured course data
-function videoToCourse(video: any, index: number) {
-  const publicId = video.public_id || "";
-  const fileName = publicId.split("/").pop() || "";
-
-  // Generate title & description from the video filename
-  const courseMap: Record<
-    string,
-    {
-      title: string;
-      desc: string;
-      level: string;
-      category: string;
-      price: number;
-    }
-  > = {
-    elephants: {
-      title: "የዱር አንስታይ ጥናት",
-      desc: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ። የዱር አንስታይ ፍቅር ያላቸው ሁሉ መመዝገብ ይኖርባቸዋል",
-      level: "beginner",
-      category: "Science",
-      price: 599,
-    },
-    "dance-2": {
-      title: "ዘመናዊ ዳንስ ስልጠና",
-      desc: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ። በዘመናዊ የአካል ብቃት እንቅስቃሴ ጤናዎን ይጠብቁ",
-      level: "intermediate",
-      category: "Arts",
-      price: 799,
-    },
-    "cld-sample-video": {
-      title: "የቪዲዮ ኤዲቲንግ መሰረቶች",
-      desc: "የቪዲዮ አርትዖት መሰረታዊ መርሆችን ይማሩ። ከመጀመሪያ እስከ መጨረሻ የቪዲዮ አርትዖት ስልጠና",
-      level: "beginner",
-      category: "Technology",
-      price: 1299,
-    },
-    "sea-turtle": {
-      title: "የባህር ህይወት ጥናት",
-      desc: "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ። የባህር ስነ-ምህዳርን ይረዱ",
-      level: "intermediate",
-      category: "Science",
-      price: 699,
-    },
-  };
-
-  const mapped = courseMap[fileName] || {
-    title: fileName
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c: string) => c.toUpperCase()),
-    desc: `ስለ ${fileName.replace(/-/g, " ")} የሚያጠና አስደሳች ኮርስ`,
+// Demo courses with Bunny storage paths
+const DEMO_COURSES = [
+  {
+    id: "bunny-demo-1",
+    title: "የዱር አንስታይ ጥናት",
+    shortDescription:
+      "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ። የዱር አንስታይ ፍቅር ያላቸው ሁሉ መመዝገብ ይኖርባቸዋል",
     level: "beginner",
-    category: "General",
-    price: 499,
-  };
-
-  return {
-    id: `cloudinary-${publicId.replace(/\//g, "-")}`,
-    title: mapped.title,
-    shortDescription: mapped.desc,
-    coverImage: CloudinaryService.getVideoThumbnail(publicId, {
-      width: 640,
-      height: 360,
-    }),
-    level: mapped.level,
-    category: mapped.category,
-    price: mapped.price,
-    currency: "ETB",
-    enrollmentCount: Math.floor(Math.random() * 150) + 20,
-    instructor: { fullName: "AD LMS" },
-    isFromCloudinary: true,
-    cloudinaryPublicId: publicId,
-    videoDuration: video.duration ? Math.round(video.duration) : 0,
-    videoUrl: video.secure_url,
-  };
-}
+    category: "Science",
+    price: 599,
+  },
+  {
+    id: "bunny-demo-2",
+    title: "ዘመናዊ ዳንስ ስልጠና",
+    shortDescription:
+      "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ። በዘመናዊ የአካል ብቃት እንቅስቃሴ ጤናዎን ይጠብቁ",
+    level: "intermediate",
+    category: "Arts",
+    price: 799,
+  },
+  {
+    id: "bunny-demo-3",
+    title: "የቪዲዮ ኤዲቲንግ መሰረቶች",
+    shortDescription:
+      "የቪዲዮ አርትዖት መሰረታዊ መርሀዎችን ይማሩ። ከመጀመሪያ እስከ መጨረሻ የቪዲዮ አርትዖት ስልጠና",
+    level: "beginner",
+    category: "Technology",
+    price: 1299,
+  },
+  {
+    id: "bunny-demo-4",
+    title: "የባህር ህይወት ጥናት",
+    shortDescription:
+      "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ። የባህር ስነ-ምህዳርን ይረዱ",
+    level: "intermediate",
+    category: "Science",
+    price: 699,
+  },
+];
 
 export async function GET() {
   try {
-    const allVideos = await CloudinaryService.searchResources(
-      "resource_type:video",
-      { maxResults: 50, resourceType: "video" },
-    );
+    if (!env.bunny.demoVideoUrl) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        message: "Demo video URL not configured",
+        total: 0,
+      });
+    }
 
-    const courses = allVideos.map(videoToCourse);
+    const courses = DEMO_COURSES.map((course) => ({
+      ...course,
+      coverImage: env.bunny.demoVideoUrl,
+      videoUrl: env.bunny.demoVideoUrl,
+      videoDuration: 60,
+      enrollmentCount: Math.floor(Math.random() * 150) + 20,
+      instructor: { fullName: "AD LMS", id: "adlms", profileImage: null },
+      videoCount: 1,
+    }));
 
     return NextResponse.json({
       success: true,
       data: courses,
-      message: "Cloudinary courses retrieved successfully",
+      message: "Demo courses retrieved successfully",
       total: courses.length,
     });
   } catch (error) {
-    console.error("[CLOUDINARY COURSES] Failed:", error);
+    console.error("[DEMO COURSES] Failed:", error);
     return NextResponse.json({
       success: true,
       data: [],

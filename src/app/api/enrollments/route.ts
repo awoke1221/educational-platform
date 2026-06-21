@@ -3,7 +3,8 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { env } from "@/config/env";
 import {
   successResponse,
   errorResponse,
@@ -44,96 +45,63 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Demo: return Cloudinary courses as enrolled
-    const { default: CloudinaryService } = await import("@/lib/cloudinary");
-    const allVideos = await CloudinaryService.searchResources(
-      "resource_type:video",
-      { maxResults: 10, resourceType: "video" },
-    );
-
-    const courseMap: Record<
-      string,
-      {
-        title: string;
-        desc: string;
-        level: string;
-        category: string;
-        price: number;
-      }
-    > = {
-      elephants: {
-        title: "የዱር አንስታይ ጥናት",
-        desc: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ",
-        level: "beginner",
-        category: "Science",
-        price: 599,
-      },
-      "dance-2": {
-        title: "ዘመናዊ ዳንስ ስልጠና",
-        desc: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ",
-        level: "intermediate",
-        category: "Arts",
-        price: 799,
-      },
-      "cld-sample-video": {
-        title: "የቪዲዮ ኤዲቲንግ መሰረቶች",
-        desc: "የቪዲዮ አርትዖት መሰረታዊ መርሆችን ይማሩ",
-        level: "beginner",
-        category: "Technology",
-        price: 1299,
-      },
-      "sea-turtle": {
-        title: "የባህር ህይወት ጥናት",
-        desc: "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ",
-        level: "intermediate",
-        category: "Science",
-        price: 699,
-      },
-    };
-
-    const demoEnrollments = allVideos.map((video: any, i: number) => {
-      const publicId = video.public_id || "";
-      const fileName = publicId.split("/").pop() || "";
-      const info = courseMap[fileName] || {
-        title: fileName,
-        desc: "",
-        level: "beginner",
-        category: "General",
-        price: 499,
-      };
-      return {
-        id: `demo-enr-${i}`,
-        userId: auth.userId,
-        courseId: `cloudinary-${publicId.replace(/\//g, "-")}`,
-        status: "active",
-        completionPercentage: Math.floor(Math.random() * 40),
-        progressPercentage: Math.floor(Math.random() * 40),
-        enrolledAt: new Date().toISOString(),
-        lastAccessedAt: new Date().toISOString(),
-        course: {
-          id: `cloudinary-${publicId.replace(/\//g, "-")}`,
-          title: info.title,
-          shortDescription: info.desc,
-          coverImage: CloudinaryService.getVideoThumbnail(publicId, {
-            width: 640,
-            height: 360,
-          }),
-          level: info.level,
-          category: info.category,
-          price: info.price,
-          currency: "ETB",
-          instructor: { fullName: "AD LMS", id: "adlms", profileImage: null },
+    // Demo: return Bunny demo courses as enrolled
+    if (env.bunny.demoVideoUrl) {
+      const demoEnrollments = [
+        {
+          id: `demo-enr-1`,
+          userId: auth.userId,
+          courseId: `bunny-demo-1`,
+          status: "active",
+          completionPercentage: Math.floor(Math.random() * 40),
+          progressPercentage: Math.floor(Math.random() * 40),
+          enrolledAt: new Date().toISOString(),
+          lastAccessedAt: new Date().toISOString(),
+          course: {
+            id: `bunny-demo-1`,
+            title: "የዱር አንስታይ ጥናት",
+            shortDescription: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ",
+            coverImage: env.bunny.demoVideoUrl,
+            level: "beginner",
+            category: "Science",
+            price: 599,
+            currency: "ETB",
+            instructor: { fullName: "AD LMS", id: "adlms", profileImage: null },
+          },
         },
-      };
-    });
+        {
+          id: `demo-enr-2`,
+          userId: auth.userId,
+          courseId: `bunny-demo-2`,
+          status: "active",
+          completionPercentage: Math.floor(Math.random() * 40),
+          progressPercentage: Math.floor(Math.random() * 40),
+          enrolledAt: new Date().toISOString(),
+          lastAccessedAt: new Date().toISOString(),
+          course: {
+            id: `bunny-demo-2`,
+            title: "ዘመናዊ ዳንስ ስልጠና",
+            shortDescription: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ",
+            coverImage: env.bunny.demoVideoUrl,
+            level: "intermediate",
+            category: "Arts",
+            price: 799,
+            currency: "ETB",
+            instructor: { fullName: "AD LMS", id: "adlms", profileImage: null },
+          },
+        },
+      ];
 
-    return paginatedResponse(
-      demoEnrollments,
-      demoEnrollments.length,
-      1,
-      50,
-      "Demo enrollments",
-    );
+      return paginatedResponse(
+        demoEnrollments,
+        demoEnrollments.length,
+        1,
+        50,
+        "Demo enrollments",
+      );
+    }
+
+    return paginatedResponse([], 0, 1, 50, "No enrollments found");
   } catch (error) {
     console.error("[LIST ENROLLMENTS ERROR]", error);
     return handleApiError(error);
@@ -171,4 +139,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
-

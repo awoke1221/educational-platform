@@ -1,13 +1,13 @@
-"use client";
+﻿"use client";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { env } from "@/config/env";
 
 interface VideoTestimonial {
   id: string;
   name: string;
   title: string;
   videoUrl: string;
-  cloudinaryPublicId: string;
   duration: number;
 }
 
@@ -55,36 +55,33 @@ function VideoTestimonialsSection() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Hardcoded video testimonials using Cloudinary
-    const testimonials: VideoTestimonial[] = [
-      {
-        id: "vid-1",
-        name: "አቤቤ ተሐነ",
-        title: "ሶፍትዌር ፕሮግራመር",
-        videoUrl:
-          "https://res.cloudinary.com/dikm1x43c/video/upload/v1/samples/sea-turtle",
-        cloudinaryPublicId: "samples/sea-turtle",
-        duration: 45,
-      },
-      {
-        id: "vid-2",
-        name: "ሙሉነሽ አሰፋ",
-        title: "ዲዲታል ማርኬቲንግ ስፔሻሊስት",
-        videoUrl:
-          "https://res.cloudinary.com/dikm1x43c/video/upload/v1/samples/elephants",
-        cloudinaryPublicId: "samples/elephants",
-        duration: 60,
-      },
-      {
-        id: "vid-3",
-        name: "ብርሃነ ታደሰ",
-        title: "ሞባይል ጀማሪ ሚኒስተር",
-        videoUrl:
-          "https://res.cloudinary.com/dikm1x43c/video/upload/v1/samples/sea-turtle",
-        cloudinaryPublicId: "samples/sea-turtle",
-        duration: 45,
-      },
-    ];
+    // Bunny demo video testimonials
+    const bunnyDemoUrl = env.bunny.demoVideoUrl;
+    const testimonials: VideoTestimonial[] = bunnyDemoUrl
+      ? [
+          {
+            id: "vid-1",
+            name: "Sara Martinez",
+            title: "Creative Director",
+            videoUrl: bunnyDemoUrl,
+            duration: 45,
+          },
+          {
+            id: "vid-2",
+            name: "Daniel Kim",
+            title: "Full Stack Developer",
+            videoUrl: bunnyDemoUrl,
+            duration: 60,
+          },
+          {
+            id: "vid-3",
+            name: "Ariana Patel",
+            title: "Course Mentor",
+            videoUrl: bunnyDemoUrl,
+            duration: 45,
+          },
+        ]
+      : [];
     setVideoTestimonials(testimonials);
     setLoading(false);
   }, []);
@@ -105,6 +102,14 @@ function VideoTestimonialsSection() {
     );
   }
 
+  if (videoTestimonials.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">Demo video URL not configured</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,7 +123,6 @@ function VideoTestimonialsSection() {
               <video
                 src={testimonial.videoUrl}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                poster={`https://res.cloudinary.com/dikm1x43c/video/upload/c_fill,h_192,q_auto,w_340,so_0s/${testimonial.cloudinaryPublicId}.jpg`}
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                 <button className="bg-white/90 hover:bg-white text-secondary p-3 rounded-full transition-all transform group-hover:scale-110">
@@ -142,7 +146,7 @@ function VideoTestimonialsSection() {
               <p className="text-sm text-text-muted mb-3">
                 {testimonial.title}
               </p>
-              <p className="text-xs text-primary font-medium">ቪዲዮ ምስክርነት</p>
+              <p className="text-xs text-primary font-medium">Watch now</p>
             </div>
           </div>
         ))}
@@ -176,7 +180,8 @@ function VideoTestimonialsSection() {
                 {selectedVideo.title}
               </p>
               <p className="text-gray-300 text-sm">
-                ይህ ምስክር በእኛ ተማሪ ሰብስቦ ሞያ ምንብርከታ እና ሃላፊነት ስለ AD LMS ያሳያል።
+                Learn how AD LMS helped these students grow with engaging
+                courses and practical skills training.
               </p>
 
               {/* Close Button */}
@@ -197,7 +202,7 @@ function VideoTestimonialsSection() {
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-                ዝጋ
+                Close
               </button>
             </div>
           </div>
@@ -218,34 +223,34 @@ function TextTestimonialsSection() {
     const testimonials: TextTestimonial[] = [
       {
         id: "txt-1",
-        name: "ብርሃነ ታደሰ",
-        title: "ኮርሱ ተማሪ",
-        company: "ጌታ ሶፍትዌር",
-        text: "AD LMS ኮርሱ ገና ንግግር ስስተም ምክር አልወደደ ነበር ግን አሁን ሙሉ ለሙሉ ተለውጧል! በጣም ጥሩ ኮርስ ነው።",
+        name: "Emma Johnson",
+        title: "Marketing Specialist",
+        company: "Bright Media",
+        text: "AD LMS helped me improve my skills and land the job I wanted. The course content was clear, practical, and easy to follow.",
         rating: 5,
       },
       {
         id: "txt-2",
-        name: "ሳልም ሙሊታ",
-        title: "ይህ ብርሃን ወጋ",
-        company: "ኢሜ ቴክ",
-        text: "ከ AD LMS ጋር ተማር አድርጋለሁ እና ሙሉ ለሙሉ ተስፋ ወደ ሌላ ሥራ መሄድ ችሌያለሁ ። አመስጋናለሁ!",
+        name: "Liam Patel",
+        title: "Product Designer",
+        company: "Creative Studio",
+        text: "The platform is easy to use and the instructors are knowledgeable. Highly recommended for anyone learning online.",
         rating: 5,
       },
       {
         id: "txt-3",
-        name: "ዘሪአ ተስፋዬ",
-        title: "ዲዲታል ማርኬቲንግ ስፔሻሊስት",
-        company: "ነብር ዲጂታል",
-        text: "ይህ ግን በጣም ጥሩ የተማሪ ገበያ። ሁሉም ኮርስ በጣም ተስማሚ እና ጠቃሚ ነው።",
+        name: "Sophia Lee",
+        title: "Software Engineer",
+        company: "Tech Works",
+        text: "The lessons are practical and the support team was always available. I feel more confident in my career after completing the course.",
         rating: 4,
       },
       {
         id: "txt-4",
-        name: "ከበደ ታደሰ",
-        title: "ዉጤት ሁኔታ",
-        company: "ደርሰት ኢንኖቬሽን",
-        text: "AD LMS ከሌሎች ኮርስ ፕላቶርም የተለየ ነው። ሙሉ ለሙሉ የታዘበ።",
+        name: "Noah Brown",
+        title: "Business Analyst",
+        company: "Growth Labs",
+        text: "Amazing experience! The courses are well-structured and the community support is excellent.",
         rating: 5,
       },
     ];
@@ -316,54 +321,54 @@ function ImageTestimonialsSection() {
     const testimonials: ImageTestimonial[] = [
       {
         id: "img-1",
-        name: "ሓና ሳረ",
-        title: "ጨዋ ሙያ ሰራተኛ",
-        text: "AD LMS በእኔ ስራ አመራት ተለውጠ። እጅግ በጣም ምርጥ ልምድ ነበር!",
+        name: "Mia Carter",
+        title: "Freelance Writer",
+        text: "AD LMS helped me master new skills quickly and effectively. I loved the hands-on lessons and course structure.",
         image:
           "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
         rating: 5,
       },
       {
         id: "img-2",
-        name: "ዓላ በየነ",
-        title: "ቴክኖሎጂ ሰራተኛ",
-        text: "በጣም ጥሩ ሙያ ዝርጋት! ሞባይል ዲቬሎፕመንት ለመምጣት እረጅ ከረ።",
+        name: "Ethan Davis",
+        title: "Visual Designer",
+        text: "Great learning experience with real results. I now feel more confident building projects from start to finish.",
         image:
           "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
         rating: 5,
       },
       {
         id: "img-3",
-        name: "ሚሪያም ታደሰ",
-        title: "ምህረተ ሙያ ሴት",
-        text: "ብዙ ተማሪ ጋር ተራምድ ሁሉ በድንቁርና ጋር ተብሎ ይሄዳል።",
+        name: "Olivia Kim",
+        title: "Project Manager",
+        text: "The lessons were easy to follow and the projects were meaningful. This course helped me move ahead in my career.",
         image:
           "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=400&fit=crop",
         rating: 4,
       },
       {
         id: "img-4",
-        name: "ወናዥ ምሩ",
-        title: "ዋና ቴክኖሎጂ ሰራተኛ",
-        text: "AD LMS በእኔ ስራ ዘርዝር ተለውጥ ። ሙሉ ለሙሉ አዲስ ተሞክሮ!",
+        name: "Noah Wilson",
+        title: "Entrepreneur",
+        text: "I loved how the platform made learning engaging and practical. The content was useful from day one.",
         image:
           "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
         rating: 5,
       },
       {
         id: "img-5",
-        name: "ሊና ከበደ",
-        title: "ሸ ውጤት ሴት",
-        text: "ይህ ብቻ ሙያ ስልት ደስ ይልኛል። ቀጣይ ኮርሱን ብቸኛ በይወ ታሪ ነው።",
+        name: "Sophia Turner",
+        title: "UX Researcher",
+        text: "The instructors are supportive and the course material is excellent. I highly recommend AD LMS to anyone learning online.",
         image:
           "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
         rating: 5,
       },
       {
         id: "img-6",
-        name: "ምቴ ወንዴ",
-        title: "ወህግደ ሙያ ሰራተኛ",
-        text: "AD LMS ሞያወ ልወር ወርህ አላ ሁሉ ነገር በግልጽ ተብራርቷል።",
+        name: "Lucas Martin",
+        title: "Software Developer",
+        text: "AD LMS made it easy to study on my schedule. The lessons were practical and helped me grow my skills fast.",
         image:
           "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
         rating: 4,
@@ -447,10 +452,12 @@ export default function TestimonialsPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
-              ምስክርነቶች
+              Student Testimonials
             </h1>
             <p className="text-base sm:text-lg text-white/90 mb-8 max-w-xl mx-auto">
-              ከአሰሙ ተማሪዎቻቻችን መምጣት ውጤታቸውና ሞግገሱን ቀጣይ ለማወቅ
+              Learn from real students who grew their skills and careers with AD
+              LMS. Explore video, text, and image testimonials from our
+              community.
             </p>
             <div className="flex justify-center items-center gap-4 flex-wrap">
               <div className="text-center">
@@ -458,7 +465,7 @@ export default function TestimonialsPage() {
                   10,000+
                 </div>
                 <div className="text-xs sm:text-sm text-white/80 mt-1">
-                  ደስተኞች ተማሪዎች
+                  happy learners
                 </div>
               </div>
               <div className="text-center">
@@ -466,7 +473,7 @@ export default function TestimonialsPage() {
                   4.9★
                 </div>
                 <div className="text-xs sm:text-sm text-white/80 mt-1">
-                  አርሞት ደረጃ
+                  average rating
                 </div>
               </div>
               <div className="text-center">
@@ -474,7 +481,7 @@ export default function TestimonialsPage() {
                   1,500+
                 </div>
                 <div className="text-xs sm:text-sm text-white/80 mt-1">
-                  ሥራ ወሳኝ ዋጋ
+                  certificates earned
                 </div>
               </div>
             </div>
@@ -487,9 +494,13 @@ export default function TestimonialsPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center gap-3 flex-wrap">
           {[
-            { id: "video", label: "ቪዲዮ ምስክርነቶች", icon: "🎬" },
-            { id: "text", label: "ጽሑፍ ምስክርነቶች", icon: "💬" },
-            { id: "image", label: "ምስል ምስክርነቶች", icon: "📸" },
+            {
+              id: "video",
+              label: "Video Testimonials",
+              icon: "🎥",
+            },
+            { id: "text", label: "Text Testimonials", icon: "💬" },
+            { id: "image", label: "Image Testimonials", icon: "🖼️" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -513,7 +524,7 @@ export default function TestimonialsPage() {
           <div className="animate-fadeIn">
             <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
               <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
-              ቪዲዮ ምስክርነቶች
+              Video Testimonials
             </h2>
             <VideoTestimonialsSection />
           </div>
@@ -523,7 +534,7 @@ export default function TestimonialsPage() {
           <div className="animate-fadeIn">
             <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
               <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
-              ጽሑፍ ምስክርነቶች
+              Text Testimonials
             </h2>
             <TextTestimonialsSection />
           </div>
@@ -533,7 +544,7 @@ export default function TestimonialsPage() {
           <div className="animate-fadeIn">
             <h2 className="text-2xl font-bold text-primary mb-8 flex items-center gap-2">
               <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
-              ምስል ምስክርነቶች
+              Image Testimonials
             </h2>
             <ImageTestimonialsSection />
           </div>
@@ -544,10 +555,11 @@ export default function TestimonialsPage() {
       <section className="bg-gradient-to-r from-primary to-secondary py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            ወደ ምስክርነት ታሪክ ዶ?
+            Ready to learn more?
           </h2>
           <p className="text-white/90 mb-8">
-            በ AD LMS ከ ሌላ ሰፊ ተማሪ ቅጥ ጋር በተለውጡ ተርገምና የሞያ ብለግባ
+            Join AD LMS today and start building your skills with expert-led
+            courses and real learner success stories.
           </p>
           <Link
             href="/courses"
@@ -566,7 +578,7 @@ export default function TestimonialsPage() {
                 d="M13 7l5 5m0 0l-5 5m5-5H6"
               />
             </svg>
-            ኮርሱን ይመልከቱ
+            Explore courses
           </Link>
         </div>
       </section>
@@ -575,10 +587,10 @@ export default function TestimonialsPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {[
-            { label: "ወደ ተሎ ተማሪዎች", value: "10,000+" },
-            { label: "አጠናቀቁ ኮርስ", value: "50,000+" },
-            { label: "አማካይ ደረጃ", value: "4.9 ⭐" },
-            { label: "ሥራ ምልክት ተሰጥቶ", value: "1,500+" },
+            { label: "Happy learners", value: "10,000+" },
+            { label: "Course enrollments", value: "50,000+" },
+            { label: "Average rating", value: "4.9★" },
+            { label: "Certificates earned", value: "1,500+" },
           ].map((stat, i) => (
             <div
               key={i}
