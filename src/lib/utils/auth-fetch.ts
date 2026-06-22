@@ -22,6 +22,15 @@ export function getStoredRefreshToken(): string | null {
   return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
+export function setStoredRefreshToken(token: string | null) {
+  if (typeof window === "undefined") return;
+  if (token) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+}
+
 export async function refreshAccessToken(): Promise<string | null> {
   try {
     const refreshToken = getStoredRefreshToken();

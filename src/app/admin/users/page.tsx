@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedAuthFetchJson } from "@/lib/utils/cache";
+import { handleAuthError } from "@/lib/utils/auth-error";
 
 interface AdminUser {
   id: string;
@@ -19,6 +21,7 @@ interface AdminUser {
 }
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [token, setToken] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +54,13 @@ export default function AdminUsersPage() {
         { method: "GET" },
         15_000,
       );
+
+      // Handle authentication errors
+      if (result.response.status === 401 || result.response.status === 403) {
+        handleAuthError(result.response.status, router);
+        return;
+      }
+
       const data = result.data;
       if (result.response.ok && data.success) {
         setUsers(data.data?.data || []);
@@ -61,7 +71,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, page, search, roleFilter, statusFilter]);
+  }, [token, page, search, roleFilter, statusFilter, router]);
 
   useEffect(() => {
     fetchUsers();

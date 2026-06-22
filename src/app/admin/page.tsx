@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedAuthFetchJson } from "@/lib/utils/cache";
+import { handleAuthError } from "@/lib/utils/auth-error";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import {
   AnimatedSection,
@@ -46,13 +47,18 @@ export default function AdminPage() {
 
     cachedAuthFetchJson("/api/admin/analytics", { method: "GET" }, 15_000)
       .then((result) => {
+        // Handle authentication errors
+        if (result.response.status === 401 || result.response.status === 403) {
+          handleAuthError(result.response.status, router);
+          return;
+        }
         if (result.response.ok) {
           setAnalytics(result.data.data);
         }
       })
       .catch((err) => console.error("Failed to load admin analytics", err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   if (!token)
     return (

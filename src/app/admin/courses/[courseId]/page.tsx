@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, Reorder } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { handleAuthError } from "@/lib/utils/auth-error";
 
 // ============================================
 // Types
@@ -178,6 +179,22 @@ export default function AdminCourseDetailPage() {
         authFetchJson(`/api/courses/${courseId}`, { method: "GET" }),
         authFetchJson(`/api/courses/${courseId}/lectures`, { method: "GET" }),
       ]);
+
+      // Handle authentication errors
+      if (
+        courseResult.response.status === 401 ||
+        courseResult.response.status === 403
+      ) {
+        handleAuthError(courseResult.response.status, router);
+        return;
+      }
+      if (
+        lecturesResult.response.status === 401 ||
+        lecturesResult.response.status === 403
+      ) {
+        handleAuthError(lecturesResult.response.status, router);
+        return;
+      }
 
       const courseData = courseResult.data;
       if (courseResult.response.ok && courseData.success) {
@@ -370,6 +387,13 @@ export default function AdminCourseDetailPage() {
           method: "DELETE",
         },
       );
+
+      // Handle authentication errors
+      if (result.response.status === 401 || result.response.status === 403) {
+        handleAuthError(result.response.status, router);
+        return;
+      }
+
       const data = result.data;
       if (result.response.ok && data.success) {
         fetchData();
@@ -441,6 +465,12 @@ export default function AdminCourseDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
+      // Handle authentication errors
+      if (result.response.status === 401 || result.response.status === 403) {
+        handleAuthError(result.response.status, router);
+        return;
+      }
 
       if (result.response.ok && result.data.success) {
         setSaveMessage({

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { handleAuthError } from "@/lib/utils/auth-error";
 import {
   validateCourseTitle,
   validateCourseDescription,
@@ -264,6 +265,12 @@ export default function NewCoursePage() {
         },
         body: JSON.stringify(courseData),
       });
+
+      // Handle authentication errors
+      if (res.status === 401 || res.status === 403) {
+        handleAuthError(res.status, router);
+        return;
+      }
 
       const data = await res.json();
       if (data.success) {

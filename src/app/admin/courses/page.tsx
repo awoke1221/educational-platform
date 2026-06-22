@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedAuthFetchJson } from "@/lib/utils/cache";
+import { handleAuthError } from "@/lib/utils/auth-error";
 import {
   validateSearchQuery,
   sanitizeInput,
@@ -130,6 +131,13 @@ export default function AdminCoursesPage() {
         { method: "GET" },
         10_000,
       );
+
+      // Handle authentication errors
+      if (result.response.status === 401 || result.response.status === 403) {
+        handleAuthError(result.response.status, router);
+        return;
+      }
+
       const data: PaginatedResponse = result.data;
 
       if (result.response.ok && data.success) {
@@ -146,7 +154,7 @@ export default function AdminCoursesPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, page, search, statusFilter]);
+  }, [token, page, search, statusFilter, router]);
 
   useEffect(() => {
     fetchCourses();
@@ -157,23 +165,39 @@ export default function AdminCoursesPage() {
     if (!token) return;
     const fetchStats = async () => {
       try {
-        const [pub, draft, arch] = await Promise.all([
+        const results = await Promise.all([
           cachedAuthFetchJson(
             `/api/admin/courses?status=published&limit=1`,
             { method: "GET" },
             15_000,
-          ).then((result) => result.data),
+          ),
           cachedAuthFetchJson(
             `/api/admin/courses?status=draft&limit=1`,
             { method: "GET" },
             15_000,
-          ).then((result) => result.data),
+          ),
           cachedAuthFetchJson(
             `/api/admin/courses?status=archived&limit=1`,
             { method: "GET" },
             15_000,
-          ).then((result) => result.data),
+          ),
         ]);
+
+        // Handle auth errors on any response
+        for (const result of results) {
+          if (
+            result.response.status === 401 ||
+            result.response.status === 403
+          ) {
+            handleAuthError(result.response.status, router);
+            return;
+          }
+        }
+
+        const pub = results[0].data;
+        const draft = results[1].data;
+        const arch = results[2].data;
+
         const publishedCount = pub.data?.total || 0;
         const draftCount = draft.data?.total || 0;
         const archivedCount = arch.data?.total || 0;
@@ -188,7 +212,7 @@ export default function AdminCoursesPage() {
       }
     };
     fetchStats();
-  }, [token]);
+  }, [token, router]);
 
   // ============================================
   // Actions
@@ -206,6 +230,13 @@ export default function AdminCoursesPage() {
         },
         body: JSON.stringify({ courseId, action }),
       });
+
+      // Handle authentication errors
+      if (result.response.status === 401 || result.response.status === 403) {
+        handleAuthError(result.response.status, router);
+        return;
+      }
+
       const data = result.data;
       if (result.response.ok && data.success) {
         fetchCourses();

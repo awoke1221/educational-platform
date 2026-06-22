@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedAuthFetchJson } from "@/lib/utils/cache";
+import { handleAuthError } from "@/lib/utils/auth-error";
 
 // ── Types ──
 interface PendingRegistration {
