@@ -94,9 +94,18 @@ export async function GET(request: NextRequest) {
           (instructors || []).map((u: any) => [u.id, u]),
         );
 
-        for (const c of courseList) {
-          c.instructor = instructorMap.get(c.instructorId) || null;
-        }
+        // Replace course list with new objects that include instructor data
+        const enrichedList = courseList.map((c: any) => ({
+          ...c,
+          instructor: instructorMap.get(c.instructorId) || null,
+        }));
+        return paginatedResponse(
+          enrichedList,
+          count || 0,
+          page,
+          limit,
+          "Courses retrieved successfully",
+        );
       }
     }
 
