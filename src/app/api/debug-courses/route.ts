@@ -7,11 +7,8 @@ export async function GET(request: NextRequest) {
     // Check if supabaseAdmin is initialized
     const clientStatus = supabaseAdmin ? "initialized" : "null";
 
-    // Show the actual Supabase URL being used (partially masked)
+    // Show the actual Supabase URL being used
     const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "NOT SET";
-    const maskedUrl = rawUrl.length > 20 
-      ? rawUrl.substring(0, 20) + "..." + rawUrl.substring(rawUrl.length - 10)
-      : rawUrl;
 
     // Try to query courses without filters
     const { data: allCourses, error: coursesErr, count } = await supabaseAdmin!
@@ -25,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     return successResponse({
       clientStatus,
-      supabaseUrl: maskedUrl,
+      supabaseUrl: rawUrl,
       courses: {
         count,
         error: coursesErr?.message || null,
