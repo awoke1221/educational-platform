@@ -50,7 +50,6 @@ export async function GET(
       .maybeSingle();
 
     if (instrErr) throw instrErr;
-    if (instr) course.instructor = instr;
 
     const { data: lectures, error: lecturesErr } = await supabaseAdmin!
       .from("Lecture")
@@ -62,7 +61,7 @@ export async function GET(
     if (lecturesErr) throw lecturesErr;
 
     return successResponse(
-      { ...course, lectures: lectures || [] },
+      { ...course, instructor: instr || null, lectures: lectures || [] },
       "Course retrieved successfully",
     );
   } catch (error) {
