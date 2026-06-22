@@ -71,10 +71,11 @@ export async function PATCH(
       orderIndex: index + 1,
     }));
 
+    const now = new Date().toISOString();
     for (const update of updates) {
       await supabaseAdmin!
         .from("Lecture")
-        .update({ orderIndex: update.orderIndex })
+        .update({ orderIndex: update.orderIndex, updatedAt: now })
         .eq("id", update.id);
     }
 

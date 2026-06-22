@@ -13,6 +13,12 @@ import {
   markLectureCompleted,
   isLectureCompleted,
 } from "@/lib/utils/videoPersistence";
+import {
+  isCacheAvailable,
+  isVideoUrl,
+  cacheVideoResponse,
+  preloadVideo,
+} from "@/lib/utils/videoCache";
 
 // ============================================
 // Types
@@ -28,6 +34,7 @@ interface LectureDetail {
   cloudinaryPublicId: string | null;
   streamingUrl: string | null;
   signedVideoUrl: string | null;
+  proxiedVideoUrl: string | null;
   isPublished: boolean;
   courseId: string;
   course: {
@@ -51,6 +58,7 @@ interface CourseLectures {
     orderIndex: number;
     isPublished: boolean;
     videoUrl?: string;
+    cloudinaryPublicId?: string | null;
   }[];
   progress: Record<string, { isCompleted: boolean; watchPercentage: number }>;
 }
@@ -259,6 +267,32 @@ export default function LecturePlayerPage() {
       : null;
 
   // ============================================
+  // Preload next lecture video when current one is playing
+  // Uses the same video proxy pattern as the hero video
+  // ============================================
+
+  useEffect(() => {
+    if (!nextLecture || !lectures?.lectures) return;
+
+    // Find the next lecture's video URL from the lecture list
+    const next = lectures.lectures.find((l) => l.id === nextLecture.id);
+    if (!next) return;
+
+    // Build the proxy URL from the Bunny storage path (same pattern as hero video)
+    const storagePath = next.cloudinaryPublicId || next.videoUrl || "";
+    if (!storagePath) return;
+
+    // Wait until user is past 50% of the current video, then preload next
+    if (!duration || currentTime / duration < 0.5) return;
+
+    // Build video proxy URL (same pattern as hero video)
+    const nextSrc = `/api/bunny/video-proxy?path=${encodeURIComponent(storagePath)}`;
+    if (isCacheAvailable()) {
+      preloadVideo(nextSrc);
+    }
+  }, [currentTime, duration, nextLecture, lectures]);
+
+  // ============================================
   // Send progress update to API
   // ============================================
 
@@ -386,7 +420,35 @@ export default function LecturePlayerPage() {
   };
 
   const handleWaiting = () => setIsBuffering(true);
-  const handleCanPlay = () => setIsBuffering(false);
+  const handleCanPlay = () => {
+    setIsBuffering(false);
+
+    // Cache the video in the background for future plays
+    const video = videoRef.current;
+    // Same priority as the video src: proxied > signed > streaming > raw
+    const src =
+      lecture?.proxiedVideoUrl ||
+      lecture?.signedVideoUrl ||
+      lecture?.streamingUrl ||
+      lecture?.videoUrl ||
+      video?.src ||
+      "";
+    if (video && src && isCacheAvailable() && isVideoUrl(src)) {
+      setTimeout(async () => {
+        try {
+          // Fetch the first 2MB of the video and store in Cache API
+          const response = await fetch(src, {
+            headers: { Range: "bytes=0-2097152" },
+          });
+          if (response.ok || response.status === 206) {
+            await cacheVideoResponse(src, response);
+          }
+        } catch {
+          // Silently fail — caching is opportunistic
+        }
+      }, 3000);
+    }
+  };
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -720,8 +782,16 @@ export default function LecturePlayerPage() {
   // ============================================
 
   const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
+  // Priority: proxied (same origin, no CDN/CORS issues) > signed > streaming > raw
+  // The video proxy (/api/bunny/video-proxy) uses the same approach as the hero video —
+  // it serves video through our server with HTTP Range (byte-serving), avoiding all
+  // Bunny CDN token auth issues, CORS/ORB blocking, and works reliably on Vercel.
   const videoUrl =
-    lecture.videoUrl || lecture.signedVideoUrl || lecture.streamingUrl || "";
+    lecture.proxiedVideoUrl ||
+    lecture.signedVideoUrl ||
+    lecture.streamingUrl ||
+    lecture.videoUrl ||
+    "";
 
   return (
     <div className="min-h-screen bg-gray-950">

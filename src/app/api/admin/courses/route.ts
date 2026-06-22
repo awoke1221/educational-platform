@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -158,7 +158,10 @@ export async function PATCH(request: NextRequest) {
 
     const { data: course, error: updateErr } = await supabaseAdmin!
       .from("Course")
-      .update(updateData)
+      .update({
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      })
       .eq("id", courseId)
       .select("id, title, isPublished, isArchived")
       .single();
@@ -181,4 +184,3 @@ export async function PATCH(request: NextRequest) {
     return handleApiError(error);
   }
 }
-

@@ -14,13 +14,25 @@ import {
 import { parsePagination } from "@/lib/utils/request";
 
 // Helper: build Supabase query from params
-function buildCourseQuery(
+// Only returns published courses that have at least one lecture with a video uploaded to Bunny.
+async function buildCourseQuery(
   filters: Record<string, any>,
   sortBy: string,
   sortOrder: string,
   page: number,
   limit: number,
 ) {
+  // First, get IDs of courses that have at least one lecture with actual video content
+  const { data: lecturesWithVideo } = await supabaseAdmin!
+    .from("Lecture")
+    .select("courseId")
+    .not("videoUrl", "eq", "")
+    .not("videoUrl", "is", null);
+
+  const validCourseIds = [
+    ...new Set((lecturesWithVideo || []).map((l: any) => l.courseId)),
+  ];
+
   let query = supabaseAdmin!
     .from("Course")
     // Select only needed columns for the listing — avoids fetching heavy fields like description, tags
@@ -32,6 +44,14 @@ function buildCourseQuery(
     )
     .eq("isPublished", true)
     .eq("isArchived", false);
+
+  // Only include courses that have video content uploaded to Bunny
+  if (validCourseIds.length > 0) {
+    query = query.in("id", validCourseIds);
+  } else {
+    // No courses with video — return empty result
+    query = query.in("id", ["__no_video_courses__"]);
+  }
 
   if (filters.category) query = query.eq("category", filters.category);
   if (filters.level) query = query.eq("level", filters.level);
@@ -159,6 +179,8 @@ export async function POST(request: NextRequest) {
       tags,
     } = validation.data;
 
+    const now = new Date().toISOString();
+
     const { data: course, error: createErr } = await supabaseAdmin!
       .from("Course")
       .insert({
@@ -166,7 +188,7 @@ export async function POST(request: NextRequest) {
         title,
         description,
         shortDescription: shortDescription || null,
-        coverImage: coverImage || null,
+        coverImage: coverImage || "",
         instructorId: auth.userId,
         price,
         currency: "ETB",
@@ -174,6 +196,8 @@ export async function POST(request: NextRequest) {
         category: category || null,
         tags: tags || [],
         isPublished: false,
+        createdAt: now,
+        updatedAt: now,
       })
       .select(
         "id, title, description, shortDescription, price, currency, level, category, tags, isPublished, instructorId, createdAt",

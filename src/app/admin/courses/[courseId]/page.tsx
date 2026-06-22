@@ -94,6 +94,7 @@ export default function AdminCourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [activeTab, setActiveTab] = useState<
     "lectures" | "settings" | "storage"
   >("lectures");
@@ -170,6 +171,7 @@ export default function AdminCourseDetailPage() {
   const fetchData = useCallback(async () => {
     if (!token || !courseId) return;
     setLoading(true);
+    setLoadError("");
 
     try {
       const [courseResult, lecturesResult] = await Promise.all([
@@ -180,14 +182,18 @@ export default function AdminCourseDetailPage() {
       const courseData = courseResult.data;
       if (courseResult.response.ok && courseData.success) {
         setCourse(courseData.data);
+        setLoadError("");
+      } else {
+        setLoadError(courseData.error || "Failed to load course");
       }
 
       const lecturesData = lecturesResult.data;
       if (lecturesResult.response.ok && lecturesData.success) {
         setLectures(lecturesData.data.lectures || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("[ADMIN COURSE] Fetch error:", err);
+      setLoadError(err?.message || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -548,13 +554,43 @@ export default function AdminCourseDetailPage() {
   if (!course) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <p className="text-gray-500 mb-4">Course not found</p>
-        <Link
-          href="/admin/courses"
-          className="text-primary hover:underline text-sm"
-        >
-          ← Back to Courses
-        </Link>
+        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg
+            className="w-8 h-8 text-red-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+        </div>
+        <p className="text-gray-700 font-medium mb-2">
+          {loadError || "Course not found"}
+        </p>
+        <p className="text-gray-400 text-sm mb-6">
+          {loadError
+            ? "There was a problem loading this course. Check your connection and try again."
+            : "The course may have been deleted or you may not have permission to view it."}
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => fetchData()}
+            className="bg-secondary text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:brightness-90 transition-colors"
+          >
+            Retry
+          </button>
+          <Link
+            href="/admin/courses"
+            className="text-primary hover:underline text-sm"
+          >
+            ← Back to Courses
+          </Link>
+        </div>
       </div>
     );
   }
@@ -622,13 +658,51 @@ export default function AdminCourseDetailPage() {
             </span>
           </div>
         </div>
-        <Link
-          href={`/courses/${courseId}`}
-          className="text-sm text-primary hover:underline"
-          target="_blank"
-        >
-          Open →
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => {
+              setActiveTab("lectures");
+              setShowCreateForm(true);
+            }}
+            className="inline-flex items-center gap-1.5 bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium hover:brightness-90 transition-all shadow-sm"
+            title="Add a new lecture with video"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Add Lecture
+          </button>
+          <Link
+            href={`/courses/${courseId}`}
+            className="inline-flex items-center gap-1.5 text-xs text-white bg-primary/80 px-3 py-2 rounded-lg hover:bg-primary transition-colors"
+            target="_blank"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+            View
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -673,6 +747,60 @@ export default function AdminCourseDetailPage() {
       {/* ============================================ */}
       {activeTab === "lectures" && (
         <div>
+          {/* Guidance */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg
+                  className="w-4 h-4 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-blue-800">
+                  How to add video content
+                </h4>
+                <ol className="mt-1 text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                  <li>
+                    <strong>Add a lecture</strong> by clicking the button below
+                  </li>
+                  <li>
+                    <strong>Upload a video</strong> by clicking the{" "}
+                    <span className="inline-flex items-center gap-0.5">
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </span>{" "}
+                    icon next to each lecture
+                  </li>
+                  <li>
+                    <strong>Publish the course</strong> from the Settings tab
+                    when ready
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
           {/* Add Lecture Button */}
           <div className="mb-6">
             {showCreateForm ? (

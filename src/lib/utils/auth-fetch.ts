@@ -59,14 +59,29 @@ export async function authFetch(
   retry = true,
 ): Promise<Response> {
   const token = getStoredAccessToken();
-  const headers = new Headers(init.headers || {});
+  const isFormData = init.body instanceof FormData;
 
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  if (!headers.has("Accept")) {
-    headers.set("Accept", "application/json");
+  // For FormData (file uploads), don't override headers — let the browser
+  // auto-set Content-Type: multipart/form-data; boundary=... which is required
+  // for the server to parse the upload correctly.
+  let headers: Headers;
+  if (isFormData) {
+    headers = new Headers();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+    // Don't set Content-Type or Accept — browser handles Content-Type for FormData
+  } else {
+    headers = new Headers(init.headers || {});
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+    if (!headers.has("Accept")) {
+      headers.set("Accept", "application/json");
+    }
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
   }
 
   const response = await fetch(input, {

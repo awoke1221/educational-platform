@@ -78,7 +78,11 @@ export async function GET(request: NextRequest) {
     const responseHeaders = new Headers();
     responseHeaders.set("Content-Type", contentType);
     responseHeaders.set("Accept-Ranges", "bytes");
-    responseHeaders.set("Cache-Control", "public, max-age=3600");
+    // Long cache with stale-while-revalidate: serve stale from cache while re-fetching
+    responseHeaders.set(
+      "Cache-Control",
+      "public, max-age=86400, stale-while-revalidate=604800",
+    );
     responseHeaders.set("Access-Control-Allow-Origin", "*");
     responseHeaders.set(
       "Access-Control-Expose-Headers",

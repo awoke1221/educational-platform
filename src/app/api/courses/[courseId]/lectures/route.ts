@@ -104,16 +104,14 @@ export async function GET(
       createdAt: true,
     };
 
-    // Only include video details for course owner
-    if (isOwner) {
-      lectureSelect.videoUrl = true;
-      lectureSelect.cloudinaryPublicId = true; // Bunny storage path
-      lectureSelect.videoSize = true;
-    }
+    // Include video details for course owners and enrolled students
+    lectureSelect.videoUrl = true;
+    lectureSelect.cloudinaryPublicId = true; // Bunny storage path
+    lectureSelect.videoSize = true;
 
     let lectureQuery = supabaseAdmin!
       .from("Lecture")
-      .select(lectureSelect.join(","))
+      .select(Object.keys(lectureSelect).join(","))
       .eq("courseId", courseId)
       .order("orderIndex", { ascending: true });
 
@@ -221,6 +219,8 @@ export async function POST(
       finalOrderIndex = (lastLecture?.orderIndex ?? -1) + 1;
     }
 
+    const now = new Date().toISOString();
+
     const { data: lecture, error: createErr } = await supabaseAdmin!
       .from("Lecture")
       .insert({
@@ -232,6 +232,8 @@ export async function POST(
         cloudinaryPublicId: "",
         orderIndex: finalOrderIndex,
         isPublished: false,
+        createdAt: now,
+        updatedAt: now,
       })
       .select(
         "id, courseId, title, description, orderIndex, isPublished, createdAt",

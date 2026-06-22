@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { ThemeProvider } from "@/lib/ThemeProvider";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,10 +35,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="am" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        {/* Preconnect to Bunny CDN for faster video loading */}
+        <link rel="preconnect" href="https://AdonayTikTokAcadamy.b-cdn.net" />
+        <link rel="dns-prefetch" href="https://AdonayTikTokAcadamy.b-cdn.net" />
+        <link rel="preconnect" href="https://ny.storage.bunnycdn.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col pb-20 md:pb-0`}
       >
         <ThemeProvider>
+          <ServiceWorkerRegister />
           <Navbar />
           <main className="flex-1">{children}</main>
           <footer className="bg-gradient-to-r from-secondary to-accent text-white py-6 sm:py-8 mt-auto">

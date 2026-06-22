@@ -100,7 +100,10 @@ export async function PUT(
     }
     const { data: course, error: updateErr } = await supabaseAdmin!
       .from("Course")
-      .update(updates)
+      .update({
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      })
       .eq("id", courseId)
       .select(
         "id, title, description, shortDescription, coverImage, price, level, category, tags, isPublished, updatedAt",

@@ -102,15 +102,25 @@ export async function GET(
     if (lecture && lecture.courseId === courseId) {
       let streamingUrl = null;
       let signedVideoUrl = null;
+      let proxiedVideoUrl = null;
+
       if (lecture.cloudinaryPublicId) {
         streamingUrl = BunnyService.getStreamingUrl(lecture.cloudinaryPublicId);
         signedVideoUrl = BunnyService.generateSignedUrl(
           lecture.cloudinaryPublicId,
           { expiresIn: 86400 },
         );
+
+        // Build a video proxy URL (same pattern as hero video)
+        // This avoids all Bunny CDN token auth and CORS issues
+        const reqUrl = new URL(request.url);
+        const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`;
+        const encodedPath = encodeURIComponent(lecture.cloudinaryPublicId);
+        proxiedVideoUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedPath}`;
       }
+
       return successResponse(
-        { ...lecture, streamingUrl, signedVideoUrl },
+        { ...lecture, streamingUrl, signedVideoUrl, proxiedVideoUrl },
         "Lecture retrieved",
       );
     }
@@ -165,6 +175,7 @@ export async function PUT(
             ? String(body.videoSize)
             : lecture.videoSize,
           isPublished: true,
+          updatedAt: new Date().toISOString(),
         })
         .eq("id", lectureId)
         .select(
@@ -193,7 +204,9 @@ export async function PUT(
     }
 
     // Standard update (title, description, orderIndex, isPublished)
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, any> = {
+      updatedAt: new Date().toISOString(),
+    };
     if (body.title !== undefined) updateData.title = body.title;
     if (body.description !== undefined)
       updateData.description = body.description;
@@ -201,7 +214,7 @@ export async function PUT(
     if (body.isPublished !== undefined)
       updateData.isPublished = body.isPublished;
 
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(updateData).length <= 1) {
       return errorResponse("No fields to update", 400);
     }
 

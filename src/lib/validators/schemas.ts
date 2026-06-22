@@ -188,7 +188,7 @@ export const updateCourseSchema = createCourseSchema.partial();
 // ============================================
 
 export const createLectureSchema = z.object({
-  courseId: z.string().cuid("Invalid course ID"),
+  courseId: z.string().min(1, "Course ID is required"),
 
   title: z
     .string()
@@ -203,7 +203,8 @@ export const createLectureSchema = z.object({
   orderIndex: z
     .number()
     .int("Order index must be an integer")
-    .min(0, "Order index cannot be negative"),
+    .min(0, "Order index cannot be negative")
+    .optional(),
 });
 
 export const uploadLectureVideoSchema = z.object({
