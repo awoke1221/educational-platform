@@ -712,7 +712,7 @@ export default function LecturePlayerPage() {
               <>
                 <Link
                   href="/auth/login"
-                  className="bg-secondary text-white px-6 py-2.5 rounded-lg font-medium hover:brightness-110 transition-all"
+                  className="bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
                 >
                   ግባ
                 </Link>
@@ -768,7 +768,7 @@ export default function LecturePlayerPage() {
           <p className="text-gray-400 mb-6">ይህን ቪዲዮ ለማየት በመጀመሪያ ለኮርሱ ይመዝገቡ።</p>
           <Link
             href={`/courses/${courseId}`}
-            className="bg-secondary text-white px-6 py-2.5 rounded-lg font-medium hover:brightness-110 transition-all"
+            className="bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
           >
             ወደ ኮርሱ ተመለስ
           </Link>

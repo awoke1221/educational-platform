@@ -445,7 +445,7 @@ function PaymentForm() {
               <button
                 onClick={proceedToReceipt}
                 disabled={loading || courseStatus !== "none"}
-                className="px-4 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl disabled:opacity-50"
+                className="px-4 py-3 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white rounded-xl hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50"
               >
                 Continue to receipt upload
               </button>

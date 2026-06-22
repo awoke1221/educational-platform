@@ -208,7 +208,7 @@ export default function CourseReviews({
             className={`text-sm px-4 py-2 rounded-lg font-medium transition-all ${
               showForm
                 ? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                : "bg-secondary text-white hover:brightness-90"
+                : "bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
             }`}
           >
             {showForm ? "Cancel" : "Write Review"}
@@ -279,7 +279,7 @@ export default function CourseReviews({
               <button
                 type="submit"
                 disabled={submitting || newRating === 0}
-                className="px-4 py-2 bg-secondary text-white text-sm font-medium rounded-lg hover:brightness-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-4 py-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? "Submitting..." : "Submit Review"}
               </button>

@@ -137,7 +137,7 @@ export default function InstructorDashboard() {
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/admin/courses/new"
-                className="text-sm bg-secondary text-white px-4 py-2 rounded-lg hover:brightness-110 transition-all font-medium"
+                className="text-sm bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 font-medium"
               >
                 ➕ New Course
               </Link>
@@ -239,7 +239,7 @@ export default function InstructorDashboard() {
                 </p>
                 <Link
                   href="/admin/courses/new"
-                  className="inline-flex items-center gap-2 bg-secondary text-white px-5 py-2 rounded-lg text-sm font-medium hover:brightness-90 transition-all"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-5 py-2 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
                 >
                   ➕ Create Course
                 </Link>

@@ -254,7 +254,7 @@ export default function AdminPage() {
               </Link>
               <Link
                 href="/admin/courses/new"
-                className="text-sm bg-secondary text-white px-4 py-2 rounded-lg hover:brightness-110 transition-all"
+                className="text-sm bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
               >
                 ➕ New Course
               </Link>

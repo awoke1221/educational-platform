@@ -282,7 +282,7 @@ export default function CourseDetailPage() {
                   }
                 }}
                 disabled={enrolling}
-                className="bg-white text-secondary px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                className="border-2 border-[#1b2a4a] text-[#1b2a4a] px-8 py-3 rounded-lg font-semibold hover:bg-[#1b2a4a] hover:text-white hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50"
               >
                 {enrolling
                   ? "በመመዝገብ ላይ..."

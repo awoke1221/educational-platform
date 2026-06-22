@@ -610,7 +610,7 @@ export default function AdminCourseDetailPage() {
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => fetchData()}
-            className="bg-secondary text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:brightness-90 transition-colors"
+            className="bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
           >
             Retry
           </button>
@@ -694,7 +694,7 @@ export default function AdminCourseDetailPage() {
               setActiveTab("lectures");
               setShowCreateForm(true);
             }}
-            className="inline-flex items-center gap-1.5 bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium hover:brightness-90 transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300 shadow-sm"
             title="Add a new lecture with video"
           >
             <svg
@@ -741,7 +741,7 @@ export default function AdminCourseDetailPage() {
           onClick={() => setActiveTab("lectures")}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "lectures"
-              ? "border-secondary text-primary"
+              ? "border-[#1b2a4a] text-[#1b2a4a] font-semibold"
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
@@ -751,7 +751,7 @@ export default function AdminCourseDetailPage() {
           onClick={() => setActiveTab("settings")}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "settings"
-              ? "border-secondary text-primary"
+              ? "border-[#1b2a4a] text-[#1b2a4a] font-semibold"
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
@@ -891,7 +891,7 @@ export default function AdminCourseDetailPage() {
             ) : (
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="flex items-center gap-2 bg-secondary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:brightness-90 transition-colors"
+                className="flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
               >
                 <svg
                   className="w-4 h-4"
@@ -1441,7 +1441,7 @@ export default function AdminCourseDetailPage() {
               Upload directly to Bunny Storage for this course. Use the Lectures
               tab to attach videos to specific lectures.
             </p>
-            <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-secondary text-white text-sm font-medium rounded-lg hover:brightness-90 transition-colors cursor-pointer">
+            <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -1521,7 +1521,7 @@ export default function AdminCourseDetailPage() {
                 <button
                   type="button"
                   onClick={() => handlePublishAction("publish")}
-                  className="px-3 py-1.5 text-xs font-medium bg-secondary text-white rounded-lg hover:brightness-90 transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
                 >
                   Publish
                 </button>

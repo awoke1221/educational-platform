@@ -698,7 +698,7 @@ export default function VideoUploader({
             <button
               onClick={startUpload}
               disabled={isUploading}
-              className="w-full py-2.5 bg-secondary hover:bg-secondary/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isUploading ? (
                 <>

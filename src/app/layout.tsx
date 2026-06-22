@@ -48,9 +48,11 @@ export default function RootLayout({
           <ServiceWorkerRegister />
           <Navbar />
           <main className="flex-1">{children}</main>
-          <footer className="bg-gradient-to-r from-secondary to-accent text-white py-6 sm:py-8 mt-auto">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs sm:text-sm text-white/90">
-              <p>© 2026 Adonay TikTok Academy</p>
+          <footer className="bg-gradient-to-r from-[#0a0a0a] via-[#111111] to-[#1a1a1a] border-t border-[#c9952a]/20 py-8 sm:py-10 mt-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <p className="text-xs sm:text-sm bg-gradient-to-r from-[#c9952a] to-[#d4a843] bg-clip-text text-transparent font-semibold tracking-wide">
+                © 2026 Adonay TikTok Academy
+              </p>
             </div>
           </footer>
           <MobileBottomNav />

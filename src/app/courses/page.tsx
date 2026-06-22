@@ -44,7 +44,7 @@ const LEVEL_LABELS: Record<string, string> = {
 function SkeletonCard() {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
-      <div className="h-44 bg-gray-200" />
+      <div className="h-48 bg-gray-200" />
       <div className="p-5 space-y-3">
         <div className="flex gap-2">
           <div className="h-5 w-16 rounded-full bg-gray-200" />
@@ -87,7 +87,7 @@ function EmptyState() {
       </p>
       <Link
         href="/auth/register"
-        className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg transition-all text-sm"
+        className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-6 py-2.5 rounded-full font-semibold hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 text-sm"
       >
         <svg
           className="w-4 h-4"
@@ -129,10 +129,6 @@ export default function CoursesPage() {
   );
   // Search & Filter state
   const [fetchError, setFetchError] = useState<string | null>(null);
-  // Search & Filter state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterLevel, setFilterLevel] = useState<string>("all");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
 
   useEffect(() => {
     setToken(localStorage.getItem("token") || "");
@@ -228,28 +224,6 @@ export default function CoursesPage() {
   const isLoaded = !loading;
   const totalCount = courses.length;
 
-  // Compute unique categories from courses
-  const categories = Array.from(
-    new Set(courses.map((c) => c.category).filter(Boolean)),
-  ).sort();
-
-  // Client-side filtering
-  const filteredCourses = courses.filter((course) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchesSearch =
-        course.title.toLowerCase().includes(q) ||
-        course.shortDescription?.toLowerCase().includes(q) ||
-        course.category?.toLowerCase().includes(q) ||
-        course.instructor?.fullName?.toLowerCase().includes(q);
-      if (!matchesSearch) return false;
-    }
-    if (filterLevel !== "all" && course.level !== filterLevel) return false;
-    if (filterCategory !== "all" && course.category !== filterCategory)
-      return false;
-    return true;
-  });
-
   return (
     <div className="min-h-screen bg-surface">
       {/* ── Hero Banner ─────────────────────────────── */}
@@ -265,13 +239,13 @@ export default function CoursesPage() {
               ኮርሶች
             </h1>
             <p className="text-base sm:text-lg text-white/90 mb-8 max-w-xl mx-auto">
-              ከመቶዎች ኮርሶች ውስጥ የሚፈልጉትን ይምረጡ እና በአዲስ መልኩ መማር ይጀምሩ
+              ቢሊዮኖች እይታዎችን ያመጡ ስልቶችን ይማሩ፣ ብራንድዎን ይገንቡ፣
             </p>
             <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-lg mx-auto">
               {[
                 { value: isLoaded ? totalCount : "—", label: "ኮርሶች" },
                 { value: "24/7", label: "ድጋፍ" },
-                { value: "ነፃ", label: "ምዝገባ" },
+                { value: "ቀላል", label: "ምዝገባ" },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
@@ -288,102 +262,16 @@ export default function CoursesPage() {
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface to-transparent" />
       </section>
 
-      {/* ── Search & Filter Bar ──────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10 mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search courses by title, category, instructor..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-gray-200"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Level Filter */}
-            <select
-              value={filterLevel}
-              onChange={(e) => setFilterLevel(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer min-w-[130px]"
-            >
-              <option value="all">All Levels</option>
-              <option value="beginner">ጀማሪ (Beginner)</option>
-              <option value="intermediate">መካከለኛ (Intermediate)</option>
-              <option value="advanced">ከፍተኛ (Advanced)</option>
-            </select>
-
-            {/* Category Filter */}
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer min-w-[130px]"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-
-            {/* Result count */}
-            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap px-2">
-              {filteredCourses.length} / {courses.length} courses
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── All Courses Grid ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-primary flex items-center gap-2">
-            <span className="w-1.5 h-6 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+            <span className="w-1.5 h-7 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
             ሁሉም ኮርሶች
           </h2>
           {isLoaded && (
-            <span className="text-xs text-text-muted">
-              {filteredCourses.length}{" "}
-              {filteredCourses.length !== courses.length
-                ? `of ${courses.length}`
-                : ""}{" "}
-              ኮርሶች ተገኝተዋል
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+              {courses.length} ኮርሶች
             </span>
           )}
         </div>
@@ -398,7 +286,7 @@ export default function CoursesPage() {
         )}
 
         {/* Empty / Error */}
-        {isLoaded && filteredCourses.length === 0 && (
+        {isLoaded && courses.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
             {fetchError ? (
               <>
@@ -478,54 +366,32 @@ export default function CoursesPage() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">
-                  {searchQuery ||
-                  filterLevel !== "all" ||
-                  filterCategory !== "all"
-                    ? "No courses match your filters"
-                    : "እስካሁን ኮርሶች የሉም"}
+                  እስካሁን ኮርሶች የሉም
                 </h3>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
-                  {searchQuery ||
-                  filterLevel !== "all" ||
-                  filterCategory !== "all"
-                    ? "Try adjusting your search or filter criteria"
-                    : "በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን"}
+                  በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን
                 </p>
-                {(searchQuery ||
-                  filterLevel !== "all" ||
-                  filterCategory !== "all") && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery("");
-                      setFilterLevel("all");
-                      setFilterCategory("all");
-                    }}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Clear all filters
-                  </button>
-                )}
               </>
             )}
           </div>
         )}
 
         {/* Grid */}
-        {isLoaded && filteredCourses.length > 0 && (
+        {isLoaded && courses.length > 0 && (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8"
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-30px" }}
           >
-            {filteredCourses.map((course) => (
+            {courses.map((course) => (
               <motion.div
                 key={course.id}
                 variants={staggerItem}
-                className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border-light dark:border-gray-700 hover:border-primary dark:hover:border-secondary card-hover"
+                className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border border-gray-100 dark:border-gray-700 hover:border-primary/30 dark:hover:border-secondary/50 hover:-translate-y-1"
               >
-                <div className="relative h-44 bg-gradient-to-br from-primary to-secondary overflow-hidden">
+                <div className="relative h-48 bg-gradient-to-br from-primary via-primary-light to-secondary overflow-hidden">
                   <img
                     src={course.coverImage}
                     alt={course.title}
@@ -549,186 +415,127 @@ export default function CoursesPage() {
                   {/* Level badge */}
                   <div className="absolute top-3 left-3">
                     <span
-                      className={`text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm ${
+                      className={`text-[11px] font-semibold px-3 py-1 rounded-full backdrop-blur-md shadow-lg ${
                         course.level === "beginner"
-                          ? "bg-primary/90 text-white"
+                          ? "bg-emerald-500/90 text-white ring-1 ring-emerald-300/50"
                           : course.level === "intermediate"
-                            ? "bg-secondary/90 text-white"
-                            : "bg-purple-500/90 text-white"
+                            ? "bg-amber-500/90 text-white ring-1 ring-amber-300/50"
+                            : "bg-purple-500/90 text-white ring-1 ring-purple-300/50"
                       }`}
                     >
                       {LEVEL_LABELS[course.level] || course.level}
                     </span>
                   </div>
-                  {/* Duration badge */}
-                  {(course as any).videoDuration ? (
-                    <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {(course as any).videoDuration}s
-                    </div>
-                  ) : (
-                    <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                        />
-                      </svg>
-                      {course.enrollmentCount || 0}
-                    </div>
-                  )}
+                  {/* Enrollment count badge */}
+                  <div className="absolute top-3 right-3 bg-black/40 backdrop-blur-md text-white text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                      />
+                    </svg>
+                    {course.enrollmentCount || 0} enrolled
+                  </div>
 
-                  {/* Lock badge for not-enrolled */}
+                  {/* Lock overlay for not-enrolled */}
                   {!enrolledIds.has(course.id) && !isAdmin && (
-                    <>
-                      <div className="absolute inset-0 bg-black/20 pointer-events-none transition-opacity duration-300" />
-                      <div className="absolute top-3 right-3 inline-flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 text-primary dark:text-gray-200 text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-sm pointer-events-none">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11zm-7 0h14v10H5V11z"
-                          />
-                        </svg>
-                        Locked
-                      </div>
-                    </>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
                   )}
                 </div>
                 <div className="p-5">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] text-primary dark:text-gray-300 bg-border-light dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                  {/* Category tag */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[11px] font-medium text-primary dark:text-gray-200 bg-primary/5 dark:bg-gray-700/50 px-2.5 py-0.5 rounded-full ring-1 ring-primary/10 dark:ring-gray-600">
                       {course.category}
                     </span>
                   </div>
-                  <h3 className="font-bold text-primary dark:text-gray-100 mb-1.5 line-clamp-2 group-hover:text-secondary transition-colors">
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1.5 line-clamp-2 group-hover:text-primary dark:group-hover:text-secondary transition-colors text-base leading-snug">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-text-muted dark:text-gray-400 line-clamp-2 leading-relaxed mb-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-4">
                     {course.shortDescription}
                   </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-border-light dark:border-gray-700">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[10px] text-white font-bold">
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[11px] text-white font-bold shrink-0 shadow-sm">
                         {course.instructor?.fullName?.charAt(0) || "A"}
                       </div>
-                      <span className="text-xs text-text-muted dark:text-gray-400 truncate max-w-[100px]">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-sm font-semibold text-primary dark:text-gray-200">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="text-sm font-semibold">
                         {rejectedCourseIds.has(course.id) ? (
-                          <span className="inline-flex flex-col gap-1">
-                            <span className="inline-flex items-center gap-2 text-[#B91C1C]">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                              Payment rejected
-                            </span>
-                            <span className="text-[10px] text-text-muted dark:text-gray-400">
-                              Re-submit payment
-                            </span>
+                          <span className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2.5 py-1 rounded-lg text-xs">
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                            Rejected
                           </span>
                         ) : enrolledIds.has(course.id) ? (
-                          <span className="inline-flex flex-col gap-1">
-                            <span className="inline-flex items-center gap-2 text-emerald-600">
-                              <svg
-                                className="w-4 h-4"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                              </svg>
-                              Active access
-                            </span>
+                          <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-lg text-xs font-medium">
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                            </svg>
+                            Enrolled
                           </span>
                         ) : pendingCourseIds.has(course.id) ? (
-                          <span className="inline-flex flex-col gap-1">
-                            <span className="inline-flex items-center gap-2 text-amber-600">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              Payment pending
-                            </span>
-                            {enrollmentMap.get(course.id)?.payment && (
-                              <span className="text-[10px] text-text-muted">
-                                {enrollmentMap.get(course.id).payment
-                                  .paymentMethod || "Unknown method"}{" "}
-                                • {enrollmentMap.get(course.id).payment.amount}{" "}
-                                {enrollmentMap.get(course.id).payment
-                                  .currency || "ETB"}
-                              </span>
-                            )}
+                          <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-lg text-xs font-medium">
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            Pending
                           </span>
                         ) : (
-                          <span className="inline-flex flex-col gap-1">
-                            <span className="inline-flex items-center gap-2 text-secondary">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                />
-                              </svg>
-                              {(course.currency || "ETB") +
-                                " " +
-                                (course.price ?? 0)}
-                            </span>
-                            <span className="text-[10px] text-text-muted">
-                              Payment required
-                            </span>
+                          <span className="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700/50 px-2.5 py-1 rounded-lg text-xs font-medium">
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                              />
+                            </svg>
+                            {(course.currency || "ETB") +
+                              " " +
+                              (course.price ?? 0)}
                           </span>
                         )}
                       </div>
@@ -736,32 +543,17 @@ export default function CoursesPage() {
                       {isAdmin ? (
                         <Link
                           href={`/courses/${course.id}`}
-                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
+                          className="inline-flex items-center justify-center bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300"
                         >
                           View course
                         </Link>
                       ) : enrolledIds.has(course.id) ? (
                         <Link
                           href={`/courses/${course.id}`}
-                          className="mt-0 inline-flex items-center justify-center bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow-lg transition-all"
-                        >
-                          Continue learning
-                        </Link>
-                      ) : pendingCourseIds.has(course.id) ? (
-                        <button
-                          type="button"
-                          className="mt-0 inline-flex items-center justify-center bg-[#FFF7ED] border border-[#FBBF24] text-[#B45309] text-sm font-semibold px-4 py-2.5 rounded-xl"
-                          disabled
-                        >
-                          Pending payment review
-                        </button>
-                      ) : token ? (
-                        <Link
-                          href={`/auth/register/payment?${userId ? `userId=${userId}&` : ""}redirect=/courses/${course.id}&courseId=${course.id}`}
-                          className="mt-0 inline-flex items-center justify-center bg-white border border-border-light text-secondary text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
+                          className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5 transition-all duration-300"
                         >
                           <svg
-                            className="w-4 h-4 mr-2"
+                            className="w-3.5 h-3.5"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -770,44 +562,65 @@ export default function CoursesPage() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M12 15v-3m0 0V8m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
                             />
                           </svg>
-                          Pay and start learning
+                          Continue
+                        </Link>
+                      ) : pendingCourseIds.has(course.id) ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-xs font-semibold px-4 py-2 rounded-lg cursor-not-allowed"
+                          disabled
+                        >
+                          Pending
+                        </button>
+                      ) : token ? (
+                        <Link
+                          href={`/auth/register/payment?${userId ? `userId=${userId}&` : ""}redirect=/courses/${course.id}&courseId=${course.id}`}
+                          className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300"
+                        >
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+                          </svg>
+                          Enroll
                         </Link>
                       ) : (
                         <Link
                           href={`/auth/register?redirect=${encodeURIComponent(
                             `/auth/register/payment?courseId=${course.id}&redirect=/courses/${course.id}`,
                           )}`}
-                          className="mt-0 inline-flex items-center justify-center bg-white border border-border-light text-secondary text-sm font-semibold px-4 py-2.5 rounded-xl hover:shadow transition-all"
+                          className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300"
                         >
-                          Register and pay to take course
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                            />
+                          </svg>
+                          Enroll
                         </Link>
                       )}
                     </div>
                   </div>
                 </div>
-                {/* Lock overlay for not-enrolled */}
-                {!enrolledIds.has(course.id) && (
-                  <div className="absolute inset-0 flex items-start justify-end p-3 pointer-events-none">
-                    <div className="bg-white/80 rounded-full p-2 shadow">
-                      <svg
-                        className="w-5 h-5 text-secondary"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11z M5 11h14v10H5V11z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                )}
               </motion.div>
             ))}
           </motion.div>

@@ -381,7 +381,7 @@ export default function AdminCoursesPage() {
             </div>
             <button
               type="submit"
-              className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg transition-all"
+              className="bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
             >
               Search
             </button>
@@ -403,7 +403,7 @@ export default function AdminCoursesPage() {
                 }}
                 className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   statusFilter === f.value
-                    ? "bg-gradient-to-r from-primary to-secondary text-white"
+                    ? "bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -448,7 +448,7 @@ export default function AdminCoursesPage() {
             </p>
             <Link
               href="/admin/courses/new"
-              className="inline-flex items-center gap-2 bg-secondary text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:brightness-90 transition-colors"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
             >
               <svg
                 className="w-4 h-4"
@@ -546,7 +546,7 @@ export default function AdminCoursesPage() {
                 <div className="md:col-span-2 flex flex-wrap justify-end gap-2">
                   <Link
                     href={`/admin/courses/${course.id}`}
-                    className="inline-flex items-center gap-1.5 bg-secondary text-white px-3 py-2 rounded-lg text-xs font-medium hover:brightness-90 transition-all shadow-sm"
+                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-3 py-2 rounded-lg text-xs font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300 shadow-sm"
                     title="Manage course - add lectures, upload videos, edit settings"
                   >
                     <svg

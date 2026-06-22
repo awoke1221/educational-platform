@@ -21,8 +21,16 @@ export default function Navbar() {
   const [initialized, setInitialized] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Scroll listener: transparent at top → solid on scroll
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Client-side: restore session from localStorage after hydration
   useEffect(() => {
@@ -120,7 +128,13 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-surface-warm to-accent-light dark:from-gray-900 dark:to-gray-800 border-b-2 border-secondary sticky top-0 z-50 shadow-sm backdrop-blur-md bg-opacity-90">
+    <nav
+      className={`sticky top-0 z-50 transition-all duration-500 ${
+        scrolled
+          ? "bg-[#0a0a0a]/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#c9952a]/20 shadow-lg shadow-black/30"
+          : "bg-transparent border-b border-transparent"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
@@ -137,8 +151,8 @@ export default function Navbar() {
                 className="object-cover"
               />
             </span>
-            <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent hidden sm:block">
-              AD LMS
+            <span className="text-[10px] sm:text-sm md:text-base font-extrabold bg-gradient-to-r from-secondary via-amber-400 to-primary bg-clip-text text-transparent tracking-tight">
+              Adonay TikTok Academy
             </span>
           </Link>
 
@@ -148,19 +162,19 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-3 sm:gap-6">
               <Link
                 href="/courses"
-                className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
               >
                 Courses
               </Link>
               <Link
                 href="/about"
-                className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
               >
                 About
               </Link>
               <Link
                 href="/testimonials"
-                className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
               >
                 Testimonials
               </Link>
@@ -173,7 +187,7 @@ export default function Navbar() {
               >
                 {theme === "light" ? (
                   <svg
-                    className="w-5 h-5 text-primary dark:text-gray-300 group-hover:text-secondary transition-colors"
+                    className="w-5 h-5 text-white/80 group-hover:text-[#c9952a] transition-colors"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -407,7 +421,7 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center gap-3 sm:gap-6">
                   <Link
                     href="/auth/register"
-                    className="text-xs sm:text-sm bg-gradient-to-r from-secondary to-accent text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg hover:shadow-lg hover:brightness-110 transition-all font-semibold whitespace-nowrap animate-pulse-glow"
+                    className="text-xs sm:text-sm bg-gradient-to-r from-[#c9952a] to-[#d4a843] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg hover:shadow-lg hover:shadow-[#c9952a]/30 hover:brightness-110 transition-all font-semibold whitespace-nowrap"
                   >
                     Get Started
                   </Link>
@@ -426,7 +440,7 @@ export default function Navbar() {
                   animate={
                     mobileMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }
                   }
-                  className="block h-[2px] w-full bg-primary dark:text-gray-200 rounded-full origin-center transition-colors"
+                  className="block h-[2px] w-full bg-white/80 rounded-full origin-center transition-colors"
                   style={{
                     backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
                   }}
@@ -437,7 +451,7 @@ export default function Navbar() {
                       ? { opacity: 0, x: -8 }
                       : { opacity: 1, x: 0 }
                   }
-                  className="block h-[2px] w-full bg-primary dark:text-gray-200 rounded-full transition-colors"
+                  className="block h-[2px] w-full bg-white/80 rounded-full transition-colors"
                   style={{
                     backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
                   }}
@@ -448,7 +462,7 @@ export default function Navbar() {
                       ? { rotate: -45, y: -6 }
                       : { rotate: 0, y: 0 }
                   }
-                  className="block h-[2px] w-full bg-primary dark:text-gray-200 rounded-full origin-center transition-colors"
+                  className="block h-[2px] w-full bg-white/80 rounded-full origin-center transition-colors"
                   style={{
                     backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
                   }}
@@ -480,12 +494,12 @@ export default function Navbar() {
               animate={{ opacity: 1, y: 0, scaleY: 1 }}
               exit={{ opacity: 0, y: -20, scaleY: 0.95 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="md:hidden absolute left-0 right-0 top-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 shadow-2xl z-50 overflow-hidden"
+              className="md:hidden absolute left-0 right-0 top-full bg-[#0a0a0a]/98 backdrop-blur-xl border-b border-[#c9952a]/20 shadow-2xl shadow-black/40 z-50 overflow-hidden"
             >
               <div className="px-4 py-5 space-y-1">
                 {/* ── Theme Toggle ─────────────────────── */}
-                <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-gray-50/80 dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/50">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-white/5 border border-[#c9952a]/10">
+                  <span className="text-sm font-medium text-white/70">
                     {theme === "light" ? "☀️ Light Mode" : "🌙 Dark Mode"}
                   </span>
                   <button
@@ -531,7 +545,7 @@ export default function Navbar() {
                   </button>
                 </div>
 
-                <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
+                <div className="h-px bg-[#c9952a]/10 my-2" />
 
                 {user ? (
                   /* ── Mobile: Logged In Menu ──────────── */
@@ -772,7 +786,7 @@ function MobileMenuItem({
       onClick={onClick}
       className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200 group ${
         highlight
-          ? "bg-gradient-to-r from-secondary to-accent text-white shadow-md hover:shadow-lg hover:brightness-110"
+          ? "bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white shadow-md hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5"
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
       }`}
     >

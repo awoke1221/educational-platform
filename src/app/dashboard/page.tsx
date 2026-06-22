@@ -185,7 +185,7 @@ export default function DashboardPage() {
           </p>
           <Link
             href="/auth/login"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
           >
             ግባ
             <svg
@@ -326,7 +326,7 @@ export default function DashboardPage() {
             </p>
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-secondary to-accent text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
             >
               ኮርሶችን ይመልከቱ
             </Link>
@@ -395,7 +395,7 @@ export default function DashboardPage() {
                     {enr.status === "active" && (
                       <Link
                         href={`/courses/${enr.course?.id || enr.courseId}`}
-                        className="block w-full text-center bg-gradient-to-r from-secondary to-accent text-white text-sm py-2.5 rounded-xl font-medium hover:shadow-lg transition-all hover:brightness-110"
+                        className="block w-full text-center bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white text-sm py-2.5 rounded-xl font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
                       >
                         ቪዲዮ ይመልከቱ →
                       </Link>

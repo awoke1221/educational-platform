@@ -167,11 +167,11 @@ export default function Home() {
             >
               <Link
                 href="/courses"
-                className="group relative bg-secondary text-white px-8 py-3.5 rounded-lg text-center font-semibold transition-all shadow-lg hover:shadow-xl w-full overflow-hidden"
+                className="group relative bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-8 py-3.5 rounded-lg text-center font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-[#1b2a4a]/30 hover:-translate-y-0.5 w-full overflow-hidden"
               >
                 <span className="relative z-10">ኮርሶችን ይመልከቱ</span>
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-secondary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  className="absolute inset-0 bg-gradient-to-r from-[#1b2a4a] to-[#2c3e6b] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   initial={false}
                 />
               </Link>

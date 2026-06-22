@@ -100,7 +100,7 @@ function VideoTestimonialsSection() {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                <button className="bg-white/90 hover:bg-white text-secondary p-3 rounded-full transition-all transform group-hover:scale-110">
+                <button className="bg-white/90 hover:bg-white text-[#1b2a4a] p-3 rounded-full transition-all transform group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[#1b2a4a]/20">
                   <svg
                     className="w-6 h-6"
                     fill="currentColor"

@@ -598,7 +598,7 @@ export default function NewCoursePage() {
             disabled={
               loading || !form.title || Object.keys(fieldErrors).length > 0
             }
-            className="flex-1 bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Creating..." : "Create Course"}
           </button>
