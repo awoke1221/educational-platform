@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-
-interface HeroVideoData {
-  videoUrl: string;
-  poster: string;
-  filename: string;
-  type: string;
-  storagePath: string;
-}
+import { useHeroVideo } from "@/lib/hooks/useHeroVideo";
 
 const containerVariants = {
   hidden: {},
@@ -38,31 +31,12 @@ const videoVariants = {
 
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
-  const [heroVideo, setHeroVideo] = useState<HeroVideoData | null>(null);
-  const [heroLoading, setHeroLoading] = useState(true);
+  const { heroVideo, heroLoading, videoRef } = useHeroVideo();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 100);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    // Fetch the hero video from the API — this auto-discovers the latest video
-    // and returns a properly signed URL with token authentication
-    (async () => {
-      try {
-        const res = await fetch("/api/bunny/hero-video");
-        const json = await res.json();
-        if (json.success && json.data) {
-          setHeroVideo(json.data);
-        }
-      } catch (err) {
-        console.error("Failed to load hero video:", err);
-      } finally {
-        setHeroLoading(false);
-      }
-    })();
   }, []);
 
   return (
@@ -166,9 +140,11 @@ export default function Home() {
                 </div>
               ) : heroVideo ? (
                 <video
+                  ref={videoRef}
                   className="w-full aspect-video"
                   controls
                   playsInline
+                  preload="metadata"
                   poster={heroVideo.poster}
                 >
                   <source
