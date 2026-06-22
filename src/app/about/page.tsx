@@ -359,38 +359,12 @@ export default function AboutPage() {
 
                 {/* Image Container */}
                 <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl group">
-                  {/* Replace with actual image */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary-light to-primary-dark flex items-center justify-center">
-                    <motion.div
-                      className="text-center p-8"
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    >
-                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-secondary/20 flex items-center justify-center">
-                        <svg
-                          className="w-12 h-12 text-secondary"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
-                      </div>
-                      <p className="text-white/60 text-sm">የአዶናይ ፎቶ</p>
-                      <p className="text-white/30 text-xs mt-1">
-                        (Add image here)
-                      </p>
-                    </motion.div>
-                  </div>
+                  {/* Adonay Image */}
+                  <img
+                    src="/adonay image.jpg"
+                    alt="አዶናይ"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
 
                   {/* Overlay gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />

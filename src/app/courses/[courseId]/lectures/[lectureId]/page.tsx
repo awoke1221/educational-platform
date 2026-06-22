@@ -5,6 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
+import {
+  saveVideoPosition,
+  getVideoPosition,
+  clearVideoPosition,
+  markLectureCompleted,
+  isLectureCompleted,
+} from "@/lib/utils/videoPersistence";
 
 // ============================================
 // Types
@@ -158,15 +166,37 @@ export default function LecturePlayerPage() {
   useEffect(() => {
     if (!token || !lectureId) return;
 
-    const fetchLecture = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError("");
       setIsEnrolled(false);
 
       try {
-        const profileResult = await authFetchJson("/api/user/profile", {
-          method: "GET",
-        });
+        // Parallel fetch: profile, enrollments, lecture detail, and lecture list
+        const [profilePromise, enrPromise, lecturePromise, listPromise] = [
+          cachedAuthFetchJson("/api/user/profile", { method: "GET" }, 15_000),
+          cachedAuthFetchJson("/api/enrollments", { method: "GET" }, 15_000),
+          cachedAuthFetchJson(
+            `/api/courses/${courseId}/lectures/${lectureId}`,
+            { method: "GET" },
+            15_000,
+          ),
+          cachedAuthFetchJson(
+            `/api/courses/${courseId}/lectures`,
+            { method: "GET" },
+            15_000,
+          ),
+        ];
+
+        const [profileResult, enrResult, lectureResult, listResult] =
+          await Promise.all([
+            profilePromise,
+            enrPromise,
+            lecturePromise,
+            listPromise,
+          ]);
+
+        // Process profile
         let admin = false;
         if (profileResult.response.ok) {
           const profile = profileResult.data.data || {};
@@ -175,10 +205,8 @@ export default function LecturePlayerPage() {
           if (admin) setIsEnrolled(true);
         }
 
+        // Process enrollment
         if (!admin) {
-          const enrResult = await authFetchJson(`/api/enrollments`, {
-            method: "GET",
-          });
           const enrData = enrResult.data;
           const items = enrData.data?.data || enrData.data || [];
           const activeEnrollment = items.some(
@@ -193,10 +221,7 @@ export default function LecturePlayerPage() {
           }
         }
 
-        const lectureResult = await authFetchJson(
-          `/api/courses/${courseId}/lectures/${lectureId}`,
-          { method: "GET" },
-        );
+        // Process lecture detail
         const lecData = lectureResult.data;
         if (!lectureResult.response.ok || !lecData.success) {
           setError(lecData.error || "ምዕራፍ አልተገኘም");
@@ -204,6 +229,11 @@ export default function LecturePlayerPage() {
           return;
         }
         setLecture(lecData.data);
+
+        // Process lecture list
+        if (listResult.response.ok && listResult.data.success) {
+          setLectures(listResult.data.data);
+        }
       } catch (err) {
         setError("መረጃ በመጫን ላይ ስህተት ተከስቷል");
         console.error("[LECTURE PLAYER] Fetch error:", err);
@@ -212,26 +242,8 @@ export default function LecturePlayerPage() {
       }
     };
 
-    fetchLecture();
+    fetchData();
   }, [token, lectureId, courseId]);
-
-  // ============================================
-  // Fetch course lecture list for navigation
-  // ============================================
-
-  useEffect(() => {
-    if (!token || !courseId) return;
-
-    authFetchJson(`/api/courses/${courseId}/lectures`, {
-      method: "GET",
-    })
-      .then((result) => {
-        if (result.response.ok && result.data.success) {
-          setLectures(result.data.data);
-        }
-      })
-      .catch(() => {});
-  }, [token, courseId]);
 
   // ============================================
   // Find prev/next lectures
@@ -321,20 +333,45 @@ export default function LecturePlayerPage() {
   // ============================================
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+    const video = videoRef.current;
+    if (!video) return;
+    setCurrentTime(video.currentTime);
+    // Periodically save position (throttled by browser's timeupdate ~4-15Hz)
+    if (video.currentTime > 5 && video.duration > 0) {
+      saveVideoPosition(lectureId, video.currentTime, video.duration);
+    }
   };
 
   const handleLoadedMetadata = () => {
-    if (videoRef.current) setDuration(videoRef.current.duration);
+    const video = videoRef.current;
+    if (!video) return;
+    setDuration(video.duration);
+
+    // Restore saved video position if not already completed
+    if (!isLectureCompleted(lectureId)) {
+      const saved = getVideoPosition(lectureId);
+      if (
+        saved &&
+        saved.currentTime > 3 &&
+        saved.currentTime < video.duration - 5
+      ) {
+        video.currentTime = saved.currentTime;
+      }
+    }
   };
 
   const handlePlay = () => setIsPlaying(true);
   const handlePause = () => {
     setIsPlaying(false);
-    if (videoRef.current) {
-      const time = videoRef.current.currentTime;
-      const dur = videoRef.current.duration || 1;
+    const video = videoRef.current;
+    if (video) {
+      const time = video.currentTime;
+      const dur = video.duration || 1;
       const pct = (time / dur) * 100;
+      // Save position on pause
+      if (time > 3 && dur > 0) {
+        saveVideoPosition(lectureId, time, dur);
+      }
       sendProgress(time, pct, pct >= COMPLETION_THRESHOLD);
     }
   };
@@ -342,6 +379,7 @@ export default function LecturePlayerPage() {
   const handleEnded = () => {
     setIsPlaying(false);
     setIsCompleted(true);
+    markLectureCompleted(lectureId);
     if (videoRef.current) {
       sendProgress(videoRef.current.duration, 100, true);
     }

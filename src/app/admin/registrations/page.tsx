@@ -60,6 +60,7 @@ function ReceiptModal({
           <img
             src={url}
             alt={`Receipt for ${username}`}
+            loading="lazy"
             className="max-w-full max-h-[70vh] object-contain rounded shadow"
           />
         </div>

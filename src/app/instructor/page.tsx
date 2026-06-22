@@ -267,6 +267,7 @@ export default function InstructorDashboard() {
                             <img
                               src={course.coverImage}
                               alt=""
+                              loading="lazy"
                               className="w-full h-full object-cover"
                             />
                           ) : (
