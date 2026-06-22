@@ -17,8 +17,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AD LMS - የመስመር ላይ ትምህርት መድረክ",
-  description: "AD LMS - በኢትዮጵያ ውስጥ ለሁሉም ሰው ተደራሽ የሆነ የመስመር ላይ ትምህርት መድረክ",
+  title: "Adonay TikTok Academy",
+  description:
+    "Adonay TikTok Academy - በኢትዮጵያ ውስጥ ለሁሉም ሰው ተደራሽ የሆነ የመስመር ላይ ትምህርት መድረክ",
+  icons: {
+    icon: "/logo-adlms.jpg",
+    apple: "/logo-adlms.jpg",
+    shortcut: "/logo-adlms.jpg",
+  },
 };
 
 export default function RootLayout({
@@ -36,7 +42,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <footer className="bg-gradient-to-r from-secondary to-accent text-white py-6 sm:py-8 mt-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs sm:text-sm text-white/90">
-              <p>© 2026 AD LMS. ሁሉስ መብት የተጠበቀ ነው።</p>
+              <p>© 2026 Adonay TikTok Academy</p>
             </div>
           </footer>
           <MobileBottomNav />
