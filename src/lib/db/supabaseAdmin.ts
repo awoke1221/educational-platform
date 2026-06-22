@@ -57,39 +57,48 @@ function resolveAdmin(): SupabaseClient | null {
   return getSupabaseAdminOptional();
 }
 
-// ── Proxy-based lazy getter ──────────────────────────────
-// This is NOT evaluated at module load time. Each property access
-// (e.g. supabaseAdmin.from(...)) triggers resolveAdmin() lazily.
-// This fixes the Vercel build issue where module-level code runs
-// before env vars are injected.
-const noopClient = new Proxy(
-  {},
-  {
-    get(_, prop) {
-      if (prop === "then" || prop === "catch") return undefined;
-      // Return a function that produces another noop proxy for chaining
-      return () =>
-        Promise.resolve(
-          new Proxy(
-            { data: null, error: new Error("Supabase admin not initialized") },
-            {
-              get(target, p) {
-                if (p === "then" || p === "catch") return undefined;
-                return (target as any)[p] ?? (() => Promise.resolve(target));
-              },
-            },
-          ),
-        );
+// ── Lazy-getter Proxy ────────────────────────────────────
+// Creates a chainable noop query builder so that code like:
+//   await supabaseAdmin!.from("X").select("y").eq("z", v)
+// doesn't crash when the admin client isn't available — it
+// simply returns { data: null, error: "not initialized" }.
+//
+// The actual Supabase client is created lazily on first
+// access, NOT at module load time. This fixes the Vercel
+// build issue where env vars aren't injected yet.
+
+const NOOP_ERR = new Error(
+  "Supabase admin not initialized — check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY",
+);
+
+/** Build a chainable noop that resolves to { data: null, error } when awaited. */
+function noopChain(): any {
+  const result = { data: null, error: NOOP_ERR };
+  // Wrapping in Promise.resolve so `await noopChain()` yields `result`
+  const promise = Promise.resolve(result);
+  return new Proxy(promise, {
+    get(target, prop) {
+      // Forward Promise methods so `await` works
+      if (prop === "then" || prop === "catch" || prop === "finally") {
+        return (target as any)[prop];
+      }
+      // Every other method call returns another noop chain
+      return () => noopChain();
     },
-  },
-) as SupabaseClient;
+  });
+}
+
+const noopClient = noopChain();
 
 export const supabaseAdmin = new Proxy(
   {},
   {
     get(_, prop) {
       const client = resolveAdmin();
-      if (!client) return (noopClient as any)[prop];
+      if (!client) {
+        const val = (noopClient as any)[prop];
+        return typeof val === "function" ? val : (noopClient as any)[prop];
+      }
       return (client as any)[prop];
     },
   },
