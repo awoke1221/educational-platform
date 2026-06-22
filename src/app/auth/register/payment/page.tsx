@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedFetch, cachedAuthFetchJson } from "@/lib/utils/cache";
 
 function PaymentForm() {
   const router = useRouter();
@@ -56,46 +57,68 @@ function PaymentForm() {
       setLoadingUser(true);
 
       try {
+        // Parallel fetch: profile, course, and enrollments all at once
+        const promises: Promise<void>[] = [];
+
         if (token) {
-          const profileResult = await authFetchJson("/api/user/profile", {
-            method: "GET",
-          });
-          if (profileResult.response.ok) {
-            const profileData = profileResult.data.data || null;
-            setProfile(profileData);
-            setResolvedUserId((prev) => prev || profileData?.id || null);
-            setFullName(profileData?.fullName || "");
-            setPhoneNumber(profileData?.phoneNumber || "");
-          }
+          promises.push(
+            (async () => {
+              const profileResult = await authFetchJson("/api/user/profile", {
+                method: "GET",
+              });
+              if (profileResult.response.ok) {
+                const profileData = profileResult.data.data || null;
+                setProfile(profileData);
+                setResolvedUserId((prev) => prev || profileData?.id || null);
+                setFullName(profileData?.fullName || "");
+                setPhoneNumber(profileData?.phoneNumber || "");
+              }
+            })(),
+          );
         }
 
         if (courseId) {
-          const courseRes = await fetch(`/api/courses/${courseId}`);
-          const courseData = await courseRes.json();
-          if (courseRes.ok && courseData.data) {
-            setCourse(courseData.data);
-          }
+          promises.push(
+            (async () => {
+              const courseData = await cachedFetch(
+                `/api/courses/${courseId}`,
+                undefined,
+                15_000,
+              );
+              if (courseData?.data) {
+                setCourse(courseData.data);
+              }
+            })(),
+          );
         }
 
         if (token && courseId) {
-          const enrResult = await authFetchJson(`/api/enrollments`, {
-            method: "GET",
-          });
-          const items = enrResult.data?.data || enrResult.data || [];
-          const active = items.some(
-            (e: any) =>
-              (e.courseId || e.course?.id) === courseId &&
-              e.status === "active",
-          );
-          const processing = items.some(
-            (e: any) =>
-              (e.courseId || e.course?.id) === courseId &&
-              e.status === "processing",
-          );
-          setCourseStatus(
-            active ? "active" : processing ? "processing" : "none",
+          promises.push(
+            (async () => {
+              const enrResult = await cachedAuthFetchJson(
+                `/api/enrollments`,
+                { method: "GET" },
+                15_000,
+              );
+              const items = enrResult.data?.data || enrResult.data || [];
+              const active = items.some(
+                (e: any) =>
+                  (e.courseId || e.course?.id) === courseId &&
+                  e.status === "active",
+              );
+              const processing = items.some(
+                (e: any) =>
+                  (e.courseId || e.course?.id) === courseId &&
+                  e.status === "processing",
+              );
+              setCourseStatus(
+                active ? "active" : processing ? "processing" : "none",
+              );
+            })(),
           );
         }
+
+        await Promise.all(promises);
       } catch (err) {
         console.warn("Unable to resolve payment state", err);
       } finally {

@@ -23,10 +23,13 @@ function buildCourseQuery(
 ) {
   let query = supabaseAdmin!
     .from("Course")
-    // select course fields and instructorId only — do not rely on DB foreign-key relationships
-    .select("*, instructorId", {
-      count: "exact",
-    })
+    // Select only needed columns for the listing — avoids fetching heavy fields like description, tags
+    .select(
+      "id, title, shortDescription, coverImage, instructorId, price, currency, level, category, enrollmentCount, videoCount, duration, createdAt",
+      {
+        count: "exact",
+      },
+    )
     .eq("isPublished", true)
     .eq("isArchived", false);
 

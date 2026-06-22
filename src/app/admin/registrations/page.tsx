@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
 
 // ── Types ──
 interface PendingRegistration {
@@ -147,9 +148,11 @@ export default function AdminRegistrationsPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await authFetchJson("/api/registrations/pending", {
-        method: "GET",
-      });
+      const result = await cachedAuthFetchJson(
+        "/api/registrations/pending",
+        { method: "GET" },
+        10_000,
+      );
       const data = result.data;
       if (!result.response.ok) {
         if (result.response.status === 401) {

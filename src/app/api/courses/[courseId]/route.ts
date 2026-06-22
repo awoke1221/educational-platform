@@ -34,7 +34,9 @@ export async function GET(
 
     const { data: course, error: courseErr } = await supabaseAdmin!
       .from("Course")
-      .select("*, instructorId")
+      .select(
+        "id, title, description, shortDescription, coverImage, instructorId, price, currency, level, category, tags, enrollmentCount, videoCount, duration, isPublished, createdAt, updatedAt",
+      )
       .eq("id", courseId)
       .maybeSingle();
 

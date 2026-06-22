@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import {
   AnimatedSection,
@@ -43,9 +44,7 @@ export default function AdminPage() {
       return;
     }
 
-    authFetchJson("/api/admin/analytics", {
-      method: "GET",
-    })
+    cachedAuthFetchJson("/api/admin/analytics", { method: "GET" }, 15_000)
       .then((result) => {
         if (result.response.ok) {
           setAnalytics(result.data.data);

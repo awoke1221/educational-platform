@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
 
 interface AdminUser {
   id: string;
@@ -45,9 +46,11 @@ export default function AdminUsersPage() {
       if (roleFilter !== "all") params.set("role", roleFilter);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
-      const result = await authFetchJson(`/api/admin/users?${params}`, {
-        method: "GET",
-      });
+      const result = await cachedAuthFetchJson(
+        `/api/admin/users?${params}`,
+        { method: "GET" },
+        15_000,
+      );
       const data = result.data;
       if (result.response.ok && data.success) {
         setUsers(data.data?.data || []);

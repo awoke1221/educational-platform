@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
 import { ProgressRing } from "@/components/ProgressRing";
 import { ConfettiEffect } from "@/components/ConfettiEffect";
 import {
@@ -47,9 +48,7 @@ export default function ProgressPage() {
       return;
     }
 
-    authFetchJson(`/api/progress/${courseId}`, {
-      method: "GET",
-    })
+    cachedAuthFetchJson(`/api/progress/${courseId}`, { method: "GET" }, 15_000)
       .then((result) => {
         if (result.response.ok) {
           const d = result.data.data;

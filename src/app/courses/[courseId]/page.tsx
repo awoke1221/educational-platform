@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedFetch } from "@/lib/utils/cache";
 import CourseReviews from "@/components/CourseReviews";
 
 interface CourseDetail {
@@ -47,21 +48,26 @@ export default function CourseDetailPage() {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const courseRes = await fetch(`/api/courses/${courseId}`).then((r) =>
-          r.json(),
-        );
-        setCourse(courseRes.data || courseRes.data?.data || null);
+    const authToken = token || localStorage.getItem("token") || "";
 
-        const tokenFromStorage = localStorage.getItem("token") || "";
-        const authToken = tokenFromStorage || token;
+    // Parallel fetch: course data + (if logged in) profile + enrollments
+    const promises: Promise<void>[] = [
+      cachedFetch(`/api/courses/${courseId}`, undefined, 15_000).then(
+        (res: any) => {
+          setCourse(res.data || res.data?.data || null);
+        },
+      ),
+    ];
 
-        if (authToken) {
+    if (authToken) {
+      promises.push(
+        (async () => {
           try {
-            const profileResult = await authFetchJson("/api/user/profile", {
-              method: "GET",
-            });
+            const [profileResult, enrResult] = await Promise.all([
+              authFetchJson("/api/user/profile", { method: "GET" }),
+              authFetchJson("/api/enrollments", { method: "GET" }),
+            ]);
+
             if (profileResult.response.ok) {
               const profile = profileResult.data.data || {};
               setUserId(profile.id || null);
@@ -74,9 +80,6 @@ export default function CourseDetailPage() {
               }
             }
 
-            const enrResult = await authFetchJson(`/api/enrollments`, {
-              method: "GET",
-            });
             const items = enrResult.data?.data || enrResult.data || [];
             const matched = items.find(
               (e: any) => (e.courseId || e.course?.id) === courseId,
@@ -113,13 +116,11 @@ export default function CourseDetailPage() {
           } catch (e) {
             console.warn("Failed to load user enrollment data", e);
           }
-        }
-      } catch (e) {
-        console.warn("Failed to load course", e);
-      } finally {
-        setLoading(false);
-      }
-    })();
+        })(),
+      );
+    }
+
+    Promise.all(promises).finally(() => setLoading(false));
   }, [courseId, token]);
 
   const levelLabels: Record<string, string> = {

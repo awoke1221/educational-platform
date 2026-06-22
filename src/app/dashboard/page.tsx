@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { ProgressRing } from "@/components/ProgressRing";
 import {
@@ -139,12 +140,14 @@ export default function DashboardPage() {
     if (!t) return;
     setToken(t);
     Promise.all([
-      authFetchJson("/api/enrollments", {
-        method: "GET",
-      }).then((result) => result.data),
-      authFetchJson("/api/enrollments/stats", {
-        method: "GET",
-      }).then((result) => result.data),
+      cachedAuthFetchJson("/api/enrollments", { method: "GET" }, 15_000).then(
+        (result) => result.data,
+      ),
+      cachedAuthFetchJson(
+        "/api/enrollments/stats",
+        { method: "GET" },
+        15_000,
+      ).then((result) => result.data),
     ])
       .then(([enr, st]) => {
         setEnrollments(enr.data?.data || []);

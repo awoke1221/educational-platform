@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedFetch } from "@/lib/utils/cache";
 
 const staggerContainer = {
   hidden: {},
@@ -147,7 +148,6 @@ export default function CoursesPage() {
           setUserId(profile.id || null);
           setIsAdmin(profile.role === "admin");
           if (profile.role === "admin") {
-            setEnrolledIds(new Set(courses.map((course) => course.id)));
             return;
           }
         }
@@ -195,12 +195,18 @@ export default function CoursesPage() {
     };
 
     loadUserInfo();
-  }, [token, courses]);
+  }, [token]);
+
+  // Admin: mark all courses as enrolled
+  useEffect(() => {
+    if (isAdmin && courses.length > 0) {
+      setEnrolledIds(new Set(courses.map((c) => c.id)));
+    }
+  }, [isAdmin, courses]);
 
   useEffect(() => {
-    fetch("/api/courses")
-      .then((r) => r.json())
-      .then((d) => setCourses(d.data?.data || []))
+    cachedFetch("/api/courses", undefined, 15_000)
+      .then((d: any) => setCourses(d.data?.data || []))
       .catch(() => setCourses([]))
       .finally(() => setLoading(false));
   }, []);

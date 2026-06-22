@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
 
 // ============================================
 // Types
@@ -81,9 +82,11 @@ export default function InstructorDashboard() {
   const fetchCourses = useCallback(async () => {
     if (!token) return;
     try {
-      const result = await authFetchJson("/api/instructor/courses", {
-        method: "GET",
-      });
+      const result = await cachedAuthFetchJson(
+        "/api/instructor/courses",
+        { method: "GET" },
+        15_000,
+      );
       if (result.response.ok && result.data.success) {
         setCourses(result.data.data?.data || []);
       }

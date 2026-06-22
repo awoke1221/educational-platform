@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import { cachedAuthFetchJson } from "@/lib/utils/cache";
 import {
   validateSearchQuery,
   sanitizeInput,
@@ -128,9 +129,11 @@ export default function AdminCoursesPage() {
       if (search) params.set("search", search);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
-      const result = await authFetchJson(`/api/admin/courses?${params}`, {
-        method: "GET",
-      });
+      const result = await cachedAuthFetchJson(
+        `/api/admin/courses?${params}`,
+        { method: "GET" },
+        10_000,
+      );
       const data: PaginatedResponse = result.data;
 
       if (result.response.ok && data.success) {
@@ -141,20 +144,6 @@ export default function AdminCoursesPage() {
         setCourses(items);
         setTotal(totalItems);
         setTotalPages(pages);
-
-        // Also fetch all for stats
-        const allResult = await authFetchJson(`/api/admin/courses?limit=1`, {
-          method: "GET",
-        });
-        const allData = allResult.data;
-        if (allResult.response.ok && allData.success) {
-          setStats({
-            total: allData.data?.total ?? 0,
-            published: 0,
-            draft: 0,
-            archived: 0,
-          });
-        }
       }
     } catch (err) {
       console.error("[ADMIN COURSES] Fetch error:", err);
@@ -173,15 +162,21 @@ export default function AdminCoursesPage() {
     const fetchStats = async () => {
       try {
         const [pub, draft, arch] = await Promise.all([
-          authFetchJson(`/api/admin/courses?status=published&limit=1`, {
-            method: "GET",
-          }).then((result) => result.data),
-          authFetchJson(`/api/admin/courses?status=draft&limit=1`, {
-            method: "GET",
-          }).then((result) => result.data),
-          authFetchJson(`/api/admin/courses?status=archived&limit=1`, {
-            method: "GET",
-          }).then((result) => result.data),
+          cachedAuthFetchJson(
+            `/api/admin/courses?status=published&limit=1`,
+            { method: "GET" },
+            15_000,
+          ).then((result) => result.data),
+          cachedAuthFetchJson(
+            `/api/admin/courses?status=draft&limit=1`,
+            { method: "GET" },
+            15_000,
+          ).then((result) => result.data),
+          cachedAuthFetchJson(
+            `/api/admin/courses?status=archived&limit=1`,
+            { method: "GET" },
+            15_000,
+          ).then((result) => result.data),
         ]);
         setStats({
           total: stats.total || 0,
