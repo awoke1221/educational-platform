@@ -20,7 +20,9 @@ export default function Navbar() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Client-side: restore session from localStorage after hydration
   useEffect(() => {
@@ -71,12 +73,39 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(e.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     setUser(null);
     setDropdownOpen(false);
+    setMobileMenuOpen(false);
     router.push("/");
   };
 
@@ -114,85 +143,37 @@ export default function Navbar() {
           </Link>
 
           {/* Right Side */}
-          <div className="hidden md:flex items-center gap-3 sm:gap-6">
-            <Link
-              href="/courses"
-              className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
-            >
-              ኮርሶች
-            </Link>
-            <Link
-              href="/about"
-              className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
-            >
-              ስለ እኛ
-            </Link>
-            <Link
-              href="/testimonials"
-              className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
-            >
-              ምስክርነቶች
-            </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* ── Desktop Nav Links (md+) ──────────────── */}
+            <div className="hidden md:flex items-center gap-3 sm:gap-6">
+              <Link
+                href="/courses"
+                className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
+              >
+                Courses
+              </Link>
+              <Link
+                href="/about"
+                className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
+              >
+                About
+              </Link>
+              <Link
+                href="/testimonials"
+                className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-secondary after:transition-all after:duration-300 hover:after:w-full"
+              >
+                Testimonials
+              </Link>
 
-            {/* ── Theme Toggle ──────────────────────────── */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
-              aria-label="Toggle dark mode"
-            >
-              {theme === "light" ? (
-                <svg
-                  className="w-5 h-5 text-primary dark:text-gray-300 group-hover:text-secondary transition-colors"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5 text-secondary group-hover:text-secondary transition-colors"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-              )}
-            </button>
-
-            {user ? (
-              /* ── Logged In: User Avatar ─────────────── */
-              <div className="hidden md:block relative" ref={dropdownRef}>
-                <motion.button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-gray-700 shadow-sm">
-                    {getInitials(user.fullName)}
-                  </div>
-                  {/* Name (hidden on mobile) */}
-                  <span className="hidden sm:block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[100px] truncate">
-                    {user.fullName}
-                  </span>
-                  {/* Chevron */}
-                  <motion.svg
-                    animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-4 h-4 text-gray-400"
+              {/* ── Theme Toggle (Desktop) ─────────────── */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                aria-label="Toggle dark mode"
+              >
+                {theme === "light" ? (
+                  <svg
+                    className="w-5 h-5 text-primary dark:text-gray-300 group-hover:text-secondary transition-colors"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -201,63 +182,86 @@ export default function Navbar() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
+                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
                     />
-                  </motion.svg>
-                </motion.button>
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5 text-secondary group-hover:text-secondary transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                  </svg>
+                )}
+              </button>
 
-                {/* Dropdown Menu */}
-                <AnimatePresence>
-                  {dropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 z-50"
+              {user ? (
+                /* ── Logged In: User Avatar (Desktop) ── */
+                <div className="relative" ref={dropdownRef}>
+                  <motion.button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-gray-700 shadow-sm">
+                      {getInitials(user.fullName)}
+                    </div>
+                    <span className="hidden sm:block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[100px] truncate">
+                      {user.fullName}
+                    </span>
+                    <motion.svg
+                      animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="w-4 h-4 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      {/* User info header */}
-                      <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700">
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                          {user.fullName}
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                          {user.email}
-                        </p>
-                        <span className="inline-block mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-                          {user.role === "admin"
-                            ? "አስተዳዳሪ"
-                            : user.role === "instructor"
-                              ? "አስተማሪ"
-                              : "ተማሪ"}
-                        </span>
-                      </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </motion.svg>
+                  </motion.button>
 
-                      {/* Menu items */}
-                      <Link
-                        href="/dashboard"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  {/* Desktop Dropdown Menu */}
+                  <AnimatePresence>
+                    {dropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 z-50"
                       >
-                        <svg
-                          className="w-4 h-4 text-gray-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
-                        የእኔ ትምህርት
-                      </Link>
+                        <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700">
+                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                            {user.fullName}
+                          </p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                            {user.email}
+                          </p>
+                          <span className="inline-block mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                            {user.role === "admin"
+                              ? "Admin"
+                              : user.role === "instructor"
+                                ? "Instructor"
+                                : "Student"}
+                          </span>
+                        </div>
 
-                      {user.role === "instructor" && (
                         <Link
-                          href="/instructor"
+                          href="/dashboard"
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
@@ -271,26 +275,15 @@ export default function Navbar() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                             />
                           </svg>
-                          <span>👨‍🏫 አስተማሪ</span>
-                          <span className="ml-auto text-[10px] bg-secondary/10 text-secondary px-1.5 py-0.5 rounded">
-                            Dashboard
-                          </span>
+                          My Learning
                         </Link>
-                      )}
 
-                      {user.role === "admin" && (
-                        <>
+                        {user.role === "instructor" && (
                           <Link
-                            href="/admin"
+                            href="/instructor"
                             onClick={() => setDropdownOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
@@ -313,52 +306,266 @@ export default function Navbar() {
                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                               />
                             </svg>
-                            <span>አስተዳደር</span>
-                            <span className="ml-auto text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                            <span>👨‍🏫 Instructor</span>
+                            <span className="ml-auto text-[10px] bg-secondary/10 text-secondary px-1.5 py-0.5 rounded">
                               Dashboard
                             </span>
                           </Link>
-                          <div className="ml-7 pl-3 border-l-2 border-gray-100 dark:border-gray-700 space-y-0.5">
-                            <Link
-                              href="/admin/courses"
-                              onClick={() => setDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              📚 Courses
-                            </Link>
-                            <Link
-                              href="/admin/courses/new"
-                              onClick={() => setDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              ➕ New Course
-                            </Link>
-                            <Link
-                              href="/admin/users"
-                              onClick={() => setDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              👥 Users
-                            </Link>
-                            <Link
-                              href="/admin/registrations"
-                              onClick={() => setDropdownOpen(false)}
-                              className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                              📝 Registrations
-                            </Link>
-                          </div>
-                        </>
-                      )}
+                        )}
 
-                      <div className="border-t border-gray-50 dark:border-gray-700 my-1" />
+                        {user.role === "admin" && (
+                          <>
+                            <Link
+                              href="/admin"
+                              onClick={() => setDropdownOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              <svg
+                                className="w-4 h-4 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                              <span>Admin</span>
+                              <span className="ml-auto text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                Dashboard
+                              </span>
+                            </Link>
+                            <div className="ml-7 pl-3 border-l-2 border-gray-100 dark:border-gray-700 space-y-0.5">
+                              <Link
+                                href="/admin/courses"
+                                onClick={() => setDropdownOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              >
+                                📚 Courses
+                              </Link>
+                              <Link
+                                href="/admin/courses/new"
+                                onClick={() => setDropdownOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              >
+                                ➕ New Course
+                              </Link>
+                              <Link
+                                href="/admin/users"
+                                onClick={() => setDropdownOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              >
+                                👥 Users
+                              </Link>
+                              <Link
+                                href="/admin/registrations"
+                                onClick={() => setDropdownOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              >
+                                📝 Registrations
+                              </Link>
+                            </div>
+                          </>
+                        )}
 
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      >
+                        <div className="border-t border-gray-50 dark:border-gray-700 my-1" />
+
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                            />
+                          </svg>
+                          Logout
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                /* ── Logged Out: Get Started (Desktop) ── */
+                <div className="hidden md:flex items-center gap-3 sm:gap-6">
+                  <Link
+                    href="/auth/register"
+                    className="text-xs sm:text-sm bg-gradient-to-r from-secondary to-accent text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg hover:shadow-lg hover:brightness-110 transition-all font-semibold whitespace-nowrap animate-pulse-glow"
+                  >
+                    Get Started
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* ── Mobile Hamburger Button ─────────────── */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Toggle navigation menu"
+            >
+              <div className="w-5 h-4 relative flex flex-col justify-between">
+                <motion.span
+                  animate={
+                    mobileMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }
+                  }
+                  className="block h-[2px] w-full bg-primary dark:text-gray-200 rounded-full origin-center transition-colors"
+                  style={{
+                    backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
+                  }}
+                />
+                <motion.span
+                  animate={
+                    mobileMenuOpen
+                      ? { opacity: 0, x: -8 }
+                      : { opacity: 1, x: 0 }
+                  }
+                  className="block h-[2px] w-full bg-primary dark:text-gray-200 rounded-full transition-colors"
+                  style={{
+                    backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
+                  }}
+                />
+                <motion.span
+                  animate={
+                    mobileMenuOpen
+                      ? { rotate: -45, y: -6 }
+                      : { rotate: 0, y: 0 }
+                  }
+                  className="block h-[2px] w-full bg-primary dark:text-gray-200 rounded-full origin-center transition-colors"
+                  style={{
+                    backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
+                  }}
+                />
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Mobile Hamburger Menu Panel ─────────────────── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden fixed inset-0 top-14 bg-black/40 backdrop-blur-sm z-40"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Slide-down panel */}
+            <motion.div
+              ref={mobileMenuRef}
+              initial={{ opacity: 0, y: -20, scaleY: 0.95 }}
+              animate={{ opacity: 1, y: 0, scaleY: 1 }}
+              exit={{ opacity: 0, y: -20, scaleY: 0.95 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden absolute left-0 right-0 top-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 shadow-2xl z-50 overflow-hidden"
+            >
+              <div className="px-4 py-5 space-y-1">
+                {/* ── Theme Toggle ─────────────────────── */}
+                <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-gray-50/80 dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/50">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {theme === "light" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+                  </span>
+                  <button
+                    onClick={toggleTheme}
+                    className="relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-secondary/50"
+                    style={{
+                      backgroundColor:
+                        theme === "light" ? "#e2e8f0" : "#c9952a",
+                    }}
+                    aria-label="Toggle theme"
+                  >
+                    <motion.div
+                      animate={{ x: theme === "light" ? 2 : 26 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                      className="absolute top-[2px] w-5 h-5 bg-white rounded-full shadow-md flex items-center justify-center"
+                    >
+                      {theme === "light" ? (
                         <svg
-                          className="w-4 h-4"
+                          className="w-3 h-3 text-amber-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-3 h-3 text-gray-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                        </svg>
+                      )}
+                    </motion.div>
+                  </button>
+                </div>
+
+                <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
+
+                {user ? (
+                  /* ── Mobile: Logged In Menu ──────────── */
+                  <>
+                    {/* User info card */}
+                    <div className="px-3 py-3 rounded-xl bg-gradient-to-br from-secondary/5 to-accent/5 dark:from-gray-800 dark:to-gray-800 border border-gray-100 dark:border-gray-700/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center text-white text-sm font-bold ring-2 ring-white dark:ring-gray-700 shadow-sm">
+                          {getInitials(user.fullName)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                            {user.fullName}
+                          </p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                            {user.email}
+                          </p>
+                          <span className="inline-block mt-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                            {user.role === "admin"
+                              ? "Admin"
+                              : user.role === "instructor"
+                                ? "Instructor"
+                                : "Student"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* My Learning */}
+                    <MobileMenuItem
+                      href="/dashboard"
+                      icon={
+                        <svg
+                          className="w-5 h-5"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -367,35 +574,279 @@ export default function Navbar() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                           />
                         </svg>
-                        ውጣ
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      }
+                      label="My Learning"
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+
+                    {/* Instructor Dashboard */}
+                    {user.role === "instructor" && (
+                      <MobileMenuItem
+                        href="/instructor"
+                        icon={
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                        }
+                        label="👨‍🏫 Instructor Dashboard"
+                        badge="Dashboard"
+                        badgeColor="secondary"
+                        onClick={() => setMobileMenuOpen(false)}
+                      />
+                    )}
+
+                    {/* Admin Dashboard */}
+                    {user.role === "admin" && (
+                      <>
+                        <MobileMenuItem
+                          href="/admin"
+                          icon={
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                          }
+                          label="Admin Dashboard"
+                          badge="Admin"
+                          badgeColor="primary"
+                          onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <div className="ml-4 pl-4 border-l-2 border-gray-100 dark:border-gray-700 space-y-0.5 mb-1">
+                          <MobileSubMenuItem
+                            href="/admin/courses"
+                            label="📚 Courses"
+                            onClick={() => setMobileMenuOpen(false)}
+                          />
+                          <MobileSubMenuItem
+                            href="/admin/courses/new"
+                            label="➕ New Course"
+                            onClick={() => setMobileMenuOpen(false)}
+                          />
+                          <MobileSubMenuItem
+                            href="/admin/users"
+                            label="👥 Users"
+                            onClick={() => setMobileMenuOpen(false)}
+                          />
+                          <MobileSubMenuItem
+                            href="/admin/registrations"
+                            label="📝 Registrations"
+                            onClick={() => setMobileMenuOpen(false)}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
+
+                    {/* Logout */}
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 w-full px-3 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        />
+                      </svg>
+                      <span>Sign Out</span>
+                    </button>
+                  </>
+                ) : (
+                  /* ── Mobile: Logged Out Menu ─────────── */
+                  <>
+                    <MobileMenuItem
+                      href="/auth/login"
+                      icon={
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                          />
+                        </svg>
+                      }
+                      label="Sign In"
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                    <MobileMenuItem
+                      href="/auth/register"
+                      icon={
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                          />
+                        </svg>
+                      }
+                      label="Create Account"
+                      highlight
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                  </>
+                )}
               </div>
-            ) : (
-              /* ── Logged Out: Login / Register ──────── */
-              <div className="hidden md:flex items-center gap-3 sm:gap-6">
-                <Link
-                  href="/auth/login"
-                  className="text-xs sm:text-sm text-primary hover:text-secondary dark:text-gray-300 dark:hover:text-secondary transition-colors font-medium"
-                >
-                  ግባ
-                </Link>
-                <Link
-                  href="/auth/register"
-                  className="text-xs sm:text-sm bg-gradient-to-r from-secondary to-accent text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:shadow-lg hover:brightness-110 transition-all font-medium whitespace-nowrap animate-pulse-glow"
-                >
-                  ተመዝገብ
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </nav>
+  );
+}
+
+/* ── Mobile Menu Item Component ────────────────────────── */
+function MobileMenuItem({
+  href,
+  icon,
+  label,
+  badge,
+  badgeColor = "secondary",
+  highlight = false,
+  onClick,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  badge?: string;
+  badgeColor?: "secondary" | "primary";
+  highlight?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200 group ${
+        highlight
+          ? "bg-gradient-to-r from-secondary to-accent text-white shadow-md hover:shadow-lg hover:brightness-110"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
+      }`}
+    >
+      <span
+        className={`${
+          highlight
+            ? "text-white/90"
+            : "text-gray-400 dark:text-gray-500 group-hover:text-secondary transition-colors"
+        }`}
+      >
+        {icon}
+      </span>
+      <span className="flex-1 font-medium">{label}</span>
+      {badge && (
+        <span
+          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+            badgeColor === "secondary"
+              ? "bg-secondary/10 text-secondary"
+              : "bg-primary/10 text-primary"
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+      {!highlight && (
+        <svg
+          className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-secondary transition-colors"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      )}
+    </Link>
+  );
+}
+
+/* ── Mobile Sub Menu Item Component ────────────────────── */
+function MobileSubMenuItem({
+  href,
+  label,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors group"
+    >
+      <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-secondary transition-colors" />
+      <span>{label}</span>
+      <svg
+        className="w-3 h-3 ml-auto text-gray-300 dark:text-gray-600 group-hover:text-secondary transition-colors"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 5l7 7-7 7"
+        />
+      </svg>
+    </Link>
   );
 }

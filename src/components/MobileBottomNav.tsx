@@ -52,7 +52,7 @@ export default function MobileBottomNav() {
   const navItems = [
     {
       path: "/",
-      label: "ቤት",
+      label: "Home",
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
@@ -71,7 +71,7 @@ export default function MobileBottomNav() {
     },
     {
       path: "/courses",
-      label: "ኮርሶች",
+      label: "Courses",
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
@@ -90,7 +90,7 @@ export default function MobileBottomNav() {
     },
     {
       path: "/testimonials",
-      label: "አስተያየቶች",
+      label: "Reviews",
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
@@ -109,7 +109,7 @@ export default function MobileBottomNav() {
     },
     {
       path: "/about",
-      label: "ስለ እኛ",
+      label: "About",
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
@@ -128,7 +128,7 @@ export default function MobileBottomNav() {
     },
     {
       path: "/dashboard",
-      label: token ? "ፕሮፋይል" : "ግቤት",
+      label: token ? "Profile" : "Sign In",
       icon: (active: boolean) => {
         if (user?.profileImage && !userImageFailed) {
           return (
