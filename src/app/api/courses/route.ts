@@ -4,7 +4,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth, requireRole } from "@/lib/auth/middleware";
 import { createCourseSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -14,9 +14,7 @@ import {
 import { parsePagination } from "@/lib/utils/request";
 
 // Helper: build Supabase query from params
-// Returns published, non-archived courses. If available, filters to only
-// courses that have at least one lecture with a video URL, but falls back
-// to showing all published courses if that check fails or no lecture data exists.
+// Returns published, non-archived courses.
 async function buildCourseQuery(
   filters: Record<string, any>,
   sortBy: string,
@@ -24,7 +22,8 @@ async function buildCourseQuery(
   page: number,
   limit: number,
 ) {
-  let query = supabaseAdmin!
+  const db = getSupabaseAdmin();
+  let query = db
     .from("Course")
     // Select only needed columns for the listing — avoids fetching heavy fields like description, tags
     .select(
@@ -35,28 +34,6 @@ async function buildCourseQuery(
     )
     .eq("isPublished", true)
     .eq("isArchived", false);
-
-  // Try to filter by courses that have lectures with video content,
-  // but fall back to all published courses if no lecture data exists.
-  try {
-    const { data: lecturesWithVideo } = await supabaseAdmin!
-      .from("Lecture")
-      .select("courseId");
-
-    const validCourseIds = [
-      ...new Set((lecturesWithVideo || []).map((l: any) => l.courseId)),
-    ];
-
-    if (validCourseIds.length > 0) {
-      query = query.in("id", validCourseIds);
-    }
-    // If no lectures at all, still show courses (don't hide them)
-  } catch {
-    // If Lecture table doesn't exist or can't be queried, show all published courses
-    console.warn(
-      "[COURSES] Could not filter by lecture video — showing all published courses",
-    );
-  }
 
   if (filters.category) query = query.eq("category", filters.category);
   if (filters.level) query = query.eq("level", filters.level);
@@ -110,7 +87,7 @@ export async function GET(request: NextRequest) {
       );
 
       if (instructorIds.length > 0) {
-        const { data: instructors } = await supabaseAdmin!
+        const { data: instructors } = await getSupabaseAdmin()
           .from("User")
           .select("id, fullName, profileImage")
           .in("id", instructorIds as any[]);
@@ -186,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString();
 
-    const { data: course, error: createErr } = await supabaseAdmin!
+    const { data: course, error: createErr } = await getSupabaseAdmin()
       .from("Course")
       .insert({
         id: crypto.randomUUID(),

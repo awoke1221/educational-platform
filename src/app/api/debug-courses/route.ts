@@ -1,22 +1,22 @@
 import { NextRequest } from "next/server";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { successResponse, handleApiError } from "@/lib/utils/api";
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if supabaseAdmin is initialized
-    const clientStatus = supabaseAdmin ? "initialized" : "null";
+    const db = getSupabaseAdmin();
+    const clientStatus = db ? "initialized" : "null";
 
     // Show the actual Supabase URL being used
     const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "NOT SET";
 
     // Try to query courses without filters
-    const { data: allCourses, error: coursesErr, count } = await supabaseAdmin!
+    const { data: allCourses, error: coursesErr, count } = await db
       .from("Course")
       .select("id, title, isPublished, isArchived", { count: "exact", head: false });
 
     // Try to query lectures
-    const { data: lectures, error: lecturesErr } = await supabaseAdmin!
+    const { data: lectures, error: lecturesErr } = await db
       .from("Lecture")
       .select("id, courseId, videoUrl");
 
