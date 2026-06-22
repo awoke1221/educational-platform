@@ -34,7 +34,7 @@ function createSupabaseAdminClient(): SupabaseClient {
   });
 }
 
-function getSupabaseAdmin(): SupabaseClient {
+export function getSupabaseAdmin(): SupabaseClient {
   if (!supabaseAdminClient) {
     supabaseAdminClient = createSupabaseAdminClient();
   }
