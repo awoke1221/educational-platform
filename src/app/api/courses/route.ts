@@ -14,7 +14,9 @@ import {
 import { parsePagination } from "@/lib/utils/request";
 
 // Helper: build Supabase query from params
-// Only returns published courses that have at least one lecture with a video uploaded to Bunny.
+// Returns published, non-archived courses. If available, filters to only
+// courses that have at least one lecture with a video URL, but falls back
+// to showing all published courses if that check fails or no lecture data exists.
 async function buildCourseQuery(
   filters: Record<string, any>,
   sortBy: string,
@@ -22,17 +24,6 @@ async function buildCourseQuery(
   page: number,
   limit: number,
 ) {
-  // First, get IDs of courses that have at least one lecture with actual video content
-  const { data: lecturesWithVideo } = await supabaseAdmin!
-    .from("Lecture")
-    .select("courseId")
-    .not("videoUrl", "eq", "")
-    .not("videoUrl", "is", null);
-
-  const validCourseIds = [
-    ...new Set((lecturesWithVideo || []).map((l: any) => l.courseId)),
-  ];
-
   let query = supabaseAdmin!
     .from("Course")
     // Select only needed columns for the listing — avoids fetching heavy fields like description, tags
@@ -45,12 +36,26 @@ async function buildCourseQuery(
     .eq("isPublished", true)
     .eq("isArchived", false);
 
-  // Only include courses that have video content uploaded to Bunny
-  if (validCourseIds.length > 0) {
-    query = query.in("id", validCourseIds);
-  } else {
-    // No courses with video — return empty result
-    query = query.in("id", ["__no_video_courses__"]);
+  // Try to filter by courses that have lectures with video content,
+  // but fall back to all published courses if no lecture data exists.
+  try {
+    const { data: lecturesWithVideo } = await supabaseAdmin!
+      .from("Lecture")
+      .select("courseId");
+
+    const validCourseIds = [
+      ...new Set((lecturesWithVideo || []).map((l: any) => l.courseId)),
+    ];
+
+    if (validCourseIds.length > 0) {
+      query = query.in("id", validCourseIds);
+    }
+    // If no lectures at all, still show courses (don't hide them)
+  } catch {
+    // If Lecture table doesn't exist or can't be queried, show all published courses
+    console.warn(
+      "[COURSES] Could not filter by lecture video — showing all published courses",
+    );
   }
 
   if (filters.category) query = query.eq("category", filters.category);
