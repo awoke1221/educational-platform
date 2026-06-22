@@ -7,31 +7,36 @@ export async function GET(request: NextRequest) {
     const db = getSupabaseAdmin();
     const clientStatus = db ? "initialized" : "null";
 
-    // Show the actual Supabase URL being used
     const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "NOT SET";
 
-    // Try to query courses without filters
-    const { data: allCourses, error: coursesErr, count } = await db
+    // Test 1: count only with head
+    const { count: c1, error: e1 } = await db
       .from("Course")
-      .select("id, title, isPublished, isArchived", { count: "exact", head: false });
+      .select("*", { count: "exact", head: true });
 
-    // Try to query lectures
-    const { data: lectures, error: lecturesErr } = await db
+    // Test 2: select specific columns
+    const { data: d2, error: e2, count: c2 } = await db
+      .from("Course")
+      .select("id, title", { count: "exact", head: false });
+
+    // Test 3: select all columns
+    const { data: d3, error: e3 } = await db
       .from("Lecture")
-      .select("id, courseId, videoUrl");
+      .select("*");
+
+    // Test 4: check User table still works
+    const { count: c4, error: e4 } = await db
+      .from("User")
+      .select("*", { count: "exact", head: true });
 
     return successResponse({
       clientStatus,
       supabaseUrl: rawUrl,
-      courses: {
-        count,
-        error: coursesErr?.message || null,
-        items: allCourses || [],
-      },
-      lectures: {
-        count: lectures?.length || 0,
-        error: lecturesErr?.message || null,
-        sample: lectures?.slice(0, 3) || [],
+      tests: {
+        courses_head: { count: c1, error: e1?.message || null },
+        courses_select: { count: c2, error: e2?.message || null, items: d2 || [] },
+        lectures: { count: d3?.length || 0, error: e3?.message || null },
+        users: { count: c4, error: e4?.message || null },
       },
     });
   } catch (error) {
