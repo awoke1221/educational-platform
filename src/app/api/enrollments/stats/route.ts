@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -61,25 +61,23 @@ export async function GET(request: NextRequest) {
       /* fall through */
     }
 
-    // Demo stats with Cloudinary courses
     return successResponse(
       {
         overview: {
-          totalEnrollments: 4,
-          activeCourses: 4,
+          totalEnrollments: 0,
+          activeCourses: 0,
           completedCourses: 0,
-          totalWatchTime: 3600,
+          totalWatchTime: 0,
           completedLectures: 0,
           certificatesCount: 0,
           completionRate: 0,
         },
         recentEnrollments: [],
       },
-      "Demo stats",
+      "Statistics retrieved",
     );
   } catch (error) {
     console.error("[ENROLLMENT STATS ERROR]", error);
     return handleApiError(error);
   }
 }
-

@@ -117,8 +117,12 @@ function getStorageZoneName(): string {
 function buildStorageEndpoint(path: string): string {
   const storageZone = getStorageZoneName();
   if (!storageZone) throw new Error("Bunny storage zone is not configured");
-  const normalized = normalizePath(path);
-  return `${STORAGE_API_BASE}/${encodeURIComponent(storageZone)}/${encodeURI(normalized)}`;
+  const cleaned = path.replace(/^\/+/, "");
+  const encoded = cleaned
+    .split("/")
+    .map((s) => encodeURIComponent(s))
+    .join("/");
+  return `${STORAGE_API_BASE}/${encodeURIComponent(storageZone)}/${encoded}`;
 }
 
 function buildApiEndpoint(path: string): string {
@@ -445,11 +449,17 @@ export class BunnyService {
     if (!PULL_ZONE_URL) {
       throw new Error("Bunny Pull Zone URL is not configured");
     }
-    const normalizedPath = normalizePath(storagePath);
+    // Preserve the original storage path with spaces (Bunny stores files with spaces).
+    // Only strip leading slash and URL-encode each segment individually.
+    const cleaned = storagePath.replace(/^\/+/, "");
+    const encoded = cleaned
+      .split("/")
+      .map((s) => encodeURIComponent(s))
+      .join("/");
     const base = PULL_ZONE_URL.endsWith("/")
       ? PULL_ZONE_URL
       : `${PULL_ZONE_URL}/`;
-    return `${base}${encodeURI(normalizedPath)}`;
+    return `${base}${encoded}`;
   }
 
   /**

@@ -22,22 +22,26 @@ import {
 export async function GET(request: NextRequest) {
   try {
     const courseId = request.nextUrl.searchParams.get("courseId");
-    if (!courseId) return errorResponse("courseId is required", 400);
 
-    const { data: reviews, error } = await supabaseAdmin!
+    let query = supabaseAdmin!
       .from("Review")
       .select("*, user:User(id, fullName, profileImage)")
-      .eq("courseId", courseId)
-      .eq("isApproved", true)
-      .order("createdAt", { ascending: false });
+      .eq("isApproved", true);
+
+    if (courseId) {
+      query = query.eq("courseId", courseId);
+    }
+
+    const { data: reviews, error } = await query.order("createdAt", {
+      ascending: false,
+    });
 
     if (error) throw error;
 
-    // Calculate aggregate stats
     const total = reviews?.length || 0;
     const averageRating =
       total > 0 ? reviews!.reduce((sum, r) => sum + r.rating, 0) / total : 0;
-    const distribution = [0, 0, 0, 0, 0]; // 1-5 stars
+    const distribution = [0, 0, 0, 0, 0];
     reviews?.forEach((r) => {
       distribution[r.rating - 1]++;
     });

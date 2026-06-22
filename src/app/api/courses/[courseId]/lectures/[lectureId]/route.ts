@@ -93,60 +93,29 @@ export async function GET(
       }
     }
 
-    // Try DB first
-    try {
-      const { data: lecture } = await supabaseAdmin!
-        .from("Lecture")
-        .select("*")
-        .eq("id", lectureId)
-        .maybeSingle();
+    const { data: lecture, error: lectureErr } = await supabaseAdmin!
+      .from("Lecture")
+      .select("*")
+      .eq("id", lectureId)
+      .maybeSingle();
 
-      if (lecture && lecture.courseId === courseId) {
-        let streamingUrl = null;
-        let signedVideoUrl = null;
-        if (lecture.cloudinaryPublicId) {
-          streamingUrl = BunnyService.getStreamingUrl(
-            lecture.cloudinaryPublicId,
-          );
-          signedVideoUrl = BunnyService.generateSignedUrl(
-            lecture.cloudinaryPublicId,
-            { expiresIn: 86400 },
-          );
-        }
-        return successResponse(
-          { ...lecture, streamingUrl, signedVideoUrl },
-          "Lecture retrieved",
+    if (lecture && lecture.courseId === courseId) {
+      let streamingUrl = null;
+      let signedVideoUrl = null;
+      if (lecture.cloudinaryPublicId) {
+        streamingUrl = BunnyService.getStreamingUrl(lecture.cloudinaryPublicId);
+        signedVideoUrl = BunnyService.generateSignedUrl(
+          lecture.cloudinaryPublicId,
+          { expiresIn: 86400 },
         );
       }
-    } catch {
-      /* DB unavailable, fallback to Cloudinary */
-    }
-
-    // Bunny fallback: generate lecture from Bunny demo video
-    if (courseId.startsWith("bunny-demo-") && env.bunny.demoVideoUrl) {
       return successResponse(
-        {
-          id: lectureId,
-          title: courseId.replace("bunny-demo-", "").replace(/-/g, " "),
-          description: "ይህን ቪዲዮ በመመልከት ትምህርትዎን ይቀጥሉ",
-          duration: 60,
-          orderIndex: 1,
-          videoUrl: env.bunny.demoVideoUrl,
-          cloudinaryPublicId: "demo-bunny",
-          streamingUrl: env.bunny.demoVideoUrl,
-          signedVideoUrl: env.bunny.demoVideoUrl,
-          isPublished: true,
-          courseId,
-          course: {
-            id: courseId,
-            title: "Demo Course",
-            instructorId: auth?.userId || "",
-          },
-          userProgress: null,
-        },
-        "Demo lecture from Bunny",
+        { ...lecture, streamingUrl, signedVideoUrl },
+        "Lecture retrieved",
       );
     }
+
+    return notFoundResponse("Lecture");
   } catch (error) {
     console.error("[GET LECTURE ERROR]", error);
     return handleApiError(error);

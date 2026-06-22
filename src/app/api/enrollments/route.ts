@@ -4,14 +4,12 @@
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { env } from "@/config/env";
 import {
   successResponse,
   errorResponse,
   paginatedResponse,
   handleApiError,
 } from "@/lib/utils/api";
-import { parsePagination } from "@/lib/utils/request";
 
 // GET /api/enrollments — User's Enrolled Courses
 export async function GET(request: NextRequest) {
@@ -56,64 +54,8 @@ export async function GET(request: NextRequest) {
           );
         }
       } catch {
-        // Table may not exist, fall through to demo data
+        // If the enrollment table is unavailable, return an empty result set.
       }
-    }
-
-    // Demo: return Bunny demo courses as enrolled
-    if (env.bunny.demoVideoUrl) {
-      const demoEnrollments = [
-        {
-          id: `demo-enr-1`,
-          userId: auth.userId,
-          courseId: `bunny-demo-1`,
-          status: "active",
-          completionPercentage: Math.floor(Math.random() * 40),
-          progressPercentage: Math.floor(Math.random() * 40),
-          enrolledAt: new Date().toISOString(),
-          lastAccessedAt: new Date().toISOString(),
-          course: {
-            id: `bunny-demo-1`,
-            title: "የዱር አንስታይ ጥናት",
-            shortDescription: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ",
-            coverImage: env.bunny.demoVideoUrl,
-            level: "beginner",
-            category: "Science",
-            price: 599,
-            currency: "ETB",
-            instructor: { fullName: "AD LMS", id: "adlms", profileImage: null },
-          },
-        },
-        {
-          id: `demo-enr-2`,
-          userId: auth.userId,
-          courseId: `bunny-demo-2`,
-          status: "active",
-          completionPercentage: Math.floor(Math.random() * 40),
-          progressPercentage: Math.floor(Math.random() * 40),
-          enrolledAt: new Date().toISOString(),
-          lastAccessedAt: new Date().toISOString(),
-          course: {
-            id: `bunny-demo-2`,
-            title: "ዘመናዊ ዳንስ ስልጠና",
-            shortDescription: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ",
-            coverImage: env.bunny.demoVideoUrl,
-            level: "intermediate",
-            category: "Arts",
-            price: 799,
-            currency: "ETB",
-            instructor: { fullName: "AD LMS", id: "adlms", profileImage: null },
-          },
-        },
-      ];
-
-      return paginatedResponse(
-        demoEnrollments,
-        demoEnrollments.length,
-        1,
-        50,
-        "Demo enrollments",
-      );
     }
 
     return paginatedResponse([], 0, 1, 50, "No enrollments found");
@@ -129,26 +71,10 @@ export async function POST(request: NextRequest) {
     const auth = await verifyAuth(request);
     if (!auth) return errorResponse("Unauthorized", 401);
 
-    const { courseId } = await request.json();
-    if (!courseId) return errorResponse("courseId is required", 400);
-
-    // Return a simulated successful enrollment
-    // (DB tables use Supabase REST API)
-    const enrollment = {
-      id: crypto.randomUUID(),
-      userId: auth.userId,
-      courseId,
-      status: "active",
-      completionPercentage: 0,
-      certificateIssued: false,
-      enrolledAt: new Date().toISOString(),
-      lastAccessedAt: new Date().toISOString(),
-      course: null,
-      payment: null,
-    };
-
-    console.log(`[ENROLL] User ${auth.userId} enrolled in course ${courseId}`);
-    return successResponse(enrollment, "Enrolled successfully", 201);
+    return errorResponse(
+      "Direct enrollment is disabled. Use the payment and registration workflow.",
+      400,
+    );
   } catch (error) {
     console.error("[ENROLL POST ERROR]", error);
     return handleApiError(error);

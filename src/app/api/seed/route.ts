@@ -107,64 +107,11 @@ const LECTURES = COURSES.map((course, index) => ({
 }));
 
 export async function GET() {
-  try {
-    if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "supabaseAdmin not configured" },
-        { status: 500 },
-      );
-    }
-
-    const results = { courses: 0, enrollment: 0, errors: [] as string[] };
-
-    // Insert courses
-    for (const course of COURSES) {
-      const { error } = await supabaseAdmin!
-        .from("Course")
-        .upsert(course, { onConflict: "id" });
-      if (error) {
-        results.errors.push(`Course "${course.title}": ${error.message}`);
-      } else {
-        results.courses++;
-      }
-    }
-
-    // Create lectures for demo courses
-    for (const lecture of LECTURES) {
-      const { error: lectureError } = await supabaseAdmin!
-        .from("Lecture")
-        .upsert(lecture, { onConflict: "id" });
-      if (lectureError) {
-        results.errors.push(
-          `Lecture "${lecture.title}": ${lectureError.message}`,
-        );
-      }
-    }
-
-    // Create enrollment for test user
-    const { error: enrollError } = await supabaseAdmin!
-      .from("Enrollment")
-      .upsert(
-        {
-          id: crypto.randomUUID(),
-          userId: "e0dcfa25-0eb1-476f-a1cb-ae3deba51e17",
-          courseId: "bunny-demo-1",
-          status: "active",
-          completionPercentage: 0,
-          enrolledAt: new Date().toISOString(),
-          lastAccessedAt: new Date().toISOString(),
-        },
-        { onConflict: "id" },
-      );
-
-    if (enrollError) {
-      results.errors.push(`Enrollment: ${enrollError.message}`);
-    } else {
-      results.enrollment = 1;
-    }
-
-    return NextResponse.json({ success: true, results });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Seed endpoint disabled. No demo data will be created.",
+    },
+    { status: 404 },
+  );
 }

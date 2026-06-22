@@ -3,29 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { env } from "@/config/env";
 
-interface PromoData {
-  url: string;
-  streamingUrl: string;
-  thumbnail: string;
-  title: string;
-}
-
-function getPromoVideo(): PromoData | null {
-  try {
-    if (env.bunny.demoVideoUrl) {
-      return {
-        url: env.bunny.demoVideoUrl,
-        streamingUrl: env.bunny.demoVideoUrl,
-        thumbnail: env.bunny.demoVideoUrl,
-        title: "AD LMS Promo Video",
-      };
-    }
-    return null;
-  } catch {
-    return null;
-  }
+interface HeroVideoData {
+  videoUrl: string;
+  poster: string;
+  filename: string;
+  type: string;
+  storagePath: string;
 }
 
 const containerVariants = {
@@ -53,14 +37,32 @@ const videoVariants = {
 };
 
 export default function Home() {
-  const [promo, setPromo] = useState<PromoData | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [heroVideo, setHeroVideo] = useState<HeroVideoData | null>(null);
+  const [heroLoading, setHeroLoading] = useState(true);
 
   useEffect(() => {
-    setPromo(getPromoVideo());
     const onScroll = () => setScrolled(window.scrollY > 100);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    // Fetch the hero video from the API — this auto-discovers the latest video
+    // and returns a properly signed URL with token authentication
+    (async () => {
+      try {
+        const res = await fetch("/api/bunny/hero-video");
+        const json = await res.json();
+        if (json.success && json.data) {
+          setHeroVideo(json.data);
+        }
+      } catch (err) {
+        console.error("Failed to load hero video:", err);
+      } finally {
+        setHeroLoading(false);
+      }
+    })();
   }, []);
 
   return (
@@ -150,39 +152,34 @@ export default function Home() {
               variants={videoVariants}
               whileHover={{ scale: 1.01 }}
             >
-              {promo ? (
+              {heroLoading ? (
+                <div className="w-full aspect-video flex items-center justify-center bg-black/60">
+                  <motion.div
+                    className="w-12 h-12 border-4 border-white/20 border-t-secondary rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                </div>
+              ) : heroVideo ? (
                 <video
                   className="w-full aspect-video"
                   controls
                   playsInline
-                  poster={promo.thumbnail}
+                  poster={heroVideo.poster}
                 >
-                  <source src={promo.url} type="video/mp4" />
-                  የእርስዎ ብራውዘር ቪዲዮ ማጫወት አይደግፍም።
+                  <source
+                    src={heroVideo.videoUrl}
+                    type={`video/${heroVideo.type}`}
+                  />
+                  Your browser does not support the video tag.
                 </video>
               ) : (
-                <div className="w-full aspect-video flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 text-gray-400">
-                  <div className="text-center p-8">
-                    <motion.svg
-                      className="w-16 h-16 mx-auto mb-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </motion.svg>
-                    <p className="text-lg">የማስተዋወቂያ ቪዲዮ እየተጫነ ነው...</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Promo video loading...
-                    </p>
-                  </div>
+                <div className="w-full aspect-video flex items-center justify-center bg-black/60 text-white/60 text-sm">
+                  Video unavailable
                 </div>
               )}
             </motion.div>

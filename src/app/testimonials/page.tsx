@@ -1,7 +1,5 @@
 ﻿"use client";
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
-import { env } from "@/config/env";
 
 interface VideoTestimonial {
   id: string;
@@ -55,33 +53,7 @@ function VideoTestimonialsSection() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Bunny demo video testimonials
-    const bunnyDemoUrl = env.bunny.demoVideoUrl;
-    const testimonials: VideoTestimonial[] = bunnyDemoUrl
-      ? [
-          {
-            id: "vid-1",
-            name: "Sara Martinez",
-            title: "Creative Director",
-            videoUrl: bunnyDemoUrl,
-            duration: 45,
-          },
-          {
-            id: "vid-2",
-            name: "Daniel Kim",
-            title: "Full Stack Developer",
-            videoUrl: bunnyDemoUrl,
-            duration: 60,
-          },
-          {
-            id: "vid-3",
-            name: "Ariana Patel",
-            title: "Course Mentor",
-            videoUrl: bunnyDemoUrl,
-            duration: 45,
-          },
-        ]
-      : [];
+    const testimonials: VideoTestimonial[] = [];
     setVideoTestimonials(testimonials);
     setLoading(false);
   }, []);
@@ -105,7 +77,10 @@ function VideoTestimonialsSection() {
   if (videoTestimonials.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Demo video URL not configured</p>
+        <p className="text-gray-500">
+          No video testimonials are available yet. Please check back later for
+          real student submissions.
+        </p>
       </div>
     );
   }

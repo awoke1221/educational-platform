@@ -91,7 +91,6 @@ export const env = {
     defaultFolder:
       process.env.NEXT_PUBLIC_BUNNY_DEFAULT_FOLDER?.trim() ||
       "educational-platform",
-    demoVideoUrl: process.env.NEXT_PUBLIC_BUNNY_DEMO_VIDEO_URL?.trim() || "",
     apiUrl: process.env.BUNNY_API_URL?.trim() || "https://api.bunny.net",
     // Token authentication configuration
     tokenAuthEnabled: process.env.BUNNY_TOKEN_AUTH_ENABLED === "true",
