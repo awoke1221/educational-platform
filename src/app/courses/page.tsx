@@ -128,6 +128,8 @@ export default function CoursesPage() {
     new Map(),
   );
   // Search & Filter state
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -205,9 +207,21 @@ export default function CoursesPage() {
   }, [isAdmin, courses]);
 
   useEffect(() => {
+    setFetchError(null);
     cachedFetch("/api/courses", undefined, 15_000)
-      .then((d: any) => setCourses(d.data?.data || []))
-      .catch(() => setCourses([]))
+      .then((d: any) => {
+        if (!d.success) {
+          setFetchError(d.error || "Failed to load courses");
+          setCourses([]);
+        } else {
+          setCourses(d.data?.data || []);
+        }
+      })
+      .catch((err: Error) => {
+        console.error("[COURSES] Fetch error:", err);
+        setFetchError(err.message || "Network error — unable to load courses");
+        setCourses([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -383,47 +397,115 @@ export default function CoursesPage() {
           </div>
         )}
 
-        {/* Empty */}
+        {/* Empty / Error */}
         {isLoaded && filteredCourses.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
-              <svg
-                className="w-10 h-10 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">
-              {searchQuery || filterLevel !== "all" || filterCategory !== "all"
-                ? "No courses match your filters"
-                : "እስካሁን ኮርሶች የሉም"}
-            </h3>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
-              {searchQuery || filterLevel !== "all" || filterCategory !== "all"
-                ? "Try adjusting your search or filter criteria"
-                : "በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን"}
-            </p>
-            {(searchQuery ||
-              filterLevel !== "all" ||
-              filterCategory !== "all") && (
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setFilterLevel("all");
-                  setFilterCategory("all");
-                }}
-                className="text-sm text-primary hover:underline"
-              >
-                Clear all filters
-              </button>
+            {fetchError ? (
+              <>
+                <div className="w-20 h-20 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4 ring-1 ring-red-200 dark:ring-red-800">
+                  <svg
+                    className="w-10 h-10 text-red-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-1">
+                  Unable to load courses
+                </h3>
+                <p className="text-sm text-red-500 dark:text-red-400/80 mb-4 max-w-md">
+                  {fetchError}
+                </p>
+                <button
+                  onClick={() => {
+                    setLoading(true);
+                    setFetchError(null);
+                    cachedFetch("/api/courses", undefined, 0)
+                      .then((d: any) => {
+                        if (!d.success) {
+                          setFetchError(d.error || "Failed to load courses");
+                          setCourses([]);
+                        } else {
+                          setCourses(d.data?.data || []);
+                        }
+                      })
+                      .catch((err: Error) => {
+                        setFetchError(err.message || "Network error");
+                        setCourses([]);
+                      })
+                      .finally(() => setLoading(false));
+                  }}
+                  className="inline-flex items-center gap-2 text-sm bg-primary text-white px-5 py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Try again
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                  <svg
+                    className="w-10 h-10 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                  {searchQuery ||
+                  filterLevel !== "all" ||
+                  filterCategory !== "all"
+                    ? "No courses match your filters"
+                    : "እስካሁን ኮርሶች የሉም"}
+                </h3>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                  {searchQuery ||
+                  filterLevel !== "all" ||
+                  filterCategory !== "all"
+                    ? "Try adjusting your search or filter criteria"
+                    : "በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን"}
+                </p>
+                {(searchQuery ||
+                  filterLevel !== "all" ||
+                  filterCategory !== "all") && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setFilterLevel("all");
+                      setFilterCategory("all");
+                    }}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

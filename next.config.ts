@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // ── Production output for Docker deployment ─────────────────────
-  output: process.env.NODE_ENV === "production" ? "standalone" : undefined,
-
   // ── Remove X-Powered-By header ─────────────────────────────────
   poweredByHeader: false,
 

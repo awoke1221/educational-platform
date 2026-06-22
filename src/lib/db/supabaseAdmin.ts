@@ -9,9 +9,15 @@ function createSupabaseAdminClient(): SupabaseClient {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl) {
     throw new Error(
-      "Supabase admin client is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      "Supabase admin client is not configured: NEXT_PUBLIC_SUPABASE_URL is missing. Add it to your Vercel environment variables.",
+    );
+  }
+
+  if (!serviceRoleKey) {
+    throw new Error(
+      "Supabase admin client is not configured: SUPABASE_SERVICE_ROLE_KEY is missing. Add it to your Vercel environment variables.",
     );
   }
 
