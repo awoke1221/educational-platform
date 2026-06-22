@@ -36,7 +36,7 @@ interface Course {
 interface PaginatedResponse {
   success: boolean;
   data: {
-    items: Course[];
+    data: Course[];
     total: number;
     page: number;
     limit: number;
