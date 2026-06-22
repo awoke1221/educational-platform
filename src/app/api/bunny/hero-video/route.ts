@@ -74,16 +74,16 @@ export async function GET(request: Request) {
 
       if (!storagePath) return errorResponse("Invalid path/url provided", 400);
 
-      const streamingUrl = BunnyService.getStreamingUrl(storagePath);
-      // Generate a signed poster URL (Bunny generates thumbnails on-the-fly via query params)
-      const signedPosterBase = BunnyService.generateSignedUrl(storagePath);
-      const poster = `${signedPosterBase}&width=1280&height=720`;
+      const encodedPath = encodeURIComponent(storagePath);
+      const requestUrl = new URL(request.url);
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      const proxiedVideoUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedPath}`;
       const type = storagePath.split(".").pop()?.toLowerCase() || "mp4";
 
       return successResponse(
         {
-          videoUrl: streamingUrl,
-          poster,
+          videoUrl: proxiedVideoUrl,
+          poster: "",
           filename: storagePath.split("/").pop(),
           type,
           storagePath,
@@ -122,18 +122,20 @@ export async function GET(request: Request) {
     const { storagePath } = selected;
     const objectName =
       selected.fileInfo.ObjectName || selected.fileInfo.objectName || "";
-    const type = objectName.split(".").pop()?.toLowerCase() || "mp4";
+    const encodedStoragePath = encodeURIComponent(storagePath);
 
-    // Use Bunny CDN directly with a signed URL (bypasses Vercel serverless limits)
-    const signedVideoUrl = BunnyService.getStreamingUrl(storagePath);
-    // Generate a signed poster/thumbnail URL (Bunny generates thumbnails on-the-fly)
-    const signedThumbnailBase = BunnyService.generateSignedUrl(storagePath);
-    const poster = `${signedThumbnailBase}&width=1280&height=720`;
+    // Use the proxy endpoint to serve the video (avoids CORS/ORB blocking).
+    // The proxy now supports HTTP Range (byte-serving) so each chunk request
+    // stays well within Vercel's serverless limits.
+    const requestUrl = new URL(request.url);
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    const proxiedVideoUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedStoragePath}`;
+    const type = objectName.split(".").pop()?.toLowerCase() || "mp4";
 
     return successResponse(
       {
-        videoUrl: signedVideoUrl,
-        poster,
+        videoUrl: proxiedVideoUrl,
+        poster: "",
         filename: objectName,
         type,
         storagePath,

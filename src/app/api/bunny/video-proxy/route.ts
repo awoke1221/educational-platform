@@ -1,9 +1,11 @@
 // ============================================
-// 🐰 Bunny CDN Video Proxy
+// 🐰 Bunny CDN Video Proxy (with HTTP Range support)
 // ============================================
 // Proxies video files from Bunny Storage through the Next.js server
 // to avoid CORS/ORB blocking issues in the browser.
-// Uses Storage API directly (with access key) instead of CDN (which requires token auth).
+// Supports HTTP Range (byte-serving) so the browser downloads small
+// chunks rather than the whole video — avoids Vercel serverless timeouts.
+// Uses Storage API directly (with access key) instead of CDN (requires token auth).
 // GET /api/bunny/video-proxy?path=... (storage path relative to zone root)
 // ============================================
 
@@ -44,12 +46,21 @@ export async function GET(request: NextRequest) {
       .join("/");
     const storageUrl = `${STORAGE_API_BASE}/${encodeURIComponent(zoneName)}/${encoded}`;
 
-    // Fetch the video from Bunny Storage with the access key
+    // Forward the Range header from the browser to Bunny Storage
+    const rangeHeader = request.headers.get("range");
+    const fetchHeaders: Record<string, string> = {
+      AccessKey: env.bunny.accessKey,
+    };
+    if (rangeHeader) {
+      fetchHeaders["Range"] = rangeHeader;
+    }
+
+    // Fetch from Bunny Storage (may be a range request)
     const storageResponse = await fetch(storageUrl, {
-      headers: { AccessKey: env.bunny.accessKey },
+      headers: fetchHeaders,
     });
 
-    if (!storageResponse.ok) {
+    if (!storageResponse.ok && storageResponse.status !== 206) {
       const text = await storageResponse.text().catch(() => "");
       return errorResponse(
         `Bunny storage returned ${storageResponse.status}: ${text.substring(0, 200)}`,
@@ -57,22 +68,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get the content type from the response or infer from extension
+    // Get content type
     const contentType =
       storageResponse.headers.get("content-type") ||
       getMimeType(storagePath) ||
       "video/mp4";
 
-    // Stream the response with proper headers
+    // Build response headers
     const responseHeaders = new Headers();
     responseHeaders.set("Content-Type", contentType);
     responseHeaders.set("Accept-Ranges", "bytes");
     responseHeaders.set("Cache-Control", "public, max-age=3600");
-    // Allow cross-origin usage
     responseHeaders.set("Access-Control-Allow-Origin", "*");
+    responseHeaders.set(
+      "Access-Control-Expose-Headers",
+      "Content-Range, Content-Length, Accept-Ranges",
+    );
+
+    // Forward range-related headers from Bunny Storage if present
+    const contentRange = storageResponse.headers.get("content-range");
+    const contentLength = storageResponse.headers.get("content-length");
+    if (contentRange) responseHeaders.set("Content-Range", contentRange);
+    if (contentLength) responseHeaders.set("Content-Length", contentLength);
 
     return new Response(storageResponse.body, {
-      status: 200,
+      status: rangeHeader ? 206 : 200,
       headers: responseHeaders,
     });
   } catch (error) {
