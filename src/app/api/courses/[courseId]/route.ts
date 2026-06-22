@@ -10,6 +10,7 @@ import {
   notFoundResponse,
   handleApiError,
 } from "@/lib/utils/api";
+import { proxifyCourse } from "@/lib/bunny/url-helper";
 
 async function canModify(
   id: string,
@@ -60,10 +61,14 @@ export async function GET(
 
     if (lecturesErr) throw lecturesErr;
 
-    return successResponse(
-      { ...course, instructor: instr || null, lectures: lectures || [] },
-      "Course retrieved successfully",
-    );
+    // Proxy Bunny CDN URLs to avoid CORS/ORB blocking
+    const proxiedCourse = proxifyCourse({
+      ...course,
+      instructor: instr || null,
+      lectures: lectures || [],
+    });
+
+    return successResponse(proxiedCourse, "Course retrieved successfully");
   } catch (error) {
     return handleApiError(error);
   }

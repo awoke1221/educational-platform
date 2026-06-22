@@ -12,6 +12,7 @@ import {
   handleApiError,
 } from "@/lib/utils/api";
 import { parsePagination } from "@/lib/utils/request";
+import { proxifyCourse } from "@/lib/bunny/url-helper";
 
 // Helper: build Supabase query from params
 // Returns published, non-archived courses.
@@ -97,10 +98,14 @@ export async function GET(request: NextRequest) {
         );
 
         // Replace course list with new objects that include instructor data
-        const enrichedList = courseList.map((c: any) => ({
-          ...c,
-          instructor: instructorMap.get(c.instructorId) || null,
-        }));
+        const enrichedList = courseList.map((c: any) => {
+          const course = {
+            ...c,
+            instructor: instructorMap.get(c.instructorId) || null,
+          };
+          // Proxy Bunny CDN URLs to avoid CORS/ORB blocking
+          return proxifyCourse(course);
+        });
         return paginatedResponse(
           enrichedList,
           count || 0,
@@ -111,8 +116,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Proxy Bunny CDN URLs for courses without instructor enrichment
+    const proxiedList = courseList.map((c: any) => proxifyCourse(c));
     return paginatedResponse(
-      courseList,
+      proxiedList,
       count || 0,
       page,
       limit,

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   PieChart,
@@ -33,6 +34,7 @@ const COLORS = [
 ];
 
 export default function AdminPage() {
+  const router = useRouter();
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");

@@ -531,6 +531,20 @@ export default function CoursesPage() {
                     alt={course.title}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => {
+                      // Fallback to gradient background if image fails to load
+                      const target = e.currentTarget;
+                      target.style.display = "none";
+                      // Show a gradient placeholder with course initials
+                      const parent = target.parentElement;
+                      if (parent && !parent.querySelector(".img-fallback")) {
+                        const fallback = document.createElement("div");
+                        fallback.className =
+                          "img-fallback absolute inset-0 flex items-center justify-center";
+                        fallback.innerHTML = `<span class="text-4xl font-bold text-white/60">${course.title.charAt(0)}</span>`;
+                        parent.appendChild(fallback);
+                      }
+                    }}
                   />
                   {/* Level badge */}
                   <div className="absolute top-3 left-3">
