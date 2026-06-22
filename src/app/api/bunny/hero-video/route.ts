@@ -9,9 +9,8 @@ import {
 const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "ogv", "mov", "avi", "mkv"];
 
 function isVideoFile(file: any) {
-  // Bunny API returns PascalCase properties (ObjectName, IsDirectory)
-  const name = file.ObjectName || file.objectName || "";
-  const isDir = file.IsDirectory ?? file.isDirectory ?? false;
+  const name = file.objectName || file.ObjectName || "";
+  const isDir = file.isDirectory ?? file.IsDirectory ?? false;
   const extension = name.split(".").pop()?.toLowerCase();
   return !!extension && VIDEO_EXTENSIONS.includes(extension) && !isDir;
 }
@@ -23,10 +22,10 @@ async function collectVideoFiles(rootPath: string) {
   async function recurse(currentPath: string, depth: number = 0) {
     if (depth > 5) return; // safety limit
     try {
-      const files = await BunnyService.listFiles(currentPath);
+      const files = (await BunnyService.listFiles(currentPath)) as any[];
       for (const file of files) {
-        const name = file.ObjectName || file.objectName || "";
-        const isDir = file.IsDirectory ?? file.isDirectory ?? false;
+        const name = file.objectName || file.ObjectName || "";
+        const isDir = file.isDirectory ?? file.IsDirectory ?? false;
 
         if (!isDir && isVideoFile(file)) {
           // The correct storage path is the current recursion path + object name
@@ -37,8 +36,8 @@ async function collectVideoFiles(rootPath: string) {
 
       // Recurse into subfolders
       const subfolders = files
-        .filter((f: any) => f.IsDirectory ?? f.isDirectory ?? false)
-        .map((f: any) => f.ObjectName || f.objectName || "");
+        .filter((f: any) => f.isDirectory ?? f.IsDirectory ?? false)
+        .map((f: any) => f.objectName || f.ObjectName || "");
 
       for (const name of subfolders) {
         if (!name) continue;

@@ -3,16 +3,9 @@
 
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { env } from "@/config/env";
 
-function getBunnyStoragePathFromUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    return parsed.pathname.replace(/^\/+/, "");
-  } catch {
-    return url;
-  }
-}
+const DEMO_VIDEO_URL = "/educational-platform/demo/intro.mp4";
+const DEMO_STORAGE_PATH = "educational-platform/demo/intro.mp4";
 
 const COURSES = [
   {
@@ -21,7 +14,7 @@ const COURSES = [
     shortDescription: "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ",
     description:
       "ስለ ዝሆኖች ባህሪ እና ኑሮ የሚያጠና አስደሳች ኮርስ። የዱር አንስታይ ፍቅር ያላቸው ሁሉ መመዝገብ ይኖርባቸዋል",
-    coverImage: env.bunny.demoVideoUrl,
+    coverImage: DEMO_VIDEO_URL,
     price: 599,
     currency: "ETB",
     level: "beginner",
@@ -40,7 +33,7 @@ const COURSES = [
     shortDescription: "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ",
     description:
       "ከመሰረታዊ እስከ ላቀ የዳንስ እንቅስቃሴዎችን ይማሩ። በዘመናዊ የአካል ብቃት እንቅስቃሴ ጤናዎን ይጠብቁ",
-    coverImage: env.bunny.demoVideoUrl,
+    coverImage: DEMO_VIDEO_URL,
     price: 799,
     currency: "ETB",
     level: "intermediate",
@@ -58,7 +51,7 @@ const COURSES = [
     title: "የቪዲዮ ኤዲቲንግ መሰረቶች",
     shortDescription: "የቪዲዮ አርትዖት መሰረታዊ መርሀዎችን ይማሩ",
     description: "የቪዲዮ አርትዖት መሰረታዊ መርሀዎችን ይማሩ። ከመጀመሪያ እስከ መጨረሻ የቪዲዮ አርትዖት ስልጠና",
-    coverImage: env.bunny.demoVideoUrl,
+    coverImage: DEMO_VIDEO_URL,
     price: 1299,
     currency: "ETB",
     level: "beginner",
@@ -77,7 +70,7 @@ const COURSES = [
     shortDescription: "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ",
     description:
       "ስለ ባህር ኤሊዎች እና የባህር ህይወት ጥበቃ የሚያጠና ትምህርታዊ ኮርስ። የባህር ስነ-ምህዳርን ይረዱ",
-    coverImage: env.bunny.demoVideoUrl,
+    coverImage: DEMO_VIDEO_URL,
     price: 699,
     currency: "ETB",
     level: "intermediate",
@@ -97,8 +90,8 @@ const LECTURES = COURSES.map((course, index) => ({
   courseId: course.id,
   title: `${course.title} የመግቢያ ቪዲዮ`,
   description: `እንኳን ደህና መጡ። እንዲሁ ጥናታዊ ኮርስ ዝግጅት ይጀምሩ።`,
-  videoUrl: env.bunny.demoVideoUrl,
-  cloudinaryPublicId: getBunnyStoragePathFromUrl(env.bunny.demoVideoUrl),
+  videoUrl: DEMO_VIDEO_URL,
+  cloudinaryPublicId: DEMO_STORAGE_PATH,
   duration: 60,
   orderIndex: 1,
   isPublished: true,
