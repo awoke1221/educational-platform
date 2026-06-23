@@ -107,6 +107,7 @@ export async function GET(request: NextRequest) {
 function getMimeType(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
   const mimeMap: Record<string, string> = {
+    // Video types
     mp4: "video/mp4",
     webm: "video/webm",
     ogv: "video/ogg",
@@ -116,6 +117,14 @@ function getMimeType(path: string): string {
     mkv: "video/x-matroska",
     m3u8: "application/x-mpegURL",
     ts: "video/MP2T",
+    // Image types
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+    avif: "image/avif",
   };
-  return mimeMap[ext || ""] || "video/mp4";
+  return mimeMap[ext || ""] || "application/octet-stream";
 }
