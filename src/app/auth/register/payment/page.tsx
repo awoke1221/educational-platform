@@ -3,6 +3,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch, cachedAuthFetchJson } from "@/lib/utils/cache";
+import { SegmentedToggle } from "@/components/toggle";
+import type { SegmentedOption } from "@/components/toggle";
 
 function PaymentForm() {
   const router = useRouter();
@@ -309,63 +311,33 @@ function PaymentForm() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setMethod("local");
-                  setChannel("telebirr");
-                }}
-                className={`rounded-2xl border p-4 text-left transition-all ${
-                  method === "local"
-                    ? "border-primary bg-border-light shadow-sm"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-flex h-9 w-9 rounded-full bg-primary text-white items-center justify-center">
-                    T
-                  </span>
-                  <div>
-                    <h3 className="font-semibold text-sm">Local payment</h3>
-                    <p className="text-xs text-gray-500">
-                      Telebirr / bank transfer
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Pay locally, then upload the receipt for admin verification.
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMethod("diaspora");
-                  setChannel("paypal");
-                }}
-                className={`rounded-2xl border p-4 text-left transition-all ${
-                  method === "diaspora"
-                    ? "border-[#7C3AED] bg-[#F3E8FF] shadow-sm"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-flex h-9 w-9 rounded-full bg-[#7C3AED] text-white items-center justify-center">
-                    D
-                  </span>
-                  <div>
-                    <h3 className="font-semibold text-sm">Diaspora payment</h3>
-                    <p className="text-xs text-gray-500">
-                      PayPal / international transfer
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Send the international payment and upload the receipt.
-                </p>
-              </button>
-            </div>
+            <SegmentedToggle<"local" | "diaspora">
+              variant="cards"
+              name="Payment method"
+              value={method}
+              onChange={(v) => {
+                setMethod(v);
+                setChannel(v === "local" ? "telebirr" : "paypal");
+              }}
+              options={
+                [
+                  {
+                    value: "local",
+                    label: "Local payment",
+                    icon: "T",
+                    description:
+                      "Telebirr / bank transfer — Pay locally, then upload the receipt for admin verification.",
+                  },
+                  {
+                    value: "diaspora",
+                    label: "Diaspora payment",
+                    icon: "D",
+                    description:
+                      "PayPal / international transfer — Send the international payment and upload the receipt.",
+                  },
+                ] as SegmentedOption<"local" | "diaspora">[]
+              }
+            />
 
             <div className="p-4 border rounded bg-surface">
               {method === "local" ? (

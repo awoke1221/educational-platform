@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/lib/ThemeProvider";
+import { HamburgerToggle, ThemeSwitch } from "@/components/toggle";
 
 interface UserInfo {
   id: string;
@@ -17,6 +18,7 @@ interface UserInfo {
 export default function Navbar() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  // theme/toggleTheme used by ThemeSwitch child component
   const [user, setUser] = useState<UserInfo | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -178,43 +180,15 @@ export default function Navbar() {
               >
                 Testimonials
               </Link>
+              <Link
+                href="/faq"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
+              >
+                FAQ
+              </Link>
 
               {/* ── Theme Toggle (Desktop) ─────────────── */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
-                aria-label="Toggle dark mode"
-              >
-                {theme === "light" ? (
-                  <svg
-                    className="w-5 h-5 text-white/80 group-hover:text-[#c9952a] transition-colors"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-5 h-5 text-secondary group-hover:text-secondary transition-colors"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                )}
-              </button>
+              <ThemeSwitch />
 
               {user ? (
                 /* ── Logged In: User Avatar (Desktop) ── */
@@ -430,45 +404,12 @@ export default function Navbar() {
             </div>
 
             {/* ── Mobile Hamburger Button ─────────────── */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Toggle navigation menu"
-            >
-              <div className="w-5 h-4 relative flex flex-col justify-between">
-                <motion.span
-                  animate={
-                    mobileMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }
-                  }
-                  className="block h-[2px] w-full bg-white/80 rounded-full origin-center transition-colors"
-                  style={{
-                    backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
-                  }}
-                />
-                <motion.span
-                  animate={
-                    mobileMenuOpen
-                      ? { opacity: 0, x: -8 }
-                      : { opacity: 1, x: 0 }
-                  }
-                  className="block h-[2px] w-full bg-white/80 rounded-full transition-colors"
-                  style={{
-                    backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
-                  }}
-                />
-                <motion.span
-                  animate={
-                    mobileMenuOpen
-                      ? { rotate: -45, y: -6 }
-                      : { rotate: 0, y: 0 }
-                  }
-                  className="block h-[2px] w-full bg-white/80 rounded-full origin-center transition-colors"
-                  style={{
-                    backgroundColor: mobileMenuOpen ? "#c9952a" : undefined,
-                  }}
-                />
-              </div>
-            </button>
+            <div className="md:hidden">
+              <HamburgerToggle
+                isOpen={mobileMenuOpen}
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -498,53 +439,92 @@ export default function Navbar() {
             >
               <div className="px-4 py-5 space-y-1">
                 {/* ── Theme Toggle ─────────────────────── */}
-                <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-white/5 border border-[#c9952a]/10">
-                  <span className="text-sm font-medium text-white/70">
-                    {theme === "light" ? "☀️ Light Mode" : "🌙 Dark Mode"}
-                  </span>
-                  <button
-                    onClick={toggleTheme}
-                    className="relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-secondary/50"
-                    style={{
-                      backgroundColor:
-                        theme === "light" ? "#e2e8f0" : "#c9952a",
-                    }}
-                    aria-label="Toggle theme"
-                  >
-                    <motion.div
-                      animate={{ x: theme === "light" ? 2 : 26 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                      className="absolute top-[2px] w-5 h-5 bg-white rounded-full shadow-md flex items-center justify-center"
-                    >
-                      {theme === "light" ? (
-                        <svg
-                          className="w-3 h-3 text-amber-500"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-3 h-3 text-gray-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                        </svg>
-                      )}
-                    </motion.div>
-                  </button>
-                </div>
+                <ThemeSwitch labeled />
 
+                <div className="h-px bg-[#c9952a]/10 my-2" />
+
+                {/* ── Mobile: General Nav Links ──────────── */}
+                <MobileMenuItem
+                  href="/courses"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                      />
+                    </svg>
+                  }
+                  label="Courses"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+                <MobileMenuItem
+                  href="/about"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  }
+                  label="About"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+                <MobileMenuItem
+                  href="/testimonials"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                      />
+                    </svg>
+                  }
+                  label="Testimonials"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+                <MobileMenuItem
+                  href="/faq"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                      />
+                    </svg>
+                  }
+                  label="FAQ"
+                  badge="New"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
                 <div className="h-px bg-[#c9952a]/10 my-2" />
 
                 {user ? (
