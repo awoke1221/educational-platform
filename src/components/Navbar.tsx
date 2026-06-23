@@ -26,6 +26,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const hamburgerRef = useRef<HTMLDivElement>(null);
 
   // Scroll listener: transparent at top → solid on scroll
   useEffect(() => {
@@ -86,13 +87,18 @@ export default function Navbar() {
   // Close mobile menu when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      // Don't close if clicking on hamburger button or menu
       if (
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(e.target as Node)
+        hamburgerRef.current?.contains(target) ||
+        mobileMenuRef.current?.contains(target)
       ) {
-        setMobileMenuOpen(false);
+        return;
       }
+      // Close if clicking outside
+      setMobileMenuOpen(false);
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -404,7 +410,7 @@ export default function Navbar() {
             </div>
 
             {/* ── Mobile Hamburger Button ─────────────── */}
-            <div className="md:hidden">
+            <div className="md:hidden" ref={hamburgerRef}>
               <HamburgerToggle
                 isOpen={mobileMenuOpen}
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -443,67 +449,7 @@ export default function Navbar() {
 
                 <div className="h-px bg-[#c9952a]/10 my-2" />
 
-                {/* ── Mobile: General Nav Links ──────────── */}
-                <MobileMenuItem
-                  href="/courses"
-                  icon={
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                      />
-                    </svg>
-                  }
-                  label="Courses"
-                  onClick={() => setMobileMenuOpen(false)}
-                />
-                <MobileMenuItem
-                  href="/about"
-                  icon={
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  }
-                  label="About"
-                  onClick={() => setMobileMenuOpen(false)}
-                />
-                <MobileMenuItem
-                  href="/testimonials"
-                  icon={
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                      />
-                    </svg>
-                  }
-                  label="Testimonials"
-                  onClick={() => setMobileMenuOpen(false)}
-                />
+                {/* ── Mobile: General Nav Links (only items NOT in bottom nav) ──────────── */}
                 <MobileMenuItem
                   href="/faq"
                   icon={

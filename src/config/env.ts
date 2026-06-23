@@ -122,6 +122,8 @@ export const env = {
       "image/gif",
       "image/avif",
     ],
+    // Fallback hero video URL (used when no videos are found in storage)
+    fallbackHeroVideo: process.env.BUNNY_FALLBACK_HERO_VIDEO?.trim() || "",
   },
 
   // ============================================

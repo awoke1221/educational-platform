@@ -96,8 +96,23 @@ export async function GET(request: Request) {
       env.bunny.defaultFolder?.trim() || "educational-platform";
     const videoFiles = await collectVideoFiles(rootFolder);
 
+    // If no videos found, provide a fallback video if configured
     if (!videoFiles.length) {
-      return errorResponse("No Bunny hero video found", 404);
+      const fallbackUrl = env.bunny.fallbackHeroVideo?.trim();
+      if (fallbackUrl) {
+        return successResponse(
+          {
+            videoUrl: fallbackUrl,
+            poster: "",
+            filename: "fallback-video",
+            type: "mp4",
+            storagePath: "fallback",
+          },
+          "Using fallback hero video",
+        );
+      }
+      // No fallback available, return null data
+      return successResponse(null, "No hero video available", 200);
     }
 
     // Sort by last modified time (newest first)

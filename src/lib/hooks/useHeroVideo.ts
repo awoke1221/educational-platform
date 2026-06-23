@@ -61,20 +61,42 @@ export function useHeroVideo() {
 
         // 2. No valid cache — fetch from API
         const res = await fetch("/api/bunny/hero-video");
+
+        // Check if response is OK and content-type is JSON
+        if (!res.ok) {
+          console.warn(`Hero video API returned ${res.status}`);
+          if (!cancelled) setHeroLoading(false);
+          return;
+        }
+
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          console.warn("Hero video API returned non-JSON response");
+          if (!cancelled) setHeroLoading(false);
+          return;
+        }
+
         const json = await res.json();
         if (!cancelled) {
-          if (json.success && json.data) {
-            setHeroVideo(json.data);
-            // Store in sessionStorage
-            const entry: CacheEntry = {
-              data: json.data,
-              timestamp: Date.now(),
-            };
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+          if (json.success) {
+            if (json.data) {
+              setHeroVideo(json.data);
+              // Store in sessionStorage
+              const entry: CacheEntry = {
+                data: json.data,
+                timestamp: Date.now(),
+              };
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+            }
+            // If data is null, just set loading to false (video unavailable)
           }
         }
       } catch (err) {
-        console.error("Failed to load hero video:", err);
+        console.warn(
+          "Hero video loading failed gracefully:",
+          err instanceof Error ? err.message : err,
+        );
+        // Don't log full error to avoid cluttering console
       } finally {
         if (!cancelled) setHeroLoading(false);
       }
