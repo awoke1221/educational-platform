@@ -119,7 +119,11 @@ function PaymentForm() {
                 { method: "GET" },
                 15_000,
               );
-              const items = enrResult.data?.data || enrResult.data || [];
+              const items =
+                enrResult.data?.data?.data ||
+                enrResult.data?.data ||
+                enrResult.data ||
+                [];
               const active = items.some(
                 (e: any) =>
                   (e.courseId || e.course?.id) === courseId &&

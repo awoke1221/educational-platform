@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       .from("User")
       .select(
         `id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt,
-         UserRegistration!inner (
+         UserRegistration (
            pendingReceiptUrl, paymentMethod, paymentStatus
          )`,
       )
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         .from("User")
         .select(
           `id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt,
-           UserRegistration!inner (
+           UserRegistration (
              pendingReceiptUrl, paymentMethod, paymentStatus
            )`,
         )

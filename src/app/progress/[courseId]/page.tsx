@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedAuthFetchJson } from "@/lib/utils/cache";
+import { formatDuration } from "@/lib/utils/common";
 import { ProgressRing } from "@/components/ProgressRing";
 import { ConfettiEffect } from "@/components/ConfettiEffect";
 import {
@@ -337,7 +338,7 @@ export default function ProgressPage() {
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        {lec.duration || 0} ደቂቃ
+                        {formatDuration(lec.duration)}
                       </span>
                       {lec.progress.watchPercentage > 0 && (
                         <span>{lec.progress.watchPercentage}% ተመልክቷል</span>

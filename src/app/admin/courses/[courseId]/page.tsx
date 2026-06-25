@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, Reorder } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { handleAuthError } from "@/lib/utils/auth-error";
+import { formatDuration } from "@/lib/utils/common";
 
 // ============================================
 // Types
@@ -1036,7 +1037,7 @@ export default function AdminCourseDetailPage() {
                                 <div className="flex flex-wrap items-center gap-3 mt-2 ml-9">
                                   <span className="text-xs text-gray-400">
                                     {lecture.duration
-                                      ? `${lecture.duration} ደቂቃ`
+                                      ? formatDuration(lecture.duration)
                                       : "ቆይታ የለም"}
                                   </span>
                                   {lecture.cloudinaryPublicId && (
@@ -1701,7 +1702,7 @@ export default function AdminCourseDetailPage() {
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-400">Duration</p>
                 <p className="text-lg font-bold text-primary">
-                  {course.duration || 0} min
+                  {formatDuration(course.duration)}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">

@@ -14,52 +14,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Try to fetch pending enrollments (course-specific payments)
-    const { data: enrollments, error: enrErr } = await supabaseAdmin!
-      .from("Enrollment")
+    // Fetch pending registrations from UserRegistration table
+    // Pending = has submitted payment (pending/rejected) but not yet approved
+    const { data: registrations, error } = await supabaseAdmin!
+      .from("UserRegistration")
       .select(
-        "id, userId, courseId, status, enrollmentDate, user:User(id, username, email, fullName, phoneNumber, pendingReceiptUrl, paymentMethod), course:Course(id, title, price), payment:Payment(id, status, paymentMethod, paymentType)",
+        `id, userId, isApproved, pendingReceiptUrl, paymentMethod, paymentStatus, submittedAt,
+         User!userId (id, username, email, fullName, phoneNumber)`,
       )
-      .eq("status", "processing")
-      .order("enrollmentDate", { ascending: false });
-
-    if (!enrErr && enrollments && enrollments.length > 0) {
-      // Normalize to a simple pending item list
-      const items = enrollments.map((e: any) => {
-        const payment = Array.isArray(e.payment) ? e.payment[0] : e.payment;
-        return {
-          entryId: e.id,
-          paymentId: payment?.id || null,
-          userId: e.userId,
-          id: e.userId,
-          username: e.user?.username || "",
-          email: e.user?.email || "",
-          fullName: e.user?.fullName || "",
-          phoneNumber: e.user?.phoneNumber || "",
-          pendingReceiptUrl: e.user?.pendingReceiptUrl || null,
-          paymentMethod:
-            payment?.paymentMethod || e.user?.paymentMethod || null,
-          paymentType: payment?.paymentType || null,
-          paymentStatus: payment?.status || "submitted",
-          createdAt: e.enrollmentDate,
-          courseId: e.courseId,
-          courseTitle: e.course?.title || null,
-          coursePrice: e.course?.price || null,
-          enrollmentStatus: e.status,
-        };
-      });
-
-      return NextResponse.json({ success: true, data: items }, { status: 200 });
-    }
-
-    // Fallback: previous behavior (user-level submitted payments)
-    const { data, error } = await supabaseAdmin!
-      .from("User")
-      .select(
-        "id, username, email, fullName, phoneNumber, pendingReceiptUrl, paymentMethod, paymentStatus, createdAt",
-      )
-      .eq("paymentStatus", "submitted")
-      .order("createdAt", { ascending: false });
+      .in("paymentStatus", ["pending", "rejected"])
+      .order("submittedAt", { ascending: false });
 
     if (error) {
       console.error("[PENDING FETCH ERROR]", error);
@@ -69,7 +33,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, data }, { status: 200 });
+    // Normalize to a simple pending item list
+    const items = (registrations || []).map((r: any) => ({
+      entryId: r.id,
+      registrationId: r.id,
+      userId: r.userId,
+      id: r.userId,
+      username: r.User?.username || "",
+      email: r.User?.email || "",
+      fullName: r.User?.fullName || "",
+      phoneNumber: r.User?.phoneNumber || "",
+      pendingReceiptUrl: r.pendingReceiptUrl || null,
+      paymentMethod: r.paymentMethod || null,
+      paymentStatus: r.paymentStatus || "pending",
+      createdAt: r.submittedAt,
+      isApproved: r.isApproved,
+    }));
+
+    return NextResponse.json({ success: true, data: items }, { status: 200 });
   } catch (err) {
     console.error("[PENDING GET ERROR]", err);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

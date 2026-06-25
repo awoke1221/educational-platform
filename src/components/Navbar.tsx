@@ -126,13 +126,16 @@ export default function Navbar() {
   };
 
   // Get initials for avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return "?";
+    return (
+      name
+        .split(" ")
+        .map((n) => n.charAt(0))
+        .join("")
+        .toUpperCase()
+        .slice(0, 2) || "?"
+    );
   };
 
   return (

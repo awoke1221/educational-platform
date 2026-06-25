@@ -13,6 +13,7 @@ import {
   markLectureCompleted,
   isLectureCompleted,
 } from "@/lib/utils/videoPersistence";
+import { formatDuration } from "@/lib/utils/common";
 import {
   isCacheAvailable,
   isVideoUrl,
@@ -218,7 +219,11 @@ export default function LecturePlayerPage() {
         // Process enrollment
         if (!admin) {
           const enrData = enrResult.data;
-          const items = enrData.data?.data || enrData.data || [];
+          const items =
+            enrData.data?.data?.data ||
+            enrData.data?.data ||
+            enrData.data ||
+            [];
           const activeEnrollment = items.some(
             (e: any) =>
               (e.courseId || e.course?.id) === courseId &&
@@ -789,8 +794,6 @@ export default function LecturePlayerPage() {
   // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
   // No proxy through Vercel: lower latency, zero bandwidth cost, no timeout limits.
   // Token-authenticated signed URLs ensure secure access.
-  // Priority: cdnVideoUrl (direct CDN edge) > signed > streaming > proxy > raw
-  // Note: If CDN is blocked (token key mismatch), falls back to proxy.
   const videoUrl =
     lecture.cdnVideoUrl ||
     lecture.signedVideoUrl ||
@@ -798,6 +801,20 @@ export default function LecturePlayerPage() {
     lecture.proxiedVideoUrl ||
     lecture.videoUrl ||
     "";
+
+  // Determine video MIME type from URL extension
+  const videoType = (() => {
+    const ext = videoUrl.split(".").pop()?.split("?")[0]?.toLowerCase();
+    const mimeMap: Record<string, string> = {
+      mp4: "video/mp4",
+      webm: "video/webm",
+      ogv: "video/ogg",
+      ogg: "video/ogg",
+      mov: "video/quicktime",
+      m3u8: "application/x-mpegURL",
+    };
+    return mimeMap[ext || ""] || "video/mp4";
+  })();
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -899,7 +916,6 @@ export default function LecturePlayerPage() {
             <video
               ref={videoRef}
               className="w-full aspect-video cursor-pointer relative z-10"
-              src={videoUrl}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onPlay={handlePlay}
@@ -910,7 +926,15 @@ export default function LecturePlayerPage() {
               onClick={togglePlay}
               playsInline
               preload="metadata"
-            />
+            >
+              {/* 🐰 Primary: Direct Bunny CDN (nearest edge PoP) */}
+              <source src={videoUrl} type={videoType} />
+              {/* 🔄 Fallback: Proxy through server when CDN blocked by CORS/ORB */}
+              {lecture.proxiedVideoUrl && (
+                <source src={lecture.proxiedVideoUrl} type={videoType} />
+              )}
+              Your browser does not support the video tag.
+            </video>
 
             {/* Buffering indicator */}
             <AnimatePresence>
@@ -1463,7 +1487,7 @@ export default function LecturePlayerPage() {
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-gray-400 dark:text-gray-500">
-                          {lec.duration || 0} ደቂቃ
+                          {formatDuration(lec.duration)}
                         </span>
                         {lecCompleted && (
                           <span className="text-xs text-green-500">ተጠናቋል</span>

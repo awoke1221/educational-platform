@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch } from "@/lib/utils/cache";
 import CourseReviews from "@/components/CourseReviews";
+import { formatDuration } from "@/lib/utils/common";
 
 interface CourseDetail {
   id: string;
@@ -80,7 +81,11 @@ export default function CourseDetailPage() {
               }
             }
 
-            const items = enrResult.data?.data || enrResult.data || [];
+            const items =
+              enrResult.data?.data?.data ||
+              enrResult.data?.data ||
+              enrResult.data ||
+              [];
             const matched = items.find(
               (e: any) => (e.courseId || e.course?.id) === courseId,
             );
@@ -206,7 +211,7 @@ export default function CourseDetailPage() {
           </motion.p>
           <div className="flex flex-wrap gap-4 mt-4 text-sm text-white/80">
             <span>{course.videoCount} ቪዲዮዎች</span>
-            <span>{course.duration || 0} ደቂቃ</span>
+            <span>{formatDuration(course.duration)}</span>
             <span>{course.enrollmentCount} ተማሪዎች</span>
           </div>
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -405,7 +410,7 @@ export default function CourseDetailPage() {
                       {lec.title}
                     </p>
                     <p className="text-xs text-text-muted">
-                      {lec.duration || 0} ደቂቃ
+                      {formatDuration(lec.duration)}
                     </p>
                   </div>
                   {isEnrolled ? (

@@ -35,28 +35,45 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Build query — reads from AdminApprovalQueue, JOINs Payment, User, and Course
-    let query = db
-      .from("AdminApprovalQueue")
-      .select(
-        `
+    // Build query — reads from UserRegistration, JOINs User
+    let query = db.from("UserRegistration").select(
+      `
         id,
+        userId,
+        isApproved,
+        pendingReceiptUrl,
+        paymentMethod,
+        paymentStatus,
         submittedAt,
-        isReviewed,
-        viewedAt,
-        payment:paymentId(
-          amount,
-          receiptScreenshotUrl,
-          paymentMethod,
-          status,
-          user:userId(fullName, email),
-          course:courseId(title)
+        reviewedAt,
+        reviewedBy,
+        User!userId (
+          id,
+          fullName,
+          email
         )
       `,
-        { count: "exact" },
-      )
-      .eq("isReviewed", false)
-      .order("submittedAt", { ascending: false })
+      { count: "exact" },
+    );
+
+    // Filter by status
+    if (status === "pending") {
+      // Registrations needing admin review: submitted payment, not yet approved
+      query = query.in("paymentStatus", ["pending", "rejected"]);
+    } else if (status === "approved") {
+      query = query.eq("isApproved", true);
+    } else if (status === "all") {
+      // No extra filter
+    }
+
+    if (search) {
+      query = query.or(
+        `User.fullName.ilike.%${search}%,User.email.ilike.%${search}%`,
+      );
+    }
+
+    query = query
+      .order("submittedAt", { ascending: false, nullsFirst: false })
       .range(offset, offset + limit - 1);
 
     const { data, count, error } = await query;
@@ -72,16 +89,16 @@ export async function GET(req: NextRequest) {
     // Flatten the nested response for the frontend
     const registrations = (data || []).map((item: any) => ({
       id: item.id,
+      userId: item.userId,
       submittedAt: item.submittedAt,
-      isReviewed: item.isReviewed,
-      viewedAt: item.viewedAt,
-      amount: item.payment?.amount ?? null,
-      receiptScreenshotUrl: item.payment?.receiptScreenshotUrl ?? null,
-      paymentMethod: item.payment?.paymentMethod ?? null,
-      paymentStatus: item.payment?.status ?? null,
-      fullName: item.payment?.user?.fullName ?? null,
-      email: item.payment?.user?.email ?? null,
-      courseTitle: item.payment?.course?.title ?? null,
+      isApproved: item.isApproved,
+      reviewedAt: item.reviewedAt,
+      reviewedBy: item.reviewedBy,
+      pendingReceiptUrl: item.pendingReceiptUrl,
+      paymentMethod: item.paymentMethod,
+      paymentStatus: item.paymentStatus,
+      fullName: item.User?.fullName ?? null,
+      email: item.User?.email ?? null,
     }));
 
     return NextResponse.json({
@@ -112,9 +129,9 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, action } = body;
+    const { registrationId, action } = body;
 
-    if (!userId || !["approve", "reject"].includes(action)) {
+    if (!registrationId || !["approve", "reject"].includes(action)) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
@@ -126,13 +143,25 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Update user approval status
+    // Update UserRegistration approval status
     const updateData =
       action === "approve"
-        ? { isApproved: true, paymentStatus: "approved" }
-        : { paymentStatus: "rejected" };
+        ? {
+            isApproved: true,
+            paymentStatus: "approved",
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: auth?.userId || null,
+          }
+        : {
+            paymentStatus: "rejected",
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: auth?.userId || null,
+          };
 
-    const { error } = await db.from("User").update(updateData).eq("id", userId);
+    const { error } = await db
+      .from("UserRegistration")
+      .update(updateData)
+      .eq("id", registrationId);
 
     if (error) {
       console.error("[ADMIN REGISTRATIONS PATCH]", error);
@@ -142,27 +171,36 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Mark all unreviewed AdminApprovalQueue entries for this user as reviewed
-    const { error: queueError } = await db
-      .from("AdminApprovalQueue")
-      .update({
-        isReviewed: true,
-        viewedAt: new Date().toISOString(),
-      })
-      .eq("isReviewed", false)
-      .in(
-        "paymentId",
-        (await db.from("Payment").select("id").eq("userId", userId)).data?.map(
-          (p: any) => p.id,
-        ) ?? [],
-      );
+    // Also update the User role to 'user' on approval if not already set
+    if (action === "approve") {
+      const { data: reg } = await db
+        .from("UserRegistration")
+        .select("userId")
+        .eq("id", registrationId)
+        .single();
+      if (reg?.userId) {
+        await db
+          .from("User")
+          .update({ role: "user", isActive: true })
+          .eq("id", reg.userId);
 
-    if (queueError) {
-      console.error(
-        "[ADMIN REGISTRATIONS PATCH] Queue update error:",
-        queueError,
-      );
-      // Non-fatal — the user record was already updated
+        // Also activate all pending enrollments and payments for this user
+        const now = new Date().toISOString();
+        await db
+          .from("Enrollment")
+          .update({ status: "active", updatedAt: now })
+          .eq("userId", reg.userId)
+          .eq("status", "processing");
+        await db
+          .from("Payment")
+          .update({
+            status: "approved",
+            approvedAt: now,
+            approvedBy: auth?.userId || null,
+          })
+          .eq("userId", reg.userId)
+          .eq("status", "pending");
+      }
     }
 
     return NextResponse.json({

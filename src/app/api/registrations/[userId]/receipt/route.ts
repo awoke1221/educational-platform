@@ -93,13 +93,40 @@ export async function POST(
       );
     }
 
-    // ── Persist receipt info on the User record ──
+    // ── Persist receipt info on the UserRegistration record ──
+    const { data: existingReg } = await supabaseAdmin!
+      .from("UserRegistration")
+      .select("id")
+      .eq("userId", userId)
+      .maybeSingle();
+
+    if (existingReg) {
+      await supabaseAdmin!
+        .from("UserRegistration")
+        .update({
+          pendingReceiptUrl: uploadResult.publicUrl,
+          paymentMethod: paymentChannel || paymentMethod || "telebirr",
+          paymentStatus: "pending",
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("id", existingReg.id);
+    } else {
+      await supabaseAdmin!.from("UserRegistration").insert({
+        id: crypto.randomUUID(),
+        userId,
+        pendingReceiptUrl: uploadResult.publicUrl,
+        paymentMethod: paymentChannel || paymentMethod || "telebirr",
+        paymentStatus: "pending",
+        submittedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // Also update User name/phone
     const { error: updateError } = await supabaseAdmin!
       .from("User")
       .update({
-        pendingReceiptUrl: uploadResult.publicUrl,
-        paymentMethod: paymentChannel || paymentMethod,
-        paymentStatus: "submitted",
         fullName: fullName.trim(),
         phoneNumber: phoneNumber.trim(),
       })
