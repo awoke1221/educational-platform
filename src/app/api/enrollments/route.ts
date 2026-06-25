@@ -26,17 +26,33 @@ export async function GET(request: NextRequest) {
       return errorResponse("Authentication required", 401);
     }
 
-    let {
-      data: enrollments,
-      error,
-      count,
-    } = await supabase
+    // ── Parse pagination params ─────────────────────────────────
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
+    const offset = (page - 1) * limit;
+
+    // Count query (lightweight — no related data)
+    const countQuery = supabase
+      .from("Enrollment")
+      .select("*", { count: "exact", head: true })
+      .eq("userId", auth.userId);
+
+    // Data query with range
+    const dataQuery = supabase
       .from("Enrollment")
       .select(
         "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
         { count: "exact" },
       )
-      .order("enrollmentDate", { ascending: false });
+      .eq("userId", auth.userId)
+      .order("enrollmentDate", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    let [{ count }, { data: enrollments, error }] = await Promise.all([
+      countQuery,
+      dataQuery,
+    ]);
 
     // ── Fallback for legacy users with mismatched User.id ──────
     // If the RLS-scoped query returns empty but the user has a valid
@@ -58,18 +74,24 @@ export async function GET(request: NextRequest) {
             "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
           )
           .eq("userId", userByEmail.id)
-          .order("enrollmentDate", { ascending: false });
+          .order("enrollmentDate", { ascending: false })
+          .range(offset, offset + limit - 1);
 
         if (!legacyResult.error && legacyResult.data) {
           enrollments = legacyResult.data;
-          count = legacyResult.data.length;
+          // Re-count for legacy user
+          const countRes = await admin!
+            .from("Enrollment")
+            .select("*", { count: "exact", head: true })
+            .eq("userId", userByEmail.id);
+          count = countRes.count;
         }
       }
     }
 
     if (error) {
       console.error("[LIST ENROLLMENTS ERROR]", error);
-      return paginatedResponse([], 0, 1, 50, "No enrollments found");
+      return paginatedResponse([], 0, page, limit, "No enrollments found");
     }
 
     const normalized = (enrollments || []).map((enrollment: any) => {
@@ -86,8 +108,8 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(
       normalized,
       count || normalized.length,
-      1,
-      50,
+      page,
+      limit,
       "Enrollments retrieved",
     );
   } catch (error) {

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { requireRole } from "@/lib/auth/middleware";
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 200;
+
 export async function GET(request: NextRequest) {
   try {
     const roleErr = await requireRole(request, ["admin"]);
@@ -14,16 +18,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ── Step 1: Fetch pending registrations from UserRegistration ──
+    // ── Parse pagination params ─────────────────────────────────
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || String(DEFAULT_PAGE), 10));
+    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT), 10)));
+    const offset = (page - 1) * limit;
+
+    // ── Step 1: Fetch total count + page of pending registrations ──
     // Pending = has submitted payment (pending/rejected) but not yet approved
-    const { data: registrations, error } = await supabaseAdmin!
+    const countQuery = supabaseAdmin!
+      .from("UserRegistration")
+      .select("*", { count: "exact", head: true })
+      .in("paymentStatus", ["pending", "rejected"]);
+
+    const dataQuery = supabaseAdmin!
       .from("UserRegistration")
       .select(
         `id, userId, isApproved, pendingReceiptUrl, paymentMethod, paymentStatus, submittedAt,
          User!userId (id, username, email, fullName, phoneNumber)`,
       )
       .in("paymentStatus", ["pending", "rejected"])
-      .order("submittedAt", { ascending: false });
+      .order("submittedAt", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    const [{ count }, { data: registrations, error }] = await Promise.all([
+      countQuery,
+      dataQuery,
+    ]);
 
     if (error) {
       console.error("[PENDING FETCH ERROR]", error);
@@ -32,6 +53,10 @@ export async function GET(request: NextRequest) {
         { status: 500 },
       );
     }
+
+    const total = count ?? 0;
+    const pages = Math.ceil(total / limit);
+    const hasMore = page < pages;
 
     // ── Step 2: Fetch associated enrollments for these users ──
     // This is critical: without courseId the approve/reject routes fall
@@ -125,7 +150,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, data: items }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: items,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages,
+          hasMore,
+        },
+      },
+      { status: 200 },
+    );
   } catch (err) {
     console.error("[PENDING GET ERROR]", err);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
