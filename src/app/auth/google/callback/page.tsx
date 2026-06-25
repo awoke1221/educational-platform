@@ -21,6 +21,10 @@ export default function GoogleCallbackPage() {
     phoneNumber?: string;
     providerUserId?: string | null;
     providerIdentityId?: string | null;
+    accessToken?: string;
+    refreshToken?: string;
+    expiresIn?: number;
+    expiresAt?: number;
   }) {
     setError(null);
     setStatus("Completing sign-in...");
@@ -37,6 +41,10 @@ export default function GoogleCallbackPage() {
           profileImage: payload.profileImage,
           providerUserId: payload.providerUserId,
           providerIdentityId: payload.providerIdentityId,
+          accessToken: payload.accessToken,
+          refreshToken: payload.refreshToken,
+          expiresIn: payload.expiresIn,
+          expiresAt: payload.expiresAt,
         }),
       });
 
@@ -156,6 +164,10 @@ export default function GoogleCallbackPage() {
           phoneNumber: userPhone.trim() || undefined,
           providerUserId,
           providerIdentityId,
+          accessToken: session.access_token,
+          refreshToken: session.refresh_token,
+          expiresIn: session.expires_in,
+          expiresAt: session.expires_at,
         };
 
         // Proceed immediately — phone is optional for Google OAuth.

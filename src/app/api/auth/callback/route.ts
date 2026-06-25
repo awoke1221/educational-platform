@@ -72,13 +72,24 @@ export async function GET(request: NextRequest) {
         .update({
           fullName,
           profileImage: avatarUrl,
-          authProvider: provider,
-          authProviderUserId: authUser.identities?.[0]?.id || null,
           lastLogin: now,
           loginCount: (existingProfile.loginCount || 0) + 1,
           updatedAt: now,
         })
         .eq("id", authUser.id);
+
+      // Upsert UserAuth record
+      await supabaseAdmin!.from("UserAuth").upsert(
+        {
+          userId: authUser.id,
+          passwordHash: "",
+          authProvider: provider,
+          authProviderUserId: authUser.identities?.[0]?.id || null,
+          authProviderIdentityId: null,
+          updatedAt: now,
+        },
+        { onConflict: "userId" },
+      );
     } else {
       // Create new profile
       try {
@@ -93,9 +104,6 @@ export async function GET(request: NextRequest) {
             phoneNumber: "",
             role: "user",
             isActive: true,
-            isApproved: true,
-            authProvider: provider,
-            authProviderUserId: authUser.identities?.[0]?.id || null,
             loginCount: 1,
             lastLogin: now,
             createdAt: now,
@@ -103,6 +111,30 @@ export async function GET(request: NextRequest) {
           })
           .select("id")
           .single();
+
+        // Create UserAuth record
+        await supabaseAdmin!.from("UserAuth").insert({
+          id: crypto.randomUUID(),
+          userId: authUser.id,
+          passwordHash: "",
+          authProvider: provider,
+          authProviderUserId: authUser.identities?.[0]?.id || null,
+          authProviderIdentityId: null,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        // Create UserRegistration record
+        await supabaseAdmin!
+          .from("UserRegistration")
+          .insert({
+            id: crypto.randomUUID(),
+            userId: authUser.id,
+            isApproved: true,
+            paymentStatus: "none",
+          })
+          .select("id")
+          .maybeSingle();
       } catch (err) {
         console.error("[CALLBACK PROFILE INSERT ERROR]", err);
       }

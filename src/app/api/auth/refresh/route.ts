@@ -74,12 +74,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        session: {
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_in: session.expires_in,
-          expires_at: session.expires_at,
-        },
+        accessToken: session.access_token,
+        refreshToken: session.refresh_token,
+        expiresIn: session.expires_in,
+        expiresAt: session.expires_at,
       },
       {
         status: 200,

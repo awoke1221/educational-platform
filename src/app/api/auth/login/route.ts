@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     const { data: userProfile } = await supabaseAdmin!
       .from("User")
       .select(
-        "id, email, username, fullName, role, isActive, isBanned, isApproved, loginCount",
+        "id, email, username, fullName, role, isActive, isBanned, loginCount",
       )
       .eq("id", authData.user.id)
       .maybeSingle();
@@ -146,18 +146,26 @@ export async function POST(request: NextRequest) {
           { status: 403 },
         );
       }
-      if (userProfile.isApproved === false) {
-        return NextResponse.json(
-          { error: "Account awaiting admin approval" },
-          { status: 403 },
-        );
-      }
       if (userProfile.isBanned) {
         return NextResponse.json(
           { error: "Account has been banned. Please contact support." },
           { status: 403 },
         );
       }
+    }
+
+    // Check approval status from UserRegistration (moved from User table)
+    const { data: registration } = await supabaseAdmin!
+      .from("UserRegistration")
+      .select("isApproved")
+      .eq("userId", authData.user.id)
+      .maybeSingle();
+
+    if (registration && registration.isApproved === false) {
+      return NextResponse.json(
+        { error: "Account awaiting admin approval" },
+        { status: 403 },
+      );
     }
 
     // ============================================
@@ -196,11 +204,11 @@ export async function POST(request: NextRequest) {
               id: authData.user.id,
               email: authData.user.email,
             },
-        session: {
-          access_token,
-          refresh_token,
-          expires_in,
-          expires_at,
+        tokens: {
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          expiresIn: expires_in,
+          expiresAt: expires_at,
         },
       },
       {
