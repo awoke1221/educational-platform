@@ -248,43 +248,63 @@ export function getDeviceInfo(request: NextRequest): {
  * Middleware: require a valid authenticated session.
  * Returns a 401 / 403 NextResponse on failure, or null to continue.
  */
-export async function requireAuth(
+/**
+ * Authenticate the request and return the AuthUser on success.
+ *
+ * Returns `{ auth, error }` where `error` is a NextResponse to return
+ * when authentication fails — this avoids calling verifyAuth() twice
+ * (each call makes a Supabase Auth API request).
+ */
+export async function authenticate(
   request: NextRequest,
-): Promise<NextResponse | null> {
+): Promise<{ auth: AuthUser | null; error: NextResponse | null }> {
   const auth = await verifyAuth(request);
-
   if (!auth) {
-    return NextResponse.json(
-      { error: "Unauthorized - Invalid or missing token" },
-      { status: 401 },
-    );
+    return {
+      auth: null,
+      error: NextResponse.json(
+        { error: "Unauthorized - Invalid or missing token" },
+        { status: 401 },
+      ),
+    };
   }
 
   const isActive = await isUserActive(auth.userId);
   if (!isActive) {
-    return NextResponse.json(
-      { error: "Unauthorized - User account is inactive" },
-      { status: 403 },
-    );
+    return {
+      auth: null,
+      error: NextResponse.json(
+        { error: "Unauthorized - User account is inactive" },
+        { status: 403 },
+      ),
+    };
   }
 
-  return null; // Continue to handler
+  return { auth, error: null };
+}
+
+/**
+ * Legacy wrapper — kept for backward compatibility.
+ * Still calls verifyAuth() once (via authenticate).
+ */
+export async function requireAuth(
+  request: NextRequest,
+): Promise<NextResponse | null> {
+  const { error } = await authenticate(request);
+  return error;
 }
 
 /**
  * Middleware: require a valid session AND one of the listed roles.
+ * Calls verifyAuth() only ONCE instead of twice (previous implementation
+ * called it via requireAuth + verifyAuth separately).
  */
 export async function requireRole(
   request: NextRequest,
   requiredRoles: string[],
 ): Promise<NextResponse | null> {
-  const authError = await requireAuth(request);
-  if (authError) return authError;
-
-  const auth = await verifyAuth(request);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { auth, error } = await authenticate(request);
+  if (error) return error;
 
   const hasRequiredRole = await hasRole(auth, requiredRoles);
   if (!hasRequiredRole) {
@@ -298,21 +318,17 @@ export async function requireRole(
 }
 
 /**
- * Middleware to check course enrollment
+ * Middleware to check course enrollment.
+ * Calls verifyAuth() only ONCE instead of twice.
  */
 export async function requireCourseAccess(
   request: NextRequest,
   courseId: string,
 ): Promise<NextResponse | null> {
-  const authError = await requireAuth(request);
-  if (authError) return authError;
+  const { auth, error } = await authenticate(request);
+  if (error) return error;
 
-  const auth = await verifyAuth(request);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const hasAccess = await checkEnrollmentAccess(auth.userId, courseId);
+  const hasAccess = await checkEnrollmentAccess(auth!.userId, courseId);
   if (!hasAccess) {
     return NextResponse.json(
       { error: "Forbidden - No access to this course" },
