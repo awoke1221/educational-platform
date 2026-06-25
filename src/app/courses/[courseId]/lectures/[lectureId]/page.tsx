@@ -34,6 +34,8 @@ interface LectureDetail {
   cloudinaryPublicId: string | null;
   streamingUrl: string | null;
   signedVideoUrl: string | null;
+  cdnVideoUrl: string | null;
+  /** @deprecated Use cdnVideoUrl instead — proxy removed in favor of direct CDN */
   proxiedVideoUrl: string | null;
   isPublished: boolean;
   courseId: string;
@@ -268,7 +270,7 @@ export default function LecturePlayerPage() {
 
   // ============================================
   // Preload next lecture video when current one is playing
-  // Uses the same video proxy pattern as the hero video
+  // Uses direct Bunny CDN URL (served from nearest edge PoP)
   // ============================================
 
   useEffect(() => {
@@ -278,15 +280,17 @@ export default function LecturePlayerPage() {
     const next = lectures.lectures.find((l) => l.id === nextLecture.id);
     if (!next) return;
 
-    // Build the proxy URL from the Bunny storage path (same pattern as hero video)
+    // Get the CDN URL for preloading
     const storagePath = next.cloudinaryPublicId || next.videoUrl || "";
     if (!storagePath) return;
 
     // Wait until user is past 50% of the current video, then preload next
     if (!duration || currentTime / duration < 0.5) return;
 
-    // Build video proxy URL (same pattern as hero video)
-    const nextSrc = `/api/bunny/video-proxy?path=${encodeURIComponent(storagePath)}`;
+    // Use direct CDN URL — Bunny serves from nearest global edge PoP
+    const nextSrc = storagePath.startsWith("http")
+      ? storagePath
+      : `/api/bunny/video-proxy?path=${encodeURIComponent(storagePath)}`;
     if (isCacheAvailable()) {
       preloadVideo(nextSrc);
     }
@@ -425,9 +429,9 @@ export default function LecturePlayerPage() {
 
     // Cache the video in the background for future plays
     const video = videoRef.current;
-    // Same priority as the video src: proxied > signed > streaming > raw
+    // Priority: cdnVideoUrl (direct CDN edge) > streaming > raw
     const src =
-      lecture?.proxiedVideoUrl ||
+      lecture?.cdnVideoUrl ||
       lecture?.signedVideoUrl ||
       lecture?.streamingUrl ||
       lecture?.videoUrl ||
@@ -782,14 +786,16 @@ export default function LecturePlayerPage() {
   // ============================================
 
   const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
-  // Priority: proxied (same origin, no CDN/CORS issues) > signed > streaming > raw
-  // The video proxy (/api/bunny/video-proxy) uses the same approach as the hero video —
-  // it serves video through our server with HTTP Range (byte-serving), avoiding all
-  // Bunny CDN token auth issues, CORS/ORB blocking, and works reliably on Vercel.
+  // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
+  // No proxy through Vercel: lower latency, zero bandwidth cost, no timeout limits.
+  // Token-authenticated signed URLs ensure secure access.
+  // Priority: cdnVideoUrl (direct CDN edge) > signed > streaming > proxy > raw
+  // Note: If CDN is blocked (token key mismatch), falls back to proxy.
   const videoUrl =
-    lecture.proxiedVideoUrl ||
+    lecture.cdnVideoUrl ||
     lecture.signedVideoUrl ||
     lecture.streamingUrl ||
+    lecture.proxiedVideoUrl ||
     lecture.videoUrl ||
     "";
 

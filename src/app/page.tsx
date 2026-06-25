@@ -147,10 +147,18 @@ export default function Home() {
                   preload="metadata"
                   poster={heroVideo.poster}
                 >
+                  {/* 🐰 Primary: Direct Bunny CDN (nearest edge PoP) */}
                   <source
                     src={heroVideo.videoUrl}
                     type={`video/${heroVideo.type}`}
                   />
+                  {/* 🔄 Fallback: Proxy through server when CDN blocked */}
+                  {(heroVideo as any).proxyUrl && (
+                    <source
+                      src={(heroVideo as any).proxyUrl}
+                      type={`video/${heroVideo.type}`}
+                    />
+                  )}
                   Your browser does not support the video tag.
                 </video>
               ) : (

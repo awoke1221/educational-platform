@@ -7,6 +7,7 @@ const PLAYBACK_KEY = "hero-video-playback";
 
 interface HeroVideoData {
   videoUrl: string;
+  proxyUrl?: string;
   poster: string;
   filename: string;
   type: string;

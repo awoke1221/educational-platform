@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 5: Log lecture view (fire-and-forget — user-scoped client)
     // ============================================
-    supabase
+    const lectureViewOp = supabase
       .from("LectureView")
       .insert({
         lectureId,
@@ -155,10 +155,11 @@ export async function POST(request: NextRequest) {
         viewedAt: new Date().toISOString(),
       })
       .select("id")
-      .maybeSingle()
-      .catch(() => {
-        console.warn("[PROGRESS] Failed to log lecture view (non-fatal)");
-      });
+      .maybeSingle();
+
+    Promise.resolve(lectureViewOp).catch(() => {
+      console.warn("[PROGRESS] Failed to log lecture view (non-fatal)");
+    });
 
     // ============================================
     // STEP 6: Update enrollment totals
@@ -257,7 +258,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify enrollment
-    const { data: enrollment, error: enrollErr } = await supabaseAdmin!
+    const { data: enrollment, error: enrollErr } = await getSupabaseAdmin()!
       .from("Enrollment")
       .select("*")
       .eq("userId", auth.userId)
@@ -286,7 +287,7 @@ export async function PATCH(request: NextRequest) {
         };
 
         // Check existing
-        const { data: existing } = await supabaseAdmin!
+        const { data: existing } = await getSupabaseAdmin()!
           .from("UserProgress")
           .select("id")
           .eq("enrollmentId", enrollment.id)
@@ -294,7 +295,7 @@ export async function PATCH(request: NextRequest) {
           .maybeSingle();
 
         if (existing) {
-          const { data: updated } = await supabaseAdmin!
+          const { data: updated } = await getSupabaseAdmin()!
             .from("UserProgress")
             .update({
               watchDuration: lecture.watchDuration || 0,
@@ -309,7 +310,7 @@ export async function PATCH(request: NextRequest) {
             .single();
           return updated;
         } else {
-          const { data: created } = await supabaseAdmin!
+          const { data: created } = await getSupabaseAdmin()!
             .from("UserProgress")
             .insert(progressData)
             .select()
@@ -320,7 +321,7 @@ export async function PATCH(request: NextRequest) {
     );
 
     // Recalculate enrollment totals
-    const { data: allProgress } = await supabaseAdmin!
+    const { data: allProgress } = await getSupabaseAdmin()!
       .from("UserProgress")
       .select("watchDuration, isCompleted")
       .eq("enrollmentId", enrollment.id);
@@ -333,7 +334,7 @@ export async function PATCH(request: NextRequest) {
       (p: any) => p.isCompleted,
     ).length;
 
-    const { count } = await supabaseAdmin!
+    const { count } = await getSupabaseAdmin()!
       .from("Lecture")
       .select("*", { count: "exact", head: true })
       .eq("courseId", courseId)
@@ -343,7 +344,7 @@ export async function PATCH(request: NextRequest) {
     const completionPercentage =
       lectureCount > 0 ? Math.round((completedCount / lectureCount) * 100) : 0;
 
-    await supabaseAdmin!
+    await getSupabaseAdmin()!
       .from("Enrollment")
       .update({
         totalWatchTime,

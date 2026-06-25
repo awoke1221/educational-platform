@@ -81,28 +81,31 @@ export async function GET(request: NextRequest) {
         .eq("id", authUser.id);
     } else {
       // Create new profile
-      await supabaseAdmin!
-        .from("User")
-        .insert({
-          id: authUser.id,
-          username: username.toLowerCase(),
-          email,
-          fullName,
-          profileImage: avatarUrl,
-          phoneNumber: "",
-          role: "user",
-          isActive: true,
-          isApproved: true,
-          authProvider: provider,
-          authProviderUserId: authUser.identities?.[0]?.id || null,
-          loginCount: 1,
-          lastLogin: now,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .select("id")
-        .single()
-        .catch((err) => console.error("[CALLBACK PROFILE INSERT ERROR]", err));
+      try {
+        await supabaseAdmin!
+          .from("User")
+          .insert({
+            id: authUser.id,
+            username: username.toLowerCase(),
+            email,
+            fullName,
+            profileImage: avatarUrl,
+            phoneNumber: "",
+            role: "user",
+            isActive: true,
+            isApproved: true,
+            authProvider: provider,
+            authProviderUserId: authUser.identities?.[0]?.id || null,
+            loginCount: 1,
+            lastLogin: now,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .select("id")
+          .single();
+      } catch (err) {
+        console.error("[CALLBACK PROFILE INSERT ERROR]", err);
+      }
     }
 
     // ── Redirect to the app with the session ───────────────────────

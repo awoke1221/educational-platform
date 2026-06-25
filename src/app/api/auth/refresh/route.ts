@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       refresh_token: refreshToken,
     });
 
-    if (error || !data.session) {
+    if (error || !data.session || !data.user) {
       console.warn("[SECURITY] Invalid Supabase refresh token attempt");
       return NextResponse.json(
         { error: "Invalid or expired refresh token" },

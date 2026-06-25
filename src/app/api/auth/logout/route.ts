@@ -56,6 +56,10 @@ export async function POST(request: NextRequest) {
     const clearRefreshCookie =
       "sb-refresh-token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
 
+    const headers = new Headers();
+    headers.append("Set-Cookie", clearCookie);
+    headers.append("Set-Cookie", clearRefreshCookie);
+
     return NextResponse.json(
       {
         success: true,
@@ -65,9 +69,7 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 200,
-        headers: {
-          "Set-Cookie": [clearCookie, clearRefreshCookie],
-        },
+        headers,
       },
     );
   } catch (error) {

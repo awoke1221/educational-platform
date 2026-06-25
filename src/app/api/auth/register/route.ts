@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 4: Insert registration record
     // ============================================
-    await supabaseAdmin!
+    const insertOp = supabaseAdmin!
       .from("UserRegistration")
       .insert({
         id: crypto.randomUUID(),
@@ -208,10 +208,12 @@ export async function POST(request: NextRequest) {
         paymentStatus: "pending",
       })
       .select("id")
-      .maybeSingle()
-      .catch((err) =>
-        console.error("[REGISTER REGISTRATION INSERT ERROR]", err),
-      );
+      .maybeSingle();
+
+    // Fire-and-forget: log errors silently
+    Promise.resolve(insertOp).catch((err: any) =>
+      console.error("[REGISTER REGISTRATION INSERT ERROR]", err),
+    );
 
     console.log(
       `[AUDIT] New registration: ${authData.user.id} (${finalEmail})`,
