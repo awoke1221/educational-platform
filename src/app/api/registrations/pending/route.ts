@@ -71,16 +71,20 @@ export async function GET(request: NextRequest) {
           const payment = Array.isArray(enr.Payment)
             ? enr.Payment[0]
             : enr.Payment;
+          const courseInfo = Array.isArray(enr.Course)
+            ? enr.Course[0]
+            : enr.Course;
 
+          const userData = Array.isArray(r.User) ? r.User[0] : r.User;
           items.push({
             entryId: enr.id, // enrollment id
             registrationId: r.id,
             userId: r.userId,
             id: r.userId,
-            username: r.User?.username || "",
-            email: r.User?.email || "",
-            fullName: r.User?.fullName || "",
-            phoneNumber: r.User?.phoneNumber || "",
+            username: userData?.username || "",
+            email: userData?.email || "",
+            fullName: userData?.fullName || "",
+            phoneNumber: userData?.phoneNumber || "",
             // Use payment receipt if available, fall back to user-level receipt
             pendingReceiptUrl:
               payment?.receiptScreenshotUrl || r.pendingReceiptUrl || null,
@@ -91,21 +95,22 @@ export async function GET(request: NextRequest) {
             createdAt: r.submittedAt,
             isApproved: r.isApproved,
             courseId: enr.courseId,
-            courseTitle: enr.Course?.title || null,
-            coursePrice: enr.Course?.price ? Number(enr.Course.price) : null,
+            courseTitle: courseInfo?.title || null,
+            coursePrice: courseInfo?.price ? Number(courseInfo.price) : null,
           });
         }
       } else {
         // No specific course — user-level registration only
+        const userData = Array.isArray(r.User) ? r.User[0] : r.User;
         items.push({
           entryId: r.id,
           registrationId: r.id,
           userId: r.userId,
           id: r.userId,
-          username: r.User?.username || "",
-          email: r.User?.email || "",
-          fullName: r.User?.fullName || "",
-          phoneNumber: r.User?.phoneNumber || "",
+          username: userData?.username || "",
+          email: userData?.email || "",
+          fullName: userData?.fullName || "",
+          phoneNumber: userData?.phoneNumber || "",
           pendingReceiptUrl: r.pendingReceiptUrl || null,
           paymentMethod: r.paymentMethod || null,
           paymentType: null,
