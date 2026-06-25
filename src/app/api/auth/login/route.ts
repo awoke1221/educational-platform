@@ -46,7 +46,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid request body. Expected JSON." },
+        { status: 400 },
+      );
+    }
 
     const validation = loginSchema.safeParse(body);
     if (!validation.success) {
@@ -188,6 +196,16 @@ export async function POST(request: NextRequest) {
     const { access_token, refresh_token, expires_in, expires_at } =
       authData.session;
 
+    const responseHeaders = new Headers();
+    responseHeaders.append(
+      "Set-Cookie",
+      `sb-access-token=${access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${expires_in}`,
+    );
+    responseHeaders.append(
+      "Set-Cookie",
+      `sb-refresh-token=${refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`,
+    );
+
     return NextResponse.json(
       {
         success: true,
@@ -213,9 +231,7 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 200,
-        headers: {
-          "Set-Cookie": `sb-access-token=${access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${expires_in}`,
-        },
+        headers: responseHeaders,
       },
     );
   } catch (error) {

@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { ThemeProvider } from "@/lib/ThemeProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import SessionKeepalive from "@/components/SessionKeepalive";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ServiceWorkerRegister />
+          <SessionKeepalive />
           <Navbar />
           <main className="flex-1">{children}</main>
           <footer className="bg-gradient-to-r from-[#0a0a0a] via-[#111111] to-[#1a1a1a] border-t border-[#c9952a]/20 py-8 sm:py-10 mt-auto">

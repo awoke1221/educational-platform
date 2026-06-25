@@ -81,9 +81,16 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 200,
-        headers: {
-          "Set-Cookie": `sb-access-token=${session.access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${session.expires_in}`,
-        },
+        headers: [
+          [
+            "Set-Cookie",
+            `sb-access-token=${session.access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${session.expires_in}`,
+          ],
+          [
+            "Set-Cookie",
+            `sb-refresh-token=${session.refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`,
+          ],
+        ],
       },
     );
   } catch (error) {

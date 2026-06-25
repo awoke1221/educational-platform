@@ -79,6 +79,10 @@ async function createRedisStore(): Promise<RateLimitStore | null> {
       lazyConnect: true,
     });
 
+    // Suppress error events — connection failures are handled by the
+    // catch block below which falls back to the in-memory store.
+    redis.on("error", () => {});
+
     await redis.connect();
 
     const store: RateLimitStore = {

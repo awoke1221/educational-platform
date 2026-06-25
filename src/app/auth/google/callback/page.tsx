@@ -63,6 +63,9 @@ export default function GoogleCallbackPage() {
       if (data.tokens?.refreshToken) {
         localStorage.setItem("refreshToken", data.tokens.refreshToken);
       }
+      if (data.tokens?.expiresAt != null) {
+        localStorage.setItem("tokenExpiresAt", String(data.tokens.expiresAt));
+      }
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
       }

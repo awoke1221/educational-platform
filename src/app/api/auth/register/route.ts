@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 4: Insert registration record
     // ============================================
-    const insertOp = supabaseAdmin!
+    const { error: regInsertError } = await supabaseAdmin!
       .from("UserRegistration")
       .insert({
         id: crypto.randomUUID(),
@@ -210,10 +210,12 @@ export async function POST(request: NextRequest) {
       .select("id")
       .maybeSingle();
 
-    // Fire-and-forget: log errors silently
-    Promise.resolve(insertOp).catch((err: any) =>
-      console.error("[REGISTER REGISTRATION INSERT ERROR]", err),
-    );
+    if (regInsertError) {
+      console.error("[REGISTER REGISTRATION INSERT ERROR]", regInsertError);
+      // Non-fatal — the auth user + profile exist, registration can be
+      // retried. The login approval check handles the missing record
+      // gracefully (skips the isApproved guard).
+    }
 
     console.log(
       `[AUDIT] New registration: ${authData.user.id} (${finalEmail})`,

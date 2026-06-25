@@ -133,7 +133,43 @@ export async function POST(
       return NextResponse.json({ success: true, courseId }, { status: 200 });
     }
 
-    // Otherwise, legacy behavior: approve the user globally
+    // ── Global approval: approve the user and ALL their pending enrollments ──
+    // Also update any processing enrollments and their pending payments so
+    // the user's course statuses reflect the approval.
+    const { data: pendingEnrollments } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("id, courseId")
+      .eq("userId", userId)
+      .eq("status", "processing");
+
+    if (pendingEnrollments && pendingEnrollments.length > 0) {
+      const enrollmentIds = pendingEnrollments.map((e: any) => e.id);
+
+      // Update all processing enrollments to active
+      const { error: batchEnrollErr } = await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "active", updatedAt: new Date().toISOString() })
+        .in("id", enrollmentIds);
+
+      if (batchEnrollErr) {
+        console.error("[APPROVE BATCH ENROLLMENT ERROR]", batchEnrollErr);
+      }
+
+      // Update all pending payments for these enrollments to approved
+      const { error: batchPaymentErr } = await supabaseAdmin!
+        .from("Payment")
+        .update({
+          status: "approved",
+          approvedAt: new Date().toISOString(),
+        })
+        .in("enrollmentId", enrollmentIds)
+        .eq("status", "pending");
+
+      if (batchPaymentErr) {
+        console.error("[APPROVE BATCH PAYMENT ERROR]", batchPaymentErr);
+      }
+    }
+
     const now = new Date().toISOString();
     const { error } = await supabaseAdmin!
       .from("UserRegistration")

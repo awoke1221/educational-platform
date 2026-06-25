@@ -298,22 +298,42 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Return tokens in the format the frontend expects ──────────
-    return NextResponse.json({
-      success: true,
-      message: "Google sign-in successful",
-      tokens: {
-        accessToken: rawAccessToken || null,
-        refreshToken: rawRefreshToken || null,
-        expiresIn: expiresIn || 3600,
-        expiresAt: expiresAt || null,
+    const googleHeaders = new Headers();
+    if (rawAccessToken) {
+      googleHeaders.append(
+        "Set-Cookie",
+        `sb-access-token=${rawAccessToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${expiresIn || 3600}`,
+      );
+    }
+    if (rawRefreshToken) {
+      googleHeaders.append(
+        "Set-Cookie",
+        `sb-refresh-token=${rawRefreshToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`,
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Google sign-in successful",
+        tokens: {
+          accessToken: rawAccessToken || null,
+          refreshToken: rawRefreshToken || null,
+          expiresIn: expiresIn || 3600,
+          expiresAt: expiresAt || null,
+        },
+        user: {
+          id: userId,
+          email: email.toLowerCase(),
+          fullName: fullName || email.split("@")[0],
+          role: "user",
+        },
       },
-      user: {
-        id: userId,
-        email: email.toLowerCase(),
-        fullName: fullName || email.split("@")[0],
-        role: "user",
+      {
+        status: 200,
+        headers: googleHeaders,
       },
-    });
+    );
   } catch (error) {
     console.error("[GOOGLE OAUTH POST ERROR]", error);
     return NextResponse.json(

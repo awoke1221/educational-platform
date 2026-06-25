@@ -61,9 +61,10 @@ function LoginForm() {
       });
 
       if (response.ok && data.success) {
-        // Store tokens and user info
+        // Store tokens, expiry, and user info
         localStorage.setItem("token", data.tokens.accessToken);
         localStorage.setItem("refreshToken", data.tokens.refreshToken);
+        localStorage.setItem("tokenExpiresAt", String(data.tokens.expiresAt));
         localStorage.setItem("user", JSON.stringify(data.user));
         router.push(redirectTo);
       } else {

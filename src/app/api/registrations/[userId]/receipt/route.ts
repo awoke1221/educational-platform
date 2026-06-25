@@ -244,6 +244,12 @@ export async function POST(
           .eq("enrollmentId", enrollment.id)
           .maybeSingle();
 
+        // Map front-end payment channel values to database-allowed values.
+        // Allowed: telebirr, cb_birr, bank_transfer, laki_pay
+        const dbPaymentMethod = (paymentChannel || paymentMethod || "telebirr")
+          .replace("paypal", "laki_pay")
+          .replace("creditcard", "laki_pay");
+
         const paymentData = {
           enrollmentId: enrollment.id,
           userId,
@@ -251,7 +257,7 @@ export async function POST(
           amount: course.price || 0,
           currency: course.currency || "ETB",
           paymentType: paymentMethod || "local",
-          paymentMethod: paymentChannel || paymentMethod || "telebirr",
+          paymentMethod: dbPaymentMethod,
           status: "pending",
           transactionId: transactionId || null,
           receiptScreenshotUrl: uploadResult.publicUrl,

@@ -118,6 +118,7 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("tokenExpiresAt");
     localStorage.removeItem("user");
     setUser(null);
     setDropdownOpen(false);
