@@ -1,12 +1,19 @@
 // src/app/api/auth/register/route.ts
-// User Registration API Endpoint - Supabase REST API (IPv4 Compatible)
+// User Registration — Supabase Auth + custom profile columns
+//
+// Flow:
+//   1. Validate input & rate limit
+//   2. Create the user in Supabase Auth via supabase.auth.signUp()
+//   3. Write custom profile columns to the User table (admin client,
+//      since RLS policies aren't active for newly created profiles yet)
+//   4. Insert a UserRegistration record
+//   5. Return the Supabase session so the client can use it immediately
 
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { registerSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { jwtService } from "@/lib/auth/jwt";
-import { passwordService } from "@/lib/auth/password";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAnon } from "@/lib/db/supabaseAnonClient";
 import { rateLimit } from "@/lib/rateLimiter";
 import { env } from "@/config/env";
 
@@ -101,120 +108,147 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database not configured. Check environment variables." },
-        { status: 500 },
-      );
-    }
-
     // ============================================
-    // STEP 3: Check for Existing User
+    // STEP 2: Create Supabase Auth user
     // ============================================
-    const { data: existingUser, error: findError } = await supabaseAdmin!
-      .from("User")
-      .select("id, email, username, phoneNumber")
-      .or(
-        `email.eq.${finalEmail},username.eq.${finalUsername},phoneNumber.eq.${normalizedPhone}`,
-      )
-      .maybeSingle();
+    // Use the anon key (public) client — NOT the service-role client — so
+    // the call respects Supabase's built-in auth configuration (e.g.,
+    // email confirmation, rate limiting).
+    const supabase = getSupabaseAnon();
 
-    if (findError) {
-      console.error("[REGISTER FIND ERROR]", findError);
-      return NextResponse.json(
-        { error: "Database query failed" },
-        { status: 500 },
-      );
-    }
+    const { data: authData, error: signUpError } = await supabase.auth.signUp(
+      password
+        ? {
+            email: finalEmail,
+            password,
+            options: {
+              data: {
+                full_name: finalFullName,
+                phone: normalizedPhone,
+              },
+            },
+          }
+        : {
+            email: finalEmail,
+            // Minimal placeholder — the user will set a real password later
+            password: crypto.randomUUID() + "Aa1!",
+            options: {
+              data: {
+                full_name: finalFullName,
+                phone: normalizedPhone,
+              },
+            },
+          },
+    );
 
-    if (existingUser) {
-      const conflictField =
-        existingUser.phoneNumber === normalizedPhone
-          ? "phoneNumber"
-          : existingUser.email === finalEmail
-            ? "email"
-            : "username";
-      return NextResponse.json(
-        {
-          error: `This ${conflictField} is already registered`,
-          field: conflictField,
-        },
-        { status: 409 },
-      );
-    }
+    if (signUpError) {
+      console.error("[REGISTER SUPABASE SIGNUP ERROR]", signUpError);
 
-    // ============================================
-    // STEP 4: Hash Password with bcrypt
-    // ============================================
-    const passwordHash = password
-      ? await passwordService.hashPassword(password)
-      : "";
-
-    // ============================================
-    // STEP 5: Create User in Database
-    // ============================================
-    const { data: newUser, error: createError } = await supabaseAdmin!
-      .from("User")
-      .insert({
-        id: crypto.randomUUID(),
-        username: finalUsername.toLowerCase(),
-        email: finalEmail,
-        fullName: finalFullName,
-        phoneNumber: normalizedPhone,
-        passwordHash,
-        role: "user",
-        isActive: true,
-        loginCount: 0,
-        updatedAt: new Date().toISOString(),
-      })
-      .select("id, username, email, fullName, role, createdAt")
-      .single();
-
-    if (createError) {
-      console.error("[REGISTER CREATE ERROR]", createError);
-
-      // Handle unique constraint violation
-      if (createError.code === "23505") {
+      if (signUpError.message?.toLowerCase().includes("already")) {
         return NextResponse.json(
-          { error: "Email or username already in use" },
+          { error: "An account with this email already exists" },
           { status: 409 },
         );
       }
 
       return NextResponse.json(
-        { error: "Failed to create user account" },
+        { error: "Registration failed. Please try again later." },
         { status: 500 },
       );
     }
 
-    // ============================================
-    // STEP 6: Mark as awaiting admin approval and respond
-    // - Do NOT issue tokens or create a session until admin approves
-    // - This keeps the existing auth flow intact while enforcing approval
-    // ============================================
+    if (!authData.user) {
+      return NextResponse.json(
+        { error: "Registration failed. No user returned." },
+        { status: 500 },
+      );
+    }
 
-    // update created user to explicitly set isApproved = false and initial payment status
-    await supabaseAdmin!
+    const now = new Date().toISOString();
+
+    // ============================================
+    // STEP 3: Write custom profile columns
+    // ============================================
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const { data: newUser, error: profileError } = await supabaseAdmin!
       .from("User")
-      .update({ isApproved: false, paymentStatus: "pending" })
-      .eq("id", newUser.id);
+      .upsert(
+        {
+          id: authData.user.id,
+          username: finalUsername.toLowerCase(),
+          email: finalEmail,
+          fullName: finalFullName,
+          phoneNumber: normalizedPhone,
+          role: "user",
+          isActive: true,
+          loginCount: 0,
+          createdAt: now,
+          updatedAt: now,
+        },
+        { onConflict: "id" },
+      )
+      .select("id, username, email, fullName, role, createdAt")
+      .single();
+
+    if (profileError) {
+      console.error("[REGISTER PROFILE INSERT ERROR]", profileError);
+      // Non-fatal — the auth user exists, the profile can be retried later
+    }
+
+    // ============================================
+    // STEP 4: Insert registration record
+    // ============================================
+    await supabaseAdmin!
+      .from("UserRegistration")
+      .insert({
+        id: crypto.randomUUID(),
+        userId: authData.user.id,
+        isApproved: false,
+        paymentStatus: "pending",
+      })
+      .select("id")
+      .maybeSingle()
+      .catch((err) =>
+        console.error("[REGISTER REGISTRATION INSERT ERROR]", err),
+      );
 
     console.log(
-      `[AUDIT] New pre-registration: ${newUser.id} (${newUser.email})`,
+      `[AUDIT] New registration: ${authData.user.id} (${finalEmail})`,
     );
+
+    // ============================================
+    // STEP 5: Return the Supabase session
+    // ============================================
+    const session = authData.session
+      ? {
+          access_token: authData.session.access_token,
+          refresh_token: authData.session.refresh_token,
+          expires_in: authData.session.expires_in,
+          expires_at: authData.session.expires_at,
+        }
+      : null;
 
     return NextResponse.json(
       {
         success: true,
         message:
           "Pre-registration created. Please complete payment to submit for review.",
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          username: newUser.username,
+        session,
+        user: newUser || {
+          id: authData.user.id,
+          email: finalEmail,
+          username: finalUsername,
         },
       },
-      { status: 201 },
+      {
+        status: 201,
+        headers: session
+          ? {
+              "Set-Cookie": `sb-access-token=${session.access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${session.expires_in}`,
+            }
+          : undefined,
+      },
     );
   } catch (error) {
     console.error("[REGISTER ERROR]", error);

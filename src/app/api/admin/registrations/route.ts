@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { jwtService } from "@/lib/auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth, hasRole } from "@/lib/auth/middleware";
 
 function getDb() {
   try {
@@ -12,15 +12,9 @@ function getDb() {
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify admin token
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const payload = jwtService.verifyAccessToken(token);
-    if (!payload || payload.role !== "admin") {
+    // Verify admin token via Supabase Auth
+    const auth = await verifyAuth(req);
+    if (!auth || !(await hasRole(auth, ["admin"]))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -41,18 +35,29 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Build query
+    // Build query — reads from AdminApprovalQueue, JOINs Payment, User, and Course
     let query = db
-      .from("User")
-      .select("*", { count: "exact" })
-      .eq("isApproved", false)
-      .eq("paymentStatus", "submitted")
-      .order("createdAt", { ascending: false })
+      .from("AdminApprovalQueue")
+      .select(
+        `
+        id,
+        submittedAt,
+        isReviewed,
+        viewedAt,
+        payment:paymentId(
+          amount,
+          receiptScreenshotUrl,
+          paymentMethod,
+          status,
+          user:userId(fullName, email),
+          course:courseId(title)
+        )
+      `,
+        { count: "exact" },
+      )
+      .eq("isReviewed", false)
+      .order("submittedAt", { ascending: false })
       .range(offset, offset + limit - 1);
-
-    if (search) {
-      query = query.or(`email.ilike.%${search}%,fullName.ilike.%${search}%`);
-    }
 
     const { data, count, error } = await query;
 
@@ -64,10 +69,25 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Flatten the nested response for the frontend
+    const registrations = (data || []).map((item: any) => ({
+      id: item.id,
+      submittedAt: item.submittedAt,
+      isReviewed: item.isReviewed,
+      viewedAt: item.viewedAt,
+      amount: item.payment?.amount ?? null,
+      receiptScreenshotUrl: item.payment?.receiptScreenshotUrl ?? null,
+      paymentMethod: item.payment?.paymentMethod ?? null,
+      paymentStatus: item.payment?.status ?? null,
+      fullName: item.payment?.user?.fullName ?? null,
+      email: item.payment?.user?.email ?? null,
+      courseTitle: item.payment?.course?.title ?? null,
+    }));
+
     return NextResponse.json({
       success: true,
       data: {
-        registrations: data || [],
+        registrations,
         total: count || 0,
         page,
         limit,
@@ -85,15 +105,9 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    // Verify admin token
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const payload = jwtService.verifyAccessToken(token);
-    if (!payload || payload.role !== "admin") {
+    // Verify admin token via Supabase Auth
+    const auth = await verifyAuth(req);
+    if (!auth || !(await hasRole(auth, ["admin"]))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -126,6 +140,29 @@ export async function PATCH(req: NextRequest) {
         { error: "Failed to update registration" },
         { status: 500 },
       );
+    }
+
+    // Mark all unreviewed AdminApprovalQueue entries for this user as reviewed
+    const { error: queueError } = await db
+      .from("AdminApprovalQueue")
+      .update({
+        isReviewed: true,
+        viewedAt: new Date().toISOString(),
+      })
+      .eq("isReviewed", false)
+      .in(
+        "paymentId",
+        (await db.from("Payment").select("id").eq("userId", userId)).data?.map(
+          (p: any) => p.id,
+        ) ?? [],
+      );
+
+    if (queueError) {
+      console.error(
+        "[ADMIN REGISTRATIONS PATCH] Queue update error:",
+        queueError,
+      );
+      // Non-fatal — the user record was already updated
     }
 
     return NextResponse.json({

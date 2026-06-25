@@ -1,9 +1,12 @@
 // src/app/api/enrollments/route.ts
-// Enrollment API — Supabase REST API
+// Enrollment API — RLS-aware
+//
+// Uses the user-scoped Supabase client so that RLS policies
+// automatically restrict results to the authenticated user's rows.
 
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getUserClientFromRequest } from "@/lib/db/supabaseUserClient";
 import {
   successResponse,
   errorResponse,
@@ -17,48 +20,46 @@ export async function GET(request: NextRequest) {
     const auth = await verifyAuth(request);
     if (!auth) return errorResponse("Unauthorized", 401);
 
-    // Try Supabase first
-    if (supabaseAdmin) {
-      try {
-        const {
-          data: enrollments,
-          error,
-          count,
-        } = await supabaseAdmin!
-          .from("Enrollment")
-          .select(
-            "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
-            {
-              count: "exact",
-            },
-          )
-          .eq("userId", auth.userId);
-
-        if (!error && enrollments && enrollments.length > 0) {
-          const normalized = enrollments.map((enrollment: any) => {
-            const payment = Array.isArray(enrollment.payment)
-              ? enrollment.payment[0]
-              : enrollment.payment;
-            return {
-              ...enrollment,
-              paymentStatus: payment?.status,
-              payment: payment,
-            };
-          });
-          return paginatedResponse(
-            normalized,
-            count || normalized.length,
-            1,
-            50,
-            "Enrollments retrieved",
-          );
-        }
-      } catch {
-        // If the enrollment table is unavailable, return an empty result set.
-      }
+    const supabase = getUserClientFromRequest(request);
+    if (!supabase) {
+      return errorResponse("Authentication required", 401);
     }
 
-    return paginatedResponse([], 0, 1, 50, "No enrollments found");
+    const {
+      data: enrollments,
+      error,
+      count,
+    } = await supabase
+      .from("Enrollment")
+      .select(
+        "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
+        { count: "exact" },
+      )
+      .order("enrollmentDate", { ascending: false });
+
+    if (error) {
+      console.error("[LIST ENROLLMENTS ERROR]", error);
+      return paginatedResponse([], 0, 1, 50, "No enrollments found");
+    }
+
+    const normalized = (enrollments || []).map((enrollment: any) => {
+      const payment = Array.isArray(enrollment.payment)
+        ? enrollment.payment[0]
+        : enrollment.payment;
+      return {
+        ...enrollment,
+        paymentStatus: payment?.status,
+        payment,
+      };
+    });
+
+    return paginatedResponse(
+      normalized,
+      count || normalized.length,
+      1,
+      50,
+      "Enrollments retrieved",
+    );
   } catch (error) {
     console.error("[LIST ENROLLMENTS ERROR]", error);
     return handleApiError(error);

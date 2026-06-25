@@ -1,10 +1,14 @@
 // src/app/api/progress/route.ts
-// Progress Tracking API — Core Learning Engine
+// Progress Tracking API — RLS-aware
+//
+// User-scoped client:  UserProgress CRUD, Enrollment SELECT, LectureView INSERT
+// Admin client:        Enrollment UPDATE (system operation), Lecture reads
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
 import { updateProgressSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getUserClientFromRequest } from "@/lib/db/supabaseUserClient";
 import {
   successResponse,
   errorResponse,
@@ -23,6 +27,9 @@ export async function POST(request: NextRequest) {
     const auth = await verifyAuth(request);
     if (!auth) return errorResponse("Unauthorized", 401);
 
+    const supabase = getUserClientFromRequest(request);
+    if (!supabase) return errorResponse("Unauthorized", 401);
+
     const body = await request.json().catch(() => null);
     if (!body) return errorResponse("Invalid JSON body", 400);
 
@@ -39,9 +46,10 @@ export async function POST(request: NextRequest) {
       validation.data;
 
     // ============================================
-    // STEP 1: Verify lecture exists
+    // STEP 1: Verify lecture exists (admin client — Lecture has no RLS)
     // ============================================
-    const { data: lecture, error: lecErr } = await supabaseAdmin!
+    const admin = getSupabaseAdmin();
+    const { data: lecture, error: lecErr } = await admin!
       .from("Lecture")
       .select("id, courseId, duration")
       .eq("id", lectureId)
@@ -52,12 +60,11 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 2: Find active enrollment
+    // STEP 2: Find active enrollment (user-scoped client — RLS filters to own)
     // ============================================
-    const { data: enrollment, error: enrollErr } = await supabaseAdmin!
+    const { data: enrollment, error: enrollErr } = await supabase
       .from("Enrollment")
       .select("*")
-      .eq("userId", auth.userId)
       .eq("courseId", lecture.courseId)
       .maybeSingle();
 
@@ -80,9 +87,9 @@ export async function POST(request: NextRequest) {
     calculatedPercentage = Math.min(calculatedPercentage, 100);
 
     // ============================================
-    // STEP 4: Upsert progress record
+    // STEP 4: Upsert progress record (user-scoped — RLS allows own rows)
     // ============================================
-    const { data: existingProgress } = await supabaseAdmin!
+    const { data: existingProgress } = await supabase
       .from("UserProgress")
       .select("completedAt, isCompleted")
       .eq("enrollmentId", enrollment.id)
@@ -105,7 +112,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (existingProgress) {
-      const { data: updated } = await supabaseAdmin!
+      const { data: updated } = await supabase
         .from("UserProgress")
         .update({
           watchDuration,
@@ -127,7 +134,7 @@ export async function POST(request: NextRequest) {
         .single();
       progress = updated;
     } else {
-      const { data: created } = await supabaseAdmin!
+      const { data: created } = await supabase
         .from("UserProgress")
         .insert(progressData)
         .select(
@@ -138,9 +145,27 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 5: Update enrollment totals
+    // STEP 5: Log lecture view (fire-and-forget — user-scoped client)
     // ============================================
-    const { data: allProgress } = await supabaseAdmin!
+    supabase
+      .from("LectureView")
+      .insert({
+        lectureId,
+        userId: auth.userId,
+        viewedAt: new Date().toISOString(),
+      })
+      .select("id")
+      .maybeSingle()
+      .catch(() => {
+        console.warn("[PROGRESS] Failed to log lecture view (non-fatal)");
+      });
+
+    // ============================================
+    // STEP 6: Update enrollment totals
+    // UserProgress read:  user-scoped client (RLS allows reading own rows)
+    // Enrollment update:  admin client (users can't UPDATE Enrollment via RLS)
+    // ============================================
+    const { data: allProgress } = await supabase
       .from("UserProgress")
       .select("watchDuration, isCompleted")
       .eq("enrollmentId", enrollment.id);
@@ -153,7 +178,7 @@ export async function POST(request: NextRequest) {
       (p: any) => p.isCompleted,
     ).length;
 
-    const { count } = await supabaseAdmin!
+    const { count } = await admin!
       .from("Lecture")
       .select("*", { count: "exact", head: true })
       .eq("courseId", lecture.courseId)
@@ -164,20 +189,22 @@ export async function POST(request: NextRequest) {
     const completionPercentage =
       lectureCount > 0 ? Math.round((completedCount / lectureCount) * 100) : 0;
 
-    await supabaseAdmin!
+    // Enrollment UPDATE uses admin client: this is a system operation that
+    // increments totals — not a user-owned data write.
+    await admin!
       .from("Enrollment")
       .update({
         totalWatchTime,
         completionPercentage,
         lastAccessedAt: new Date().toISOString(),
         ...(completionPercentage >= 100
-          ? { status: "completed", completionDate: new Date().toISOString() }
+          ? { status: "completed", completedAt: new Date().toISOString() }
           : {}),
       })
       .eq("id", enrollment.id);
 
     // ============================================
-    // STEP 6: Check if course is completed
+    // STEP 7: Check if course is completed
     // ============================================
     let courseCompleted = false;
     if (completionPercentage >= 100) {
@@ -343,4 +370,3 @@ export async function PATCH(request: NextRequest) {
     return handleApiError(error);
   }
 }
-

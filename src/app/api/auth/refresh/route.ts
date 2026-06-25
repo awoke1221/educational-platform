@@ -1,20 +1,25 @@
 // src/app/api/auth/refresh/route.ts
-// Refresh Token API Endpoint
+// Refresh Token — Supabase Auth
+//
+// Exchanges a Supabase refresh token for a new access token via
+// supabase.auth.refreshSession().
 
 import { NextRequest, NextResponse } from "next/server";
-import { jwtService } from "@/lib/auth/jwt";
 import { refreshTokenSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAnon } from "@/lib/db/supabaseAnonClient";
 
 export async function POST(request: NextRequest) {
   try {
     // ============================================
     // STEP 1: Get Refresh Token from Cookie or Body
     // ============================================
-    let refreshToken = request.cookies.get("refreshToken")?.value;
+    let refreshToken =
+      request.cookies.get("sb-refresh-token")?.value ||
+      request.cookies.get("refreshToken")?.value;
 
     if (!refreshToken) {
-      const body = await request.json();
+      const body = await request.json().catch(() => ({}));
       const validation = refreshTokenSchema.safeParse(body);
 
       if (!validation.success) {
@@ -28,22 +33,18 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 2: Verify Refresh Token
+    // STEP 2: Exchange via Supabase Auth
     // ============================================
-    let payload;
-    try {
-      payload = jwtService.verifyRefreshToken(refreshToken);
-    } catch (error) {
-      console.warn("[SECURITY] Invalid refresh token attempt");
+    const supabase = getSupabaseAnon();
+
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (error || !data.session) {
+      console.warn("[SECURITY] Invalid Supabase refresh token attempt");
       return NextResponse.json(
         { error: "Invalid or expired refresh token" },
-        { status: 401 },
-      );
-    }
-
-    if (!payload) {
-      return NextResponse.json(
-        { error: "Invalid refresh token" },
         { status: 401 },
       );
     }
@@ -51,13 +52,14 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 3: Verify User Still Exists and Active
     // ============================================
-    const { data: user, error: userErr } = await supabaseAdmin!
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: user } = await supabaseAdmin!
       .from("User")
       .select("id, email, role, isActive, isBanned")
-      .eq("id", payload.userId)
+      .eq("id", data.user.id)
       .single();
 
-    if (userErr || !user || !user.isActive || user.isBanned) {
+    if (!user || !user.isActive || user.isBanned) {
       return NextResponse.json(
         { error: "User account is no longer valid" },
         { status: 403 },
@@ -65,44 +67,26 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 4: Verify Device Session if DeviceId Present
+    // STEP 4: Return New Session
     // ============================================
-    if (payload.deviceId) {
-      const { data: deviceSession } = await supabaseAdmin!
-        .from("DeviceSession")
-        .select("isActive")
-        .eq("userId", user.id)
-        .eq("deviceId", payload.deviceId)
-        .maybeSingle();
+    const session = data.session;
 
-      if (!deviceSession || !deviceSession.isActive) {
-        return NextResponse.json(
-          { error: "Device session is no longer active" },
-          { status: 403 },
-        );
-      }
-    }
-
-    // ============================================
-    // STEP 5: Generate New Access Token
-    // ============================================
-    const newAccessToken = jwtService.generateAccessToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      deviceId: payload.deviceId,
-    });
-
-    // ============================================
-    // STEP 6: Return New Access Token
-    // ============================================
     return NextResponse.json(
       {
         success: true,
-        accessToken: newAccessToken,
-        expiresIn: parseInt(process.env.JWT_EXPIRATION || "900"),
+        session: {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          expires_in: session.expires_in,
+          expires_at: session.expires_at,
+        },
       },
-      { status: 200 },
+      {
+        status: 200,
+        headers: {
+          "Set-Cookie": `sb-access-token=${session.access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${session.expires_in}`,
+        },
+      },
     );
   } catch (error) {
     console.error("[REFRESH TOKEN ERROR]", error);
@@ -113,4 +97,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

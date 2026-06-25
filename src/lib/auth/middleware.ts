@@ -1,25 +1,91 @@
 // src/lib/auth/middleware.ts
-// Advanced Authentication Middleware
+// Authentication Middleware — Supabase Auth
+//
+// All functions now validate the Supabase access token (from the
+// Authorization header) instead of a custom JWT. The token is
+// verified via supabase.auth.getUser() which calls the Supabase
+// Auth API.
 
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { jwtService, JWTPayload } from "./jwt";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { env } from "@/config/env";
+
+// ── Auth user shape (compatible with the old JWTPayload) ──────────────
+
+export interface AuthUser {
+  userId: string;
+  email: string;
+  role: string;
+}
+
+// ── Internal: anon-key client used for token verification ─────────────
+
+function createAuthClient() {
+  return createClient(env.supabase.url, env.supabase.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
+
+// ── Public helpers ────────────────────────────────────────────────────
 
 /**
- * Verify JWT token from Authorization header
+ * Verify a Supabase access token from the Authorization header.
+ *
+ * Uses supabase.auth.getUser() which validates the JWT against the
+ * Supabase Auth API.  On success it returns { userId, email, role }
+ * where the role is looked up from the User table (cached lightweight).
+ *
+ * Returns null when the token is missing, expired, or invalid.
  */
 export async function verifyAuth(
   request: NextRequest,
-): Promise<JWTPayload | null> {
+): Promise<AuthUser | null> {
   try {
     const authHeader = request.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return null;
     }
 
-    const token = authHeader.substring(7);
-    return jwtService.verifyAccessToken(token);
+    const token = authHeader.slice(7);
+
+    // ── Verify the token via Supabase Auth API ─────────────────
+    const supabase = createAuthClient();
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data.user) {
+      return null;
+    }
+
+    const authUser = data.user;
+
+    // ── Look up role from the User table ──────────────────────
+    // This is a quick read — the numeric id primary key makes it fast.
+    // Once RLS is active (Phase 4), this lookup could be cached or the
+    // role could be embedded in user_metadata during sign-up.
+    let role = "user";
+    try {
+      const admin = getSupabaseAdmin();
+      const { data: profile } = await admin!
+        .from("User")
+        .select("role")
+        .eq("id", authUser.id)
+        .maybeSingle();
+      if (profile?.role) role = profile.role;
+    } catch {
+      // Default to "user" on error
+    }
+
+    return {
+      userId: authUser.id,
+      email: authUser.email ?? "",
+      role,
+    };
   } catch (error) {
     console.error("Auth verification error:", error);
     return null;
@@ -27,10 +93,10 @@ export async function verifyAuth(
 }
 
 /**
- * Check if user has required role
+ * Check if the authenticated user has one of the required roles.
  */
 export async function hasRole(
-  auth: JWTPayload | null,
+  auth: AuthUser | null,
   requiredRoles: string[],
 ): Promise<boolean> {
   if (!auth) return false;
@@ -38,14 +104,13 @@ export async function hasRole(
 }
 
 /**
- * Verify user exists and is active
+ * Verify user exists and is active.
  */
 export async function isUserActive(userId: string): Promise<boolean> {
   try {
-    const { supabaseAdmin } = await import("@/lib/db/supabaseAdmin");
-    if (!supabaseAdmin) return true; // Default allow if no DB
+    const admin = getSupabaseAdmin();
 
-    const { data, error } = await supabaseAdmin!
+    const { data, error } = await admin!
       .from("User")
       .select("isActive, isBanned")
       .eq("id", userId)
@@ -60,16 +125,16 @@ export async function isUserActive(userId: string): Promise<boolean> {
 }
 
 /**
- * Verify device session is valid
+ * Verify device session is valid.
  */
 export async function verifyDeviceSession(
   userId: string,
   deviceId: string,
 ): Promise<boolean> {
   try {
-    if (!supabaseAdmin) return false;
+    const admin = getSupabaseAdmin();
 
-    const { data, error } = await supabaseAdmin!
+    const { data, error } = await admin!
       .from("DeviceSession")
       .select("isActive")
       .eq("userId", userId)
@@ -85,16 +150,16 @@ export async function verifyDeviceSession(
 }
 
 /**
- * Check enrollment access
+ * Check enrollment access.
  */
 export async function checkEnrollmentAccess(
   userId: string,
   courseId: string,
 ): Promise<boolean> {
   try {
-    if (!supabaseAdmin) return false;
+    const admin = getSupabaseAdmin();
 
-    const { data: enrollment, error } = await supabaseAdmin!
+    const { data: enrollment, error } = await admin!
       .from("Enrollment")
       .select("status, payment:Payment(status)")
       .eq("userId", userId)
@@ -119,7 +184,7 @@ export async function checkEnrollmentAccess(
 }
 
 /**
- * Get device info from request
+ * Get device info from request.
  */
 export function getDeviceInfo(request: NextRequest): {
   deviceId: string;
@@ -167,7 +232,8 @@ export function getDeviceInfo(request: NextRequest): {
 }
 
 /**
- * Middleware to require authentication
+ * Middleware: require a valid authenticated session.
+ * Returns a 401 / 403 NextResponse on failure, or null to continue.
  */
 export async function requireAuth(
   request: NextRequest,
@@ -193,7 +259,7 @@ export async function requireAuth(
 }
 
 /**
- * Middleware to require specific role
+ * Middleware: require a valid session AND one of the listed roles.
  */
 export async function requireRole(
   request: NextRequest,

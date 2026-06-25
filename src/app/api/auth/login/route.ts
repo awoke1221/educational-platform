@@ -1,11 +1,17 @@
 // src/app/api/auth/login/route.ts
-// User Login API Endpoint — Supabase REST API
+// User Login — Supabase Auth + custom profile
+//
+// Flow:
+//   1. Validate input & rate limit
+//   2. Call supabase.auth.signInWithPassword()
+//   3. Look up the User profile (admin client, for now)
+//   4. Update lastLogin stats
+//   5. Return the Supabase session + user profile
 
 import { NextRequest, NextResponse } from "next/server";
 import { loginSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { jwtService } from "@/lib/auth/jwt";
-import { passwordService } from "@/lib/auth/password";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAnon } from "@/lib/db/supabaseAnonClient";
 import { env } from "@/config/env";
 import { rateLimit, resetRateLimit } from "@/lib/rateLimiter";
 
@@ -83,99 +89,124 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!supabaseAdmin) {
+    // ============================================
+    // STEP 1: Authenticate via Supabase Auth
+    // ============================================
+    const supabase = getSupabaseAnon();
+
+    const { data: authData, error: signInError } =
+      await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password,
+      });
+
+    if (signInError) {
+      console.error("[LOGIN SUPABASE ERROR]", signInError);
+
+      if (
+        signInError.message?.toLowerCase().includes("invalid") ||
+        signInError.message?.toLowerCase().includes("credentials")
+      ) {
+        return NextResponse.json(
+          { error: "Invalid email or password" },
+          { status: 401 },
+        );
+      }
+
       return NextResponse.json(
-        { error: "Database not configured" },
+        { error: "Login failed. Please try again later." },
         { status: 500 },
       );
     }
 
-    const { data: users, error: findError } = await supabaseAdmin!
+    if (!authData.user || !authData.session) {
+      return NextResponse.json(
+        { error: "Login failed. No session returned." },
+        { status: 500 },
+      );
+    }
+
+    // ============================================
+    // STEP 2: Fetch User profile
+    // ============================================
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: userProfile } = await supabaseAdmin!
       .from("User")
       .select(
-        "id, email, username, fullName, passwordHash, role, isActive, isBanned, isApproved, lastLogin, loginCount",
+        "id, email, username, fullName, role, isActive, isBanned, isApproved, loginCount",
       )
-      .eq("email", email.toLowerCase());
+      .eq("id", authData.user.id)
+      .maybeSingle();
 
-    if (findError) {
-      console.error("[LOGIN FIND ERROR]", findError);
-      return NextResponse.json({ error: "Login failed" }, { status: 500 });
+    // Custom guard checks (active / banned / approved)
+    if (userProfile) {
+      if (!userProfile.isActive) {
+        return NextResponse.json(
+          { error: "Account is inactive. Please contact support." },
+          { status: 403 },
+        );
+      }
+      if (userProfile.isApproved === false) {
+        return NextResponse.json(
+          { error: "Account awaiting admin approval" },
+          { status: 403 },
+        );
+      }
+      if (userProfile.isBanned) {
+        return NextResponse.json(
+          { error: "Account has been banned. Please contact support." },
+          { status: 403 },
+        );
+      }
     }
 
-    const user = users?.[0] || null;
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      );
-    }
-
-    if (!user.isActive) {
-      return NextResponse.json(
-        { error: "Account is inactive. Please contact support." },
-        { status: 403 },
-      );
-    }
-    // Require admin approval before allowing login
-    if (user.isApproved === false) {
-      return NextResponse.json(
-        { error: "Account awaiting admin approval" },
-        { status: 403 },
-      );
-    }
-    if (user.isBanned) {
-      return NextResponse.json(
-        { error: "Account has been banned. Please contact support." },
-        { status: 403 },
-      );
-    }
-
-    const isPasswordValid = await passwordService.verifyPassword(
-      password,
-      user.passwordHash,
-    );
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      );
-    }
-
-    const tokenPair = jwtService.generateTokenPair({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    // Update last login via Supabase REST
+    // ============================================
+    // STEP 3: Update last login
+    // ============================================
     await supabaseAdmin!
       .from("User")
       .update({
         lastLogin: new Date().toISOString(),
-        loginCount: (user.loginCount || 0) + 1,
+        loginCount: (userProfile?.loginCount || 0) + 1,
       })
-      .eq("id", user.id);
+      .eq("id", authData.user.id);
 
     // Reset rate-limit counters on successful login
     await Promise.allSettled([resetRateLimit(ipKey), resetRateLimit(emailKey)]);
+
+    // ============================================
+    // STEP 4: Return Supabase session
+    // ============================================
+    const { access_token, refresh_token, expires_in, expires_at } =
+      authData.session;
 
     return NextResponse.json(
       {
         success: true,
         message: "Login successful",
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          fullName: user.fullName,
-          role: user.role,
+        user: userProfile
+          ? {
+              id: userProfile.id,
+              email: userProfile.email,
+              username: userProfile.username,
+              fullName: userProfile.fullName,
+              role: userProfile.role,
+            }
+          : {
+              id: authData.user.id,
+              email: authData.user.email,
+            },
+        session: {
+          access_token,
+          refresh_token,
+          expires_in,
+          expires_at,
         },
-        tokens: tokenPair,
       },
       {
         status: 200,
         headers: {
-          "Set-Cookie": `refreshToken=${tokenPair.refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`,
+          "Set-Cookie": `sb-access-token=${access_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${expires_in}`,
         },
       },
     );

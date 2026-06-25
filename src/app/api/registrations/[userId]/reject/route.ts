@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { requireRole } from "@/lib/auth/middleware";
+import { requireRole, verifyAuth } from "@/lib/auth/middleware";
 
 export async function POST(
   request: NextRequest,
@@ -9,6 +9,10 @@ export async function POST(
   try {
     const roleErr = await requireRole(request, ["admin"]);
     if (roleErr) return roleErr;
+
+    const auth = await verifyAuth(request);
+    if (!auth)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { userId } = await params;
 
@@ -80,17 +84,40 @@ export async function POST(
         );
       }
 
+      const now = new Date().toISOString();
       const { error: userError } = await supabaseAdmin!
-        .from("User")
-        .update({ isApproved: false, paymentStatus: "rejected" })
-        .eq("id", userId);
+        .from("UserRegistration")
+        .update({
+          isApproved: false,
+          paymentStatus: "rejected",
+          reviewedAt: now,
+          reviewedBy: auth.userId,
+        })
+        .eq("userId", userId);
 
       if (userError) {
-        console.error("[REJECT USER ERROR]", userError);
+        console.error("[REJECT USERREGISTRATION ERROR]", userError);
         return NextResponse.json(
           { error: "Failed to update user status" },
           { status: 500 },
         );
+      }
+
+      // Mark the AdminApprovalQueue entry as reviewed
+      const { data: rejectedPayment } = await supabaseAdmin!
+        .from("Payment")
+        .select("id")
+        .eq("enrollmentId", enrollment.id)
+        .eq("status", "rejected")
+        .maybeSingle();
+
+      if (rejectedPayment) {
+        await supabaseAdmin!
+          .from("AdminApprovalQueue")
+          .update({ isReviewed: true, viewedAt: new Date().toISOString() })
+          .eq("paymentId", rejectedPayment.id)
+          .eq("isReviewed", false)
+          .maybeSingle();
       }
 
       console.log(
@@ -101,17 +128,40 @@ export async function POST(
       return NextResponse.json({ success: true, courseId }, { status: 200 });
     }
 
+    const now = new Date().toISOString();
     const { error } = await supabaseAdmin!
-      .from("User")
-      .update({ isApproved: false, paymentStatus: "rejected" })
-      .eq("id", userId);
+      .from("UserRegistration")
+      .update({
+        isApproved: false,
+        paymentStatus: "rejected",
+        reviewedAt: now,
+        reviewedBy: auth.userId,
+      })
+      .eq("userId", userId);
 
     if (error) {
-      console.error("[REJECT ERROR]", error);
+      console.error("[REJECT USERREGISTRATION ERROR]", error);
       return NextResponse.json(
         { error: "Failed to reject user" },
         { status: 500 },
       );
+    }
+
+    // Mark all unreviewed queue entries for this user's payments as reviewed
+    const { data: userPayments } = await supabaseAdmin!
+      .from("Payment")
+      .select("id")
+      .eq("userId", userId);
+
+    if (userPayments && userPayments.length > 0) {
+      await supabaseAdmin!
+        .from("AdminApprovalQueue")
+        .update({ isReviewed: true, viewedAt: new Date().toISOString() })
+        .eq("isReviewed", false)
+        .in(
+          "paymentId",
+          userPayments.map((p: any) => p.id),
+        );
     }
 
     // no notification email sent for global rejection
