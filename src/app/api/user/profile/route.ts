@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    const { data: user, error } = await supabaseAdmin!
+    // Try by id first (fast path), then fall back to email for legacy
+    // users whose User.id doesn't match their Supabase Auth ID.
+    let { data: user, error } = await supabaseAdmin!
       .from("User")
       .select(
         `id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt,
@@ -35,7 +37,23 @@ export async function GET(request: NextRequest) {
          )`,
       )
       .eq("id", auth.userId)
-      .single();
+      .maybeSingle();
+
+    if (!user && !error && auth.email) {
+      // Fallback: look up by email for legacy records with mismatched IDs
+      const result = await supabaseAdmin!
+        .from("User")
+        .select(
+          `id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt,
+           UserRegistration!inner (
+             pendingReceiptUrl, paymentMethod, paymentStatus
+           )`,
+        )
+        .eq("email", auth.email.toLowerCase())
+        .maybeSingle();
+      user = result.data;
+      error = result.error;
+    }
 
     if (error || !user) {
       return errorResponse("User not found", 404);

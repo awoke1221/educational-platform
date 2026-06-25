@@ -64,7 +64,8 @@ export async function GET(request: NextRequest) {
 // then returns the session tokens in the format the frontend expects.
 //
 // Body: { email, fullName, profileImage, phoneNumber, providerUserId,
-//         providerIdentityId, accessToken, refreshToken, expiresIn, expiresAt }
+//         providerIdentityId, accessToken, refreshToken, expiresIn,
+//         expiresAt, authUserId }
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
       refreshToken: rawRefreshToken,
       expiresIn,
       expiresAt,
+      authUserId: directAuthUserId,
     } = body;
 
     if (!email) {
@@ -92,7 +94,7 @@ export async function POST(request: NextRequest) {
     // ── Look up existing user by email ─────────────────────────────
     const { data: existingUser } = await supabaseAdmin!
       .from("User")
-      .select("id, loginCount")
+      .select("id, loginCount, role")
       .eq("email", email.toLowerCase())
       .maybeSingle();
 
@@ -100,17 +102,111 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       userId = existingUser.id;
-      // Update existing profile
-      await supabaseAdmin!
-        .from("User")
-        .update({
+
+      // ── Fix ID mismatch for legacy users ────────────────────
+      // If the User record was created with a random UUID instead of
+      // the real Supabase Auth ID, update all references to match.
+      const correctUserId = directAuthUserId || null;
+      if (correctUserId && userId !== correctUserId) {
+        console.log(
+          `[GOOGLE OAUTH] Fixing user ID mismatch: ${userId} → ${correctUserId}`,
+        );
+
+        // Update Enrollments
+        await supabaseAdmin!
+          .from("Enrollment")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update Payments
+        await supabaseAdmin!
+          .from("Payment")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update UserProgress
+        await supabaseAdmin!
+          .from("UserProgress")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update Certificates
+        await supabaseAdmin!
+          .from("Certificate")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update Reviews
+        await supabaseAdmin!
+          .from("Review")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update DeviceSessions
+        await supabaseAdmin!
+          .from("DeviceSession")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update AdminApprovalQueue
+        await supabaseAdmin!
+          .from("AdminApprovalQueue")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update UserAuth
+        await supabaseAdmin!
+          .from("UserAuth")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Update UserRegistration
+        await supabaseAdmin!
+          .from("UserRegistration")
+          .update({ userId: correctUserId })
+          .eq("userId", userId);
+
+        // Finally, delete the old User record (child records
+        // already updated above, so no cascade needed here).
+        await supabaseAdmin!.from("User").delete().eq("id", userId);
+
+        // Create a new User record with the correct ID
+        const username =
+          email
+            .split("@")[0]
+            .replace(/[^a-zA-Z0-9_-]/g, "")
+            .toLowerCase()
+            .slice(0, 50) || `user_${crypto.randomBytes(3).toString("hex")}`;
+
+        await supabaseAdmin!.from("User").insert({
+          id: correctUserId,
+          username,
+          email: email.toLowerCase(),
           fullName: fullName || email.split("@")[0],
           profileImage: profileImage || null,
-          lastLogin: now,
+          phoneNumber: phoneNumber || "",
+          role: existingUser.role || "user",
+          isActive: true,
           loginCount: (existingUser.loginCount || 0) + 1,
+          lastLogin: now,
+          createdAt: now,
           updatedAt: now,
-        })
-        .eq("id", userId);
+        });
+
+        userId = correctUserId;
+      } else {
+        // No ID mismatch — standard update
+        await supabaseAdmin!
+          .from("User")
+          .update({
+            fullName: fullName || email.split("@")[0],
+            profileImage: profileImage || null,
+            lastLogin: now,
+            loginCount: (existingUser.loginCount || 0) + 1,
+            updatedAt: now,
+          })
+          .eq("id", userId);
+      }
 
       // Update UserAuth record
       await supabaseAdmin!.from("UserAuth").upsert(
@@ -126,10 +222,15 @@ export async function POST(request: NextRequest) {
       );
     } else {
       // We need the auth user's ID from Supabase Auth to link correctly.
-      // If accessToken was provided, verify it to get the user ID.
+      // The callback page now passes the real authUserId from the session.
+      // If not provided, fall back to verifying the accessToken, and if
+      // that also fails, generate a placeholder.
       let authUserId: string | null = null;
 
-      if (rawAccessToken) {
+      if (directAuthUserId) {
+        // Use the real Supabase Auth user ID from the callback page
+        authUserId = directAuthUserId;
+      } else if (rawAccessToken) {
         const supabase = getSupabaseAnon();
         const { data: userData } = await supabase.auth.getUser(rawAccessToken);
         if (userData?.user) {
@@ -138,8 +239,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (!authUserId) {
-        // Fallback: generate a placeholder ID (the callback page
-        // has already created the auth user via Supabase)
+        // Fallback: generate a placeholder ID
         authUserId = crypto.randomUUID();
       }
 

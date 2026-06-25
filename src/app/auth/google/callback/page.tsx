@@ -25,6 +25,7 @@ export default function GoogleCallbackPage() {
     refreshToken?: string;
     expiresIn?: number;
     expiresAt?: number;
+    authUserId?: string;
   }) {
     setError(null);
     setStatus("Completing sign-in...");
@@ -45,6 +46,7 @@ export default function GoogleCallbackPage() {
           refreshToken: payload.refreshToken,
           expiresIn: payload.expiresIn,
           expiresAt: payload.expiresAt,
+          authUserId: payload.authUserId,
         }),
       });
 
@@ -168,6 +170,7 @@ export default function GoogleCallbackPage() {
           refreshToken: session.refresh_token,
           expiresIn: session.expires_in,
           expiresAt: session.expires_at,
+          authUserId: session.user.id,
         };
 
         // Proceed immediately — phone is optional for Google OAuth.

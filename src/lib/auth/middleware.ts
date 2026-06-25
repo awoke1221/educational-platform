@@ -65,9 +65,10 @@ export async function verifyAuth(
     const authUser = data.user;
 
     // ── Look up role from the User table ──────────────────────
-    // This is a quick read — the numeric id primary key makes it fast.
-    // Once RLS is active (Phase 4), this lookup could be cached or the
-    // role could be embedded in user_metadata during sign-up.
+    // Try by id first (fast path). If not found (e.g. the User record
+    // was created before the authUserId was fixed), fall back to
+    // looking up by email. This ensures existing users with a
+    // mismatched User.id still get the correct role.
     let role = "user";
     try {
       const admin = getSupabaseAdmin();
@@ -76,7 +77,19 @@ export async function verifyAuth(
         .select("role")
         .eq("id", authUser.id)
         .maybeSingle();
-      if (profile?.role) role = profile.role;
+
+      if (profile?.role) {
+        role = profile.role;
+      } else if (authUser.email) {
+        // Fallback: look up by email for users whose User.id
+        // doesn't match their Supabase Auth ID (legacy records).
+        const { data: emailProfile } = await admin!
+          .from("User")
+          .select("role")
+          .eq("email", authUser.email.toLowerCase())
+          .maybeSingle();
+        if (emailProfile?.role) role = emailProfile.role;
+      }
     } catch {
       // Default to "user" on error
     }

@@ -7,6 +7,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { getUserClientFromRequest } from "@/lib/db/supabaseUserClient";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       return errorResponse("Authentication required", 401);
     }
 
-    const {
+    let {
       data: enrollments,
       error,
       count,
@@ -36,6 +37,35 @@ export async function GET(request: NextRequest) {
         { count: "exact" },
       )
       .order("enrollmentDate", { ascending: false });
+
+    // ── Fallback for legacy users with mismatched User.id ──────
+    // If the RLS-scoped query returns empty but the user has a valid
+    // email, try looking up by email via the admin client.
+    if ((!enrollments || enrollments.length === 0) && auth.email) {
+      const admin = getSupabaseAdmin();
+      const { data: userByEmail } = await admin!
+        .from("User")
+        .select("id")
+        .eq("email", auth.email.toLowerCase())
+        .maybeSingle();
+
+      if (userByEmail && userByEmail.id !== auth.userId) {
+        // Found user by email with a different ID — legacy record.
+        // Query enrollments using the admin client with the correct ID.
+        const legacyResult = await admin!
+          .from("Enrollment")
+          .select(
+            "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
+          )
+          .eq("userId", userByEmail.id)
+          .order("enrollmentDate", { ascending: false });
+
+        if (!legacyResult.error && legacyResult.data) {
+          enrollments = legacyResult.data;
+          count = legacyResult.data.length;
+        }
+      }
+    }
 
     if (error) {
       console.error("[LIST ENROLLMENTS ERROR]", error);
