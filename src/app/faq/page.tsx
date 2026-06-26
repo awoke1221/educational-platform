@@ -49,7 +49,7 @@ const faqData: FaqItem[] = [
     category: "ተደራሽነት",
     question: "ኮርሶቹን ከገዛሁ በኋላ ለምን ያህል ጊዜ አገኛቸዋለሁ?",
     answer:
-      "ከተመዘገቡ በኋላ ኮርሶቹን በማንኛውም ጊዜ እና በማንኛውም ቦታ ማየት ይችላሉ። የኮርሱ ቁሳቁሶች የዘመን ገደብ የላቸውም — በፈለጉት ፍጥነት መማር ይችላሉ።",
+      "ኮርሱን ከገዙ እና ከተመዘገቡ በኋላ ለ30 ቀናት (1 ወር) ሙሉ መዳረሻ ይኖርዎታል። በዚህ ጊዜ ውስጥ ቪዲዮዎቹን እና ሌሎች የኮርስ ቁሳቁሶችን በማንኛውም ጊዜ እና ቦታ መመልከት ይችላሉ። 30 ቀናቱ ከተጠናቀቁ በኋላ የኮርሱ መዳረሻ ይዘጋል።",
     icon: "⏰",
   },
   {
@@ -111,6 +111,16 @@ const faqData: FaqItem[] = [
 ];
 
 /* ─── Categories ────────────────────────────────────────── */
+const categories = [
+  { key: "ሁሉም", label: "ሁሉም", icon: "📋" },
+  { key: "መግቢያ", label: "መግቢያ", icon: "🎓" },
+  { key: "ተሳትፎ", label: "ተሳትፎ", icon: "🎯" },
+  { key: "መስፈርቶች", label: "መስፈርቶች", icon: "🚀" },
+  { key: "ተደራሽነት", label: "ተደራሽነት", icon: "📱" },
+  { key: "ውጤት", label: "ውጤት", icon: "📊" },
+  { key: "ክፍያ", label: "ክፍያ", icon: "💳" },
+  { key: "ድጋፍ", label: "ድጋፍ", icon: "💬" },
+];
 
 /* ─── Particle Field ───────────────────────────────────── */
 function ParticleField() {
@@ -150,6 +160,15 @@ function ParticleField() {
 }
 
 /* ─── Section Divider ──────────────────────────────────── */
+function SectionDivider() {
+  return (
+    <div className="flex items-center justify-center gap-3 py-4">
+      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
+      <div className="w-2 h-2 rounded-full bg-secondary rotate-45" />
+      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
+    </div>
+  );
+}
 
 /* ─── Floating Badge ───────────────────────────────────── */
 function FloatingBadge({
@@ -366,37 +385,6 @@ function ContactCard() {
               </p>
             </div>
           </motion.a>
-
-          {/* Working Hours */}
-          <motion.div
-            whileHover={{ scale: 1.03, y: -2 }}
-            className="flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-secondary/30 hover:bg-secondary/5 transition-all duration-300 group"
-          >
-            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center group-hover:bg-secondary/30 transition-colors">
-              <svg
-                className="w-6 h-6 text-secondary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-white/50 font-medium uppercase tracking-wider">
-                የስራ ሰዓት
-              </p>
-              <p className="text-sm sm:text-base text-white/80 font-medium">
-                ሰኞ – ቅዳሜ
-              </p>
-              <p className="text-xs text-white/50">3:00 ጠዋት – 12:00 ማታ</p>
-            </div>
-          </motion.div>
         </div>
       </div>
     </motion.div>
@@ -450,7 +438,7 @@ export default function FaqPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0604] overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-primary via-primary-dark to-primary overflow-hidden">
       {/* ═══════════════ HERO SECTION ═══════════════ */}
       <section className="relative min-h-[60vh] sm:min-h-[50vh] flex items-center pt-24 pb-16 overflow-hidden">
         <ParticleField />

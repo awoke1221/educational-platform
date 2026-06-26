@@ -124,7 +124,7 @@ function EmptyState() {
       </div>
       <h3 className="text-xl font-bold text-primary mb-2">እስካሁን ኮርሶች የሉም</h3>
       <p className="text-text-muted max-w-md mb-6">
-        በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን
+        በቅርቡ አዳዲስ እና ጥራት ያላቸው ኮርሶችን እንጨምራለን። እባክዎ ይጠብቁን።
       </p>
       <Link
         href="/auth/register"
@@ -143,7 +143,7 @@ function EmptyState() {
             d="M5 13l4 4L19 7"
           />
         </svg>
-        ይመዝገቡ እና ይጀምሩ
+        አሁኑኑ ይመዝገቡ
       </Link>
     </div>
   );
@@ -347,7 +347,7 @@ export default function CoursesPage() {
             >
               <span className="inline-flex items-center gap-2 bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-[#dc2626]/30">
                 <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
-                Adony TikTok Academy — በቅርቡ ይጀምራል!
+                Adonay TikTok Academy — በቅርቡ ይጀምራል!
               </span>
             </motion.div>
 
@@ -358,7 +358,7 @@ export default function CoursesPage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-sm text-white/60 max-w-lg mx-auto"
             >
-              አዲሱ የ Adony TikTok Academy በቅርቡ ይጀምራል። ቀደም ብለው ይመዝገቡ እና ልዩ የሆኑ
+              አዲሱ የ Adonay TikTok Academy በቅርቡ ይጀምራል። ቀደም ብለው ይመዝገቡ እና ልዩ የሆኑ
               ጥቅሞችን ያግኙ!
             </motion.p>
 
@@ -379,7 +379,7 @@ export default function CoursesPage() {
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-3">
             <span className="w-1.5 h-7 bg-gradient-to-b from-[#7f1d1d] to-[#dc2626] rounded-full inline-block" />
-            ሁሉም ኮርሶች
+            ኮርስ
           </h2>
           {isLoaded && (
             <span className="text-xs text-white/40 font-medium bg-white/5 border border-white/10 px-3 py-1 rounded-full">

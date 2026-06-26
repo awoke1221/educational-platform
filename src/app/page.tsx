@@ -185,10 +185,13 @@ export default function Home() {
   const videoLoaded = !heroLoading;
 
   // Combine the hook's callback ref with our local ref for error handling
-  const combinedVideoRef = useCallback((el: HTMLVideoElement | null) => {
-    videoRef.current = el;
-    setHeroVideoRef(el);
-  }, [setHeroVideoRef]);
+  const combinedVideoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      videoRef.current = el;
+      setHeroVideoRef(el);
+    },
+    [setHeroVideoRef],
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 100);
@@ -200,14 +203,19 @@ export default function Home() {
   const handleVideoError = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    console.warn("[HeroVideo] CDN playback issue, browser will use fallback source if available");
+    console.warn(
+      "[HeroVideo] CDN playback issue, browser will use fallback source if available",
+    );
   }, []);
 
   // Memoize video player to prevent re-renders from destroying the <video> element
   const videoPlayerContent = useMemo(() => {
     if (!videoLoaded) {
       return (
-        <div className="w-full max-h-[80vh] flex items-center justify-center bg-black/60" style={{ aspectRatio: 'auto' }}>
+        <div
+          className="w-full max-h-[80vh] flex items-center justify-center bg-black/60"
+          style={{ aspectRatio: "auto" }}
+        >
           <div className="flex flex-col items-center gap-3">
             <motion.div
               className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full"
@@ -249,7 +257,10 @@ export default function Home() {
     }
 
     return (
-      <div className="w-full max-h-[80vh] flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm" style={{ aspectRatio: 'auto' }}>
+      <div
+        className="w-full max-h-[80vh] flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm"
+        style={{ aspectRatio: "auto" }}
+      >
         <div className="text-center">
           <svg
             className="w-12 h-12 mx-auto mb-2 opacity-40"
@@ -359,7 +370,7 @@ export default function Home() {
                 className="mb-4"
               >
                 <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-tight text-white leading-tight whitespace-nowrap">
-                  Adonay TikTok Academy
+                  Welcome to Adonay TikTok Academy
                 </h1>
               </motion.div>
 
@@ -399,7 +410,7 @@ export default function Home() {
                 >
                   <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-[#ef4444]/20 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-[#ef4444]/10">
                     <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
-                    Adony TikTok Academy
+                    Adonay TikTok Academy
                   </span>
                 </motion.div>
 
