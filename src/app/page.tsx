@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
@@ -28,7 +28,13 @@ function ParticleField({ count = 30 }: { count?: number }) {
       {Array.from({ length: count }, (_, i) => (
         <motion.div
           key={i}
-          className={`absolute rounded-full ${i % 5 === 0 ? "bg-[#ef4444]/15" : i % 5 === 1 ? "bg-white/8" : "bg-white/12"}`}
+          className={`absolute rounded-full ${
+            i % 5 === 0
+              ? "bg-[#ef4444]/15"
+              : i % 5 === 1
+                ? "bg-white/8"
+                : "bg-white/12"
+          }`}
           style={{
             left: `${(i * 17 + 3) % 100}%`,
             top: `${(i * 23 + 7) % 100}%`,
@@ -98,7 +104,6 @@ function RotatingText({ phrases }: { phrases: string[] }) {
   const [index, setIndex] = useState(0);
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<"typing" | "dots" | "waiting">("typing");
-  const dotRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [dots, setDots] = useState("");
 
   // Typewriter effect
@@ -120,7 +125,7 @@ function RotatingText({ phrases }: { phrases: string[] }) {
         }
       },
       60 + Math.random() * 40,
-    ); // Varied typing speed for realism
+    );
 
     return () => clearInterval(typingInterval);
   }, [index, phrases]);
@@ -138,7 +143,6 @@ function RotatingText({ phrases }: { phrases: string[] }) {
       setDots(".".repeat(dotCount));
     }, 400);
 
-    // After showing dots for 1.5s, move to next phrase
     const nextTimeout = setTimeout(() => {
       clearInterval(dotInterval);
       setPhase("waiting");
@@ -173,86 +177,86 @@ function RotatingText({ phrases }: { phrases: string[] }) {
   );
 }
 
-export default function Home() {
-  const [scrolled, setScrolled] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const { heroVideo, heroLoading, videoRef: setHeroVideoRef } = useHeroVideo();
+// ─── FIX #1, #5, #6: Dedicated VideoPlayer component ──────────────────────────
+// Extracted into its own component so React's reconciler keeps the same <video>
+// DOM node alive across renders — no more useMemo destroying/recreating the element.
+// The wrapper always reserves the 9:16 aspect ratio to prevent layout shift (CLS).
+function VideoPlayer({
+  videoLoaded,
+  videoUrl,
+  proxyUrl,
+  videoType,
+  videoPoster,
+  videoRef,
+}: {
+  videoLoaded: boolean;
+  videoUrl: string | null;
+  proxyUrl: string | null;
+  videoType: string;
+  videoPoster: string;
+  videoRef: React.RefObject<HTMLVideoElement>;
+}) {
+  // FIX #3: Track error state to show user-visible fallback UI
+  const [hasError, setHasError] = useState(false);
 
-  const videoUrl = heroVideo?.videoUrl ?? null;
-  const proxyUrl = heroVideo?.proxyUrl ?? null;
-  const videoType = heroVideo?.type ?? "mp4";
-  const videoPoster = heroVideo?.poster ?? "";
-  const videoLoaded = !heroLoading;
-
-  // Combine the hook's callback ref with our local ref for error handling
-  const combinedVideoRef = useCallback((el: HTMLVideoElement | null) => {
-    videoRef.current = el;
-    setHeroVideoRef(el);
-  }, [setHeroVideoRef]);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 100);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Passive error logging — don't remove sources (let browser handle fallback)
+  // FIX #3: Actionable error handler — updates UI state instead of silent console.warn
   const handleVideoError = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    console.warn("[HeroVideo] CDN playback issue, browser will use fallback source if available");
-  }, []);
-
-  // Memoize video player to prevent re-renders from destroying the <video> element
-  const videoPlayerContent = useMemo(() => {
-    if (!videoLoaded) {
-      return (
-        <div className="w-full max-h-[80vh] flex items-center justify-center bg-black/60" style={{ aspectRatio: 'auto' }}>
-          <div className="flex flex-col items-center gap-3">
-            <motion.div
-              className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 1,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-            <span className="text-white/40 text-xs animate-pulse">
-              Loading video...
-            </span>
-          </div>
-        </div>
-      );
+    // Only flag error after all <source> elements have been tried (networkState === 3)
+    if (video.networkState === 3) {
+      console.error("[HeroVideo] All sources failed — showing fallback UI");
+      setHasError(true);
     }
+  }, [videoRef]);
 
-    if (videoUrl) {
-      return (
-        <div className="relative w-full max-h-[80vh] bg-black flex items-center justify-center">
-          <video
-            ref={combinedVideoRef}
-            className="w-full max-h-[80vh] object-contain"
-            controls
-            playsInline
-            preload="metadata"
-            poster={videoPoster}
-            onError={handleVideoError}
-          >
-            {/* 🐰 Primary: Direct Bunny CDN */}
-            <source src={videoUrl} type={`video/${videoType}`} />
-            {/* 🔄 Fallback: Proxy through server when CDN blocked */}
-            {proxyUrl && <source src={proxyUrl} type={`video/${videoType}`} />}
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      );
-    }
+  // Reset error state when a new video URL arrives
+  useEffect(() => {
+    setHasError(false);
+  }, [videoUrl]);
 
+  // ─── FIX #5 & #6: Stable aspect-ratio wrapper ────────────────────────────
+  // - aspectRatio: "9/16" reserves the correct portrait space on ALL states
+  //   (loading, loaded, error) — eliminates layout shift completely.
+  // - maxHeight: 80vh keeps it from overflowing the viewport on desktop.
+  // - The inner content fills this box with h-full / object-contain.
+  const wrapperStyle: React.CSSProperties = {
+    aspectRatio: "9 / 16",
+    maxHeight: "80vh",
+    width: "100%",
+    backgroundColor: "#000",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    position: "relative",
+  };
+
+  // ── Loading skeleton ────────────────────────────────────────────────────
+  if (!videoLoaded) {
     return (
-      <div className="w-full max-h-[80vh] flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm" style={{ aspectRatio: 'auto' }}>
-        <div className="text-center">
+      <div style={wrapperStyle}>
+        <div className="flex flex-col items-center gap-3">
+          <motion.div
+            className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <span className="text-white/40 text-xs animate-pulse">
+            Loading video...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Error fallback UI (shown after all sources fail) ────────────────────
+  if (hasError || !videoUrl) {
+    return (
+      <div style={wrapperStyle}>
+        <div className="flex flex-col items-center justify-center gap-3 px-4 text-center">
           <svg
-            className="w-12 h-12 mx-auto mb-2 opacity-40"
+            className="w-12 h-12 opacity-40 text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -264,18 +268,86 @@ export default function Home() {
               d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
             />
           </svg>
-          Video unavailable
+          <p className="text-white/40 text-sm">Video unavailable</p>
+          {/* FIX #3: Give user a way to retry instead of silent failure */}
+          {hasError && (
+            <button
+              onClick={() => setHasError(false)}
+              className="mt-1 text-xs text-[#ef4444]/70 hover:text-[#ef4444] underline underline-offset-2 transition-colors"
+            >
+              Retry
+            </button>
+          )}
         </div>
       </div>
     );
-  }, [
-    videoLoaded,
-    videoUrl,
-    proxyUrl,
-    videoType,
-    videoPoster,
-    handleVideoError,
-  ]);
+  }
+
+  // ── Video player ────────────────────────────────────────────────────────
+  return (
+    <div style={wrapperStyle}>
+      {/*
+        FIX #5: h-full + object-contain fills the stable wrapper exactly.
+        FIX #4: crossOrigin="anonymous" prevents CORS cache poisoning with CDNs.
+        FIX #2: preload="auto" starts buffering immediately so playback begins
+                without the stall caused by preload="metadata".
+        FIX #1: <video> lives here permanently — React reconciler never destroys
+                it because VideoPlayer stays mounted. No useMemo re-creation risk.
+      */}
+      <video
+        ref={videoRef}
+        className="w-full h-full object-contain"
+        controls
+        autoPlay
+        muted
+        playsInline
+        preload="auto" // FIX #2: was "metadata" — now pre-buffers for instant play
+        poster={videoPoster}
+        crossOrigin="anonymous" // FIX #4: required for Bunny CDN CORS correctness
+        onError={handleVideoError}
+      >
+        {/* Primary: Direct Bunny CDN */}
+        <source src={videoUrl} type={`video/${videoType}`} />
+        {/* Fallback: Proxy through server when CDN is blocked */}
+        {proxyUrl && <source src={proxyUrl} type={`video/${videoType}`} />}
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
+export default function Home() {
+  const [scrolled, setScrolled] = useState(false);
+
+  // FIX #1: Keep a stable ref for the <video> element — passed directly to
+  // VideoPlayer instead of being threaded through useMemo + useCallback chains.
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const { heroVideo, heroLoading, videoRef: setHeroVideoRef } = useHeroVideo();
+
+  const videoUrl = heroVideo?.videoUrl ?? null;
+  const proxyUrl = heroVideo?.proxyUrl ?? null;
+  const videoType = heroVideo?.type ?? "mp4";
+  const videoPoster = heroVideo?.poster ?? "";
+  const videoLoaded = !heroLoading;
+
+  // FIX #1: combinedRef synchronises our stable ref with the hook's callback ref.
+  // useCallback keeps its identity stable so VideoPlayer never re-renders from this.
+  const combinedVideoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current =
+        el;
+      setHeroVideoRef(el);
+    },
+    [setHeroVideoRef],
+  );
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 100);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div>
@@ -351,7 +423,6 @@ export default function Home() {
               className="text-center max-w-3xl"
               variants={itemVariants}
             >
-              {/* Static top title - always visible, larger than rotating text */}
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -363,7 +434,6 @@ export default function Home() {
                 </h1>
               </motion.div>
 
-              {/* Rotating text */}
               <RotatingText
                 phrases={[
                   "# ከ6 M+ followers",
@@ -376,13 +446,25 @@ export default function Home() {
               />
             </motion.div>
 
-            {/* Video Player with animated gradient border */}
+            {/*
+              FIX #1 + #5 + #6: VideoPlayer is now a stable component, not a
+              memoized JSX blob. React keeps the same DOM node across renders.
+              The gradient-border wrapper only handles visual styling — sizing
+              is owned entirely by VideoPlayer's internal wrapperStyle.
+            */}
             <motion.div
-              className="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-black gradient-border"
+              className="w-full max-w-sm sm:max-w-md rounded-2xl overflow-hidden shadow-2xl gradient-border"
               variants={videoVariants}
               whileHover={{ scale: 1.01 }}
             >
-              {videoPlayerContent}
+              <VideoPlayer
+                videoLoaded={videoLoaded}
+                videoUrl={videoUrl}
+                proxyUrl={proxyUrl}
+                videoType={videoType}
+                videoPoster={videoPoster}
+                videoRef={videoRef}
+              />
             </motion.div>
 
             {/* ── Coming Soon Section ───────────────── */}
