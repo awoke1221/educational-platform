@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch } from "@/lib/utils/cache";
 import CourseReviews from "@/components/CourseReviews";
+import ExpandableDescription from "@/components/ExpandableDescription";
 import { formatDuration } from "@/lib/utils/common";
 
 interface CourseDetail {
@@ -309,9 +310,12 @@ export default function CourseDetailPage() {
 
         <div className="p-6">
           <h2 className="font-semibold text-lg mb-3 text-primary">ስለ ኮርሱ</h2>
-          <p className="text-text-muted text-sm leading-relaxed whitespace-pre-line">
-            {course.description}
-          </p>
+          <ExpandableDescription
+            text={course.description}
+            maxLines={5}
+            className="text-text-muted"
+            variant="light"
+          />
 
           <h2 className="font-semibold text-lg mt-8 mb-4 text-primary">
             ትምህርቶች ({course.lectures?.length || 0})

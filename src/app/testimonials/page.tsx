@@ -194,34 +194,34 @@ function TextTestimonialsSection() {
     const testimonials: TextTestimonial[] = [
       {
         id: "txt-1",
-        name: "Emma Johnson",
-        title: "Content Strategist",
-        company: "Bright Media",
-        text: "Adonay's method on understanding audience psychology changed everything. I applied his storytelling framework and my content went viral within a week!",
+        name: "ወ...",
+        title: "የቲክቶክ ፈጣሪ",
+        company: "ወርቅ ሚዲያ",
+        text: "በአዶናይ TikTok Academy ስልጠና ምክንያት የቲክቶክ ገፄ በአጭር ጊዜ ውስጥ ከ200 ተከታዮች ወደ 200,000 አድጓል። የታሪክ አተረጓጎም ቴክኒኮቹ እጅግ ድንቅ ናቸው!",
         rating: 5,
       },
       {
         id: "txt-2",
-        name: "Liam Patel",
-        title: "Social Media Manager",
-        company: "Creative Studio",
-        text: "I used to struggle with camera confidence until I took Adonay's training. Now I record content naturally and my engagement has tripled. Life-changing!",
+        name: "ዳ...",
+        title: "የማህበራዊ ሚዲያ አስተዳዳሪ",
+        company: "ክሪኤቲቭ ስቱዲዮ",
+        text: "ከተለያዩ ኮርሶች ተምሬ የማላገኘውን ተግባራዊ እውቀት በአዶናይ TikTok Academy አግኝቻለሁ። የግል ብራንዴን ገንብቼ በ3 ወራት ውስጥ ከቀላል ጀማሪ ወደ ተደማጭ ፈጣሪ ተቀይሬአለሁ።",
         rating: 5,
       },
       {
         id: "txt-3",
-        name: "Sophia Lee",
-        title: "TikTok Creator",
-        company: "Tech Works",
-        text: "Adonay's community is incredible. The support, the feedback, and the proven strategies helped me grow from zero to 100K followers in 2 months.",
+        name: "ሰ...",
+        title: "የቲክቶክ ፈጣሪ",
+        company: "ቴክ ወርክስ",
+        text: "የአዶናይ ማህበረሰብ እጅግ አስደናቂ ነው። ድጋፉ፣ አስተያየቶቹ እና የተረጋገጡ ስልቶች ከዜሮ ጀምሮ በ2 ወራት ውስጥ ወደ 100,000 ተከታዮች እንዳድግ ረድተውኛል።",
         rating: 5,
       },
       {
         id: "txt-4",
-        name: "Noah Brown",
-        title: "Personal Brand Coach",
-        company: "Growth Labs",
-        text: "I've taken many courses but Adonay's is different — he breaks down exactly how he built a 6M+ audience and shows you how to do the same step by step.",
+        name: "ሀ...",
+        title: "የግል ብራንድ አሰልጣኝ",
+        company: "ግሮውዝ ላብስ",
+        text: "አዶናይ የ6 ሚሊዮን ተከታዮችን እንዴት እንደሰራ ደረጃ በደረጃ ያስተምራል። የእሱ ስልቶች ሙሉ ህይወቴን ቀይረውታል - አሁን ሙሉ ጊዜዬን በቲክቶክ ፈጠራ እያሳለፍኩ ገቢ እያገኝኩ ነው!",
         rating: 5,
       },
     ];
@@ -820,41 +820,41 @@ function ImageTestimonialsSection() {
   const portraitTestimonials: ImageTestimonial[] = [
     {
       id: "portrait-1",
-      name: "Mia Carter",
-      title: "Content Creator",
-      text: "Adonay's personal branding course completely changed how I approach TikTok. I went from 200 to 50K followers in just 3 months. The storytelling techniques are pure gold!",
+      name: "ማ...",
+      title: "የቲክቶክ ፈጣሪ",
+      text: "በአዶናይ የግል ብራንድ ኮርስ ምክንያት የቲክቶክ ገፄን አስተዳደር ሙሉ በሙሉ ቀይሬአለሁ። ከ200 ተከታዮች ወደ 50,000 ያደግሁት በ3 ወራት ውስጥ ነው። የታሪክ አያያዝ ቴክኒኮቹ ወርቅ ናቸው!",
       image: "/testimonial/image%201.jpeg",
       rating: 5,
     },
     {
       id: "portrait-2",
-      name: "Ethan Davis",
-      title: "Aspiring Creator",
-      text: "I was stuck at 1,000 followers for months until I took Adonay's course. His strategies on viral content and audience psychology helped me hit my first million views!",
+      name: "ሳ...",
+      title: "የማህበራዊ ሚዲያ አስተዳዳሪ",
+      text: "ከወራት በፊት በ1,000 ተከታዮች ተጣብቄ ነበር። የአዶናይ ኮርስ ከወሰድኩ በኋላ የቫይራል ኮንቴንት ስልቶቹ የመጀመሪያውን ሚሊዮን ቪው እንዳገኝ ረዱኝ!",
       image: "/testimonial/image%202.jpeg",
       rating: 5,
     },
     {
       id: "portrait-3",
-      name: "Olivia Kim",
-      title: "Digital Marketer",
-      text: "Adonay taught me how to build a personal brand that actually connects with people. His camera confidence tips alone transformed my content quality overnight.",
+      name: "ብ...",
+      title: "ዲጂታል ማርኬተር",
+      text: "አዶናይ ከሰዎች ጋር የሚገናኝ የግል ብራንድ እንዴት መገንባት እንደሚቻል አስተማረኝ። የካሜራ መተማመን ምክሮቹ ብቻ የምዘጋጀውን ይዘት ጥራት በአንድ ሌሊት ቀይረዋል።",
       image: "/testimonial/image%203.jpeg",
       rating: 5,
     },
     {
       id: "portrait-4",
-      name: "Noah Wilson",
-      title: "Entrepreneur",
-      text: "The monetization strategies Adonay shared opened my eyes. I'm now earning consistently from my content thanks to his proven systems and step-by-step guidance.",
+      name: "አ...",
+      title: "ስራ ፈጣሪ",
+      text: "አዶናይ የሚያስተምራቸው የገቢ መፍጠሪያ ስልቶች ዓይኔን ከፍተዋል። አሁን ከይዘቴ የማስገኘው ገቢ የተረጋጋ ነው - ሁሉንም እርግጠኛ በሆኑ ስርዓቶቹ አማካኝነት!",
       image: "/testimonial/image%204.jpeg",
       rating: 5,
     },
     {
       id: "portrait-5",
-      name: "Sophia Turner",
-      title: "Full-Time Creator",
-      text: "Adonay doesn't just teach theory — he shows you what actually works. His insights on storytelling and digital influence helped me grow my account to 200K followers.",
+      name: "ሀ...",
+      title: "ሙሉ ጊዜ ፈጣሪ",
+      text: "አዶናይ ንድፈ ሃሳብ ብቻ አያስተምርም - የሚሰራውን በተግባር ያሳያል። የታሪክ አተረጓጎም እና የዲጂታል ተፅዕኖ ግንዛቤዎቹ የቲክቶክ ገፄን ወደ 200,000 ተከታዮች እንዳድግ ረድተውኛል።",
       image: "/testimonial/image%205.jpeg",
       rating: 5,
     },
@@ -1006,7 +1006,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function TestimonialsPage() {
   const [activeTab, setActiveTab] = useState<"video" | "text" | "image">(
-    "video",
+    "text",
   );
 
   const tabs = [
@@ -1036,7 +1036,7 @@ export default function TestimonialsPage() {
             >
               <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-[#ef4444]/20 text-white/70 text-xs font-semibold px-4 py-1.5 rounded-full mb-4">
                 <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
-                Real Results from Real Students
+                የተማሪዎቻችን እውነተኛ ውጤት
               </span>
             </motion.div>
             <motion.h1
@@ -1056,9 +1056,9 @@ export default function TestimonialsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              Hear from real creators who transformed their presence with Adonay
-              TikTok Academy. From zero followers to millions — discover how our
-              students built their personal brands and mastered TikTok growth.
+              በአዶናይ TikTok Academy ስልጠና የተጠቀሙ ፈጣሪዎች በTikTok ላይ አስደናቂ ውጤቶችን
+              አስመዝግበዋል። ከመነሻ ደረጃ ተከታዮች ጀምሮ እስከ ሚሊዮኖች ድረስ በማደግ፣ ጠንካራ የግል ብራንድ
+              ገንብተው የTikTok እድገትን በብቃት ተቆጣጥረዋል።
             </motion.p>
             <motion.div
               className="flex justify-center items-center gap-4 sm:gap-8 flex-wrap"

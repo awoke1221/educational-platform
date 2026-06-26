@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch } from "@/lib/utils/cache";
 import ComingSoonForm from "@/components/ComingSoonForm";
+import ExpandableDescription from "@/components/ExpandableDescription";
 
 const LAUNCH_DATE =
   process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00";
@@ -27,6 +28,7 @@ interface Course {
   id: string;
   title: string;
   shortDescription: string;
+  description: string;
   coverImage: string;
   level: string;
   category: string;
@@ -570,9 +572,11 @@ export default function CoursesPage() {
                   <h3 className="font-bold text-white mb-1.5 line-clamp-2 group-hover:text-[#ef4444] transition-colors text-base leading-snug">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-white/50 line-clamp-2 leading-relaxed mb-4">
-                    {course.shortDescription}
-                  </p>
+                  <ExpandableDescription
+                    text={course.description || course.shortDescription}
+                    maxLines={2}
+                    className="mb-4"
+                  />
                   <div className="flex items-center justify-between pt-3 border-t border-white/10">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7f1d1d] to-[#dc2626] flex items-center justify-center text-[11px] text-white font-bold shrink-0 shadow-sm">

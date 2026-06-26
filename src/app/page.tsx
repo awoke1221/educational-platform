@@ -378,8 +378,8 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="mb-4"
               >
-                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-tight text-white leading-tight whitespace-nowrap">
-                  Adonay TikTok Academy
+                <h1 className="text-sm sm:text-base md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-extrabold tracking-tight text-white leading-tight whitespace-nowrap">
+                  Welcome to Adonay TikTok Academy
                 </h1>
               </motion.div>
 
