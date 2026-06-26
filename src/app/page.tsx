@@ -194,7 +194,7 @@ function VideoPlayer({
   proxyUrl: string | null;
   videoType: string;
   videoPoster: string;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
 }) {
   // FIX #3: Track error state to show user-visible fallback UI
   const [hasError, setHasError] = useState(false);

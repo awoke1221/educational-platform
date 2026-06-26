@@ -24,8 +24,14 @@ const PULL_ZONE_URL = process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL; // https://ad
 // Maps course title -> local image file path (relative to project root)
 const COURSES_TO_FIX = [
   {
-    title: "Tiktok For Personal",
+    title: "TikTok For Personal",
     imagePath: "public/tiktok for persenal image.jpg",
+    useExact: true,
+  },
+  {
+    title: "TikTok For Business",
+    imagePath: "public/tiktok for business course image.jpg",
+    useExact: true,
   },
 ];
 
@@ -104,8 +110,10 @@ async function uploadToBunny(buffer, mimeType, storagePath) {
 /**
  * Query Supabase for a course by title
  */
-async function findCourseByTitle(title) {
-  const url = `${SUPABASE_URL}/rest/v1/Course?title=eq.${encodeURIComponent(title)}&select=id,title,coverImage`;
+async function findCourseByTitle(title, useExact) {
+  const op = useExact ? "eq" : "ilike";
+  const val = useExact ? title : `%${title}%`;
+  const url = `${SUPABASE_URL}/rest/v1/Course?title=${op}.${encodeURIComponent(val)}&select=id,title,coverImage`;
 
   const response = await fetch(url, {
     headers: {
@@ -185,7 +193,7 @@ async function main() {
     console.log("   🔍 Searching database...");
     let course;
     try {
-      course = await findCourseByTitle(courseEntry.title);
+      course = await findCourseByTitle(courseEntry.title, courseEntry.useExact);
     } catch (err) {
       console.error(`   ❌ Failed to query database: ${err.message}`);
       continue;
@@ -200,12 +208,6 @@ async function main() {
 
     console.log(`   ✅ Found course: ${course.id}`);
     console.log(`   Current coverImage: ${course.coverImage || "(empty)"}`);
-
-    // 3. Skip if already a Bunny CDN URL
-    if (course.coverImage && course.coverImage.includes(".b-cdn.net")) {
-      console.log(`   ⏭️  Already using Bunny CDN URL, skipping upload`);
-      continue;
-    }
 
     // 4. Upload image to Bunny
     console.log("   📤 Uploading to Bunny CDN...");
