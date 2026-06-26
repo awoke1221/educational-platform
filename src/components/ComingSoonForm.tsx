@@ -11,6 +11,7 @@ type Step = "idle" | "location" | "form" | "submitting" | "success";
 interface Props {
   source?: "homepage" | "courses" | "register";
   launchDate: string;
+  onSuccess?: () => void;
 }
 
 // ─── Form State ──────────────────────────────────────────
@@ -233,6 +234,7 @@ function ComingSoonOverlay({
 export default function ComingSoonForm({
   source = "homepage",
   launchDate,
+  onSuccess,
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [step, setStep] = useState<Step>("idle");
@@ -364,6 +366,7 @@ export default function ComingSoonForm({
 
       setHasSubmitted(true);
       setStep("success");
+      onSuccess?.();
     } catch (err: any) {
       setError(err.message || "እባክዎ እንደገና ይሞክሩ");
       setStep("form");

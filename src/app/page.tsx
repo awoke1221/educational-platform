@@ -312,6 +312,19 @@ function VideoPlayer({
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
+  const [hasRegistered, setHasRegistered] = useState(false);
+
+  // Check localStorage for existing registration
+  useEffect(() => {
+    const submitted = localStorage.getItem("commingsoon_submitted");
+    if (submitted === "true") {
+      setHasRegistered(true);
+    }
+  }, []);
+
+  const handleRegistrationSuccess = useCallback(() => {
+    setHasRegistered(true);
+  }, []);
 
   // FIX #1: Keep a stable ref for the <video> element — passed directly to
   // VideoPlayer instead of being threaded through useMemo + useCallback chains.
@@ -431,27 +444,42 @@ export default function Home() {
                   </span>
                 </motion.div>
 
-                {/* Coming Soon Title */}
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.6 }}
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold"
-                >
-                  <span className="bg-gradient-to-r from-white via-white to-[#ef4444] bg-clip-text text-transparent">
-                    ለመጀመር ዝግጁ ይሁኑ
-                  </span>
-                </motion.h2>
+                {/* Conditional Heading — subtle badge when registered, CTA when not */}
+                {hasRegistered ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                  >
+                    <span className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md border border-[#ef4444]/15 text-white/50 text-xs font-semibold px-4 py-1.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
+                      ተመዝግበዋል
+                    </span>
+                  </motion.div>
+                ) : (
+                  <>
+                    <motion.h2
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5, duration: 0.6 }}
+                      className="text-2xl sm:text-3xl md:text-4xl font-bold"
+                    >
+                      <span className="bg-gradient-to-r from-white via-white to-[#ef4444] bg-clip-text text-transparent">
+                        ለመጀመር ዝግጁ ይሁኑ
+                      </span>
+                    </motion.h2>
 
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6, duration: 0.5 }}
-                  className="text-white/60 text-sm max-w-md mx-auto"
-                >
-                  አዲሱ የ Adony TikTok Academy በቅርቡ ይጀምራል። ቀደም ብለው ይመዝገቡ እና ልዩ የሆኑ
-                  ጥቅሞችን ያግኙ!
-                </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6, duration: 0.5 }}
+                      className="text-white/60 text-sm max-w-md mx-auto"
+                    >
+                      አዲሱ የ Adony TikTok Academy በቅርቡ ይጀምራል። ቀደም ብለው ይመዝገቡ እና ልዩ
+                      የሆኑ ጥቅሞችን ያግኙ!
+                    </motion.p>
+                  </>
+                )}
 
                 {/* Coming Soon Registration Form */}
                 <motion.div
@@ -459,7 +487,11 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.9, duration: 0.6 }}
                 >
-                  <ComingSoonForm source="homepage" launchDate={LAUNCH_DATE} />
+                  <ComingSoonForm
+                    source="homepage"
+                    launchDate={LAUNCH_DATE}
+                    onSuccess={handleRegistrationSuccess}
+                  />
                 </motion.div>
               </div>
             </motion.div>
