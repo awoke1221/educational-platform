@@ -176,7 +176,7 @@ function RotatingText({ phrases }: { phrases: string[] }) {
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { heroVideo, heroLoading } = useHeroVideo();
+  const { heroVideo, heroLoading, videoRef: setHeroVideoRef } = useHeroVideo();
 
   const videoUrl = heroVideo?.videoUrl ?? null;
   const proxyUrl = heroVideo?.proxyUrl ?? null;
@@ -184,22 +184,24 @@ export default function Home() {
   const videoPoster = heroVideo?.poster ?? "";
   const videoLoaded = !heroLoading;
 
+  // Combine the hook's callback ref with our local ref for error handling
+  const combinedVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    setHeroVideoRef(el);
+  }, [setHeroVideoRef]);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 100);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Handle CDN failure - fallback to proxy
+  // Passive error logging — don't remove sources (let browser handle fallback)
   const handleVideoError = useCallback(() => {
     const video = videoRef.current;
-    if (!video || !proxyUrl) return;
-    const sources = video.getElementsByTagName("source");
-    if (sources.length > 0 && sources[0].src.includes("b-cdn.net")) {
-      sources[0].remove();
-      video.load();
-    }
-  }, [proxyUrl]);
+    if (!video) return;
+    console.warn("[HeroVideo] CDN playback issue, browser will use fallback source if available");
+  }, []);
 
   // Memoize video player to prevent re-renders from destroying the <video> element
   const videoPlayerContent = useMemo(() => {
@@ -228,11 +230,11 @@ export default function Home() {
       return (
         <div className="relative w-full max-h-[80vh] bg-black flex items-center justify-center">
           <video
-            ref={videoRef}
-            className="w-full h-full max-h-[80vh] object-contain"
+            ref={combinedVideoRef}
+            className="w-full max-h-[80vh] object-contain"
             controls
             playsInline
-            preload="auto"
+            preload="metadata"
             poster={videoPoster}
             onError={handleVideoError}
           >
