@@ -124,7 +124,7 @@ function ParticleField() {
       {[...Array(25)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-1.5 h-1.5 rounded-full bg-secondary/20 blur-[1px]"
+          className="absolute w-1.5 h-1.5 rounded-full bg-[#ef4444]/20 blur-[1px]"
           style={{
             left: `${(i * 13 + 7) % 100}%`,
             top: `${(i * 19 + 11) % 100}%`,
@@ -151,9 +151,9 @@ function ParticleField() {
 function SectionDivider() {
   return (
     <div className="flex items-center justify-center gap-3 py-4">
-      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
-      <div className="w-2 h-2 rounded-full bg-secondary rotate-45" />
-      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
+      <div className="h-px w-12 bg-gradient-to-r from-transparent via-[#dc2626]/40 to-transparent" />
+      <div className="w-2 h-2 rounded-full bg-[#dc2626] rotate-45" />
+      <div className="h-px w-12 bg-gradient-to-r from-transparent via-[#dc2626]/40 to-transparent" />
     </div>
   );
 }
@@ -198,17 +198,17 @@ function AccordionItem({
       transition={{ duration: 0.4, delay: index * 0.05 }}
       className={`group rounded-2xl border transition-all duration-300 ${
         isOpen
-          ? "border-secondary/40 bg-gradient-to-br from-secondary/10 via-secondary/5 to-transparent shadow-lg shadow-secondary/10"
+          ? "border-[#dc2626]/40 bg-gradient-to-br from-[#dc2626]/10 via-[#dc2626]/5 to-transparent shadow-lg shadow-[#dc2626]/10"
           : "border-white/10 bg-white/5 hover:bg-white/[0.07] hover:border-white/20"
       }`}
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-4 px-5 sm:px-7 py-5 sm:py-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 rounded-2xl"
+        className="w-full flex items-center gap-4 px-5 sm:px-7 py-5 sm:py-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#dc2626]/50 rounded-2xl"
         aria-expanded={isOpen}
       >
         {/* Icon */}
-        <span className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-secondary/20 to-accent/10 flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-300">
+        <span className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#dc2626]/20 to-[#ef4444]/10 flex items-center justify-center text-lg sm:text-xl shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-300">
           {item.icon}
         </span>
 
@@ -216,7 +216,7 @@ function AccordionItem({
         <div className="flex-1 min-w-0">
           <span
             className={`block text-sm sm:text-base font-semibold transition-colors duration-300 ${
-              isOpen ? "text-secondary" : "text-white/80 group-hover:text-white"
+              isOpen ? "text-[#ef4444]" : "text-white/80 group-hover:text-white"
             }`}
           >
             {item.question}
@@ -233,7 +233,7 @@ function AccordionItem({
           transition={{ duration: 0.3, ease: "easeInOut" }}
           className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
             isOpen
-              ? "bg-secondary text-white"
+              ? "bg-[#dc2626] text-white"
               : "bg-white/10 text-white/50 group-hover:bg-white/20 group-hover:text-white/80"
           }`}
         >
@@ -264,7 +264,7 @@ function AccordionItem({
             className="overflow-hidden"
           >
             <div className="px-5 sm:px-7 pb-6 sm:pb-7">
-              <div className="h-px bg-gradient-to-r from-secondary/30 via-secondary/10 to-transparent mb-4" />
+              <div className="h-px bg-gradient-to-r from-[#dc2626]/30 via-[#dc2626]/10 to-transparent mb-4" />
               <p className="text-sm sm:text-base text-white/70 leading-relaxed sm:leading-loose">
                 {item.answer}
               </p>
@@ -284,11 +284,11 @@ function ContactCard() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="relative overflow-hidden rounded-3xl border border-secondary/20 bg-gradient-to-br from-secondary/10 via-secondary/5 to-transparent p-8 sm:p-12"
+      className="relative overflow-hidden rounded-3xl border border-[#dc2626]/20 bg-gradient-to-br from-[#dc2626]/10 via-[#dc2626]/5 to-transparent p-8 sm:p-12"
     >
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[#dc2626]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#ef4444]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
       <div className="relative z-10">
         <div className="text-center mb-8">
@@ -296,9 +296,9 @@ function ContactCard() {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/20 border border-secondary/30 text-secondary text-xs sm:text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#dc2626]/20 border border-[#dc2626]/30 text-[#ef4444] text-xs sm:text-sm font-medium mb-4"
           >
-            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#dc2626] animate-pulse" />
             ድጋፍ ያግኙ
           </motion.span>
           <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">
@@ -315,11 +315,11 @@ function ContactCard() {
             href="mailto:support@adonayacademy.com"
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.98 }}
-            className="flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-secondary/30 hover:bg-secondary/5 transition-all duration-300 group"
+            className="flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-[#dc2626]/30 hover:bg-[#dc2626]/5 transition-all duration-300 group"
           >
-            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center group-hover:bg-secondary/30 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-[#dc2626]/20 flex items-center justify-center group-hover:bg-[#dc2626]/30 transition-colors">
               <svg
-                className="w-6 h-6 text-secondary"
+                className="w-6 h-6 text-[#dc2626]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -336,7 +336,7 @@ function ContactCard() {
               <p className="text-xs text-white/50 font-medium uppercase tracking-wider">
                 Email
               </p>
-              <p className="text-sm sm:text-base text-white/80 group-hover:text-secondary transition-colors font-medium">
+              <p className="text-sm sm:text-base text-white/80 group-hover:text-[#ef4444] transition-colors font-medium">
                 support@adonayacademy.com
               </p>
             </div>
@@ -347,11 +347,11 @@ function ContactCard() {
             href="#"
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.98 }}
-            className="flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-secondary/30 hover:bg-secondary/5 transition-all duration-300 group"
+            className="flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-[#dc2626]/30 hover:bg-[#dc2626]/5 transition-all duration-300 group"
           >
-            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center group-hover:bg-secondary/30 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-[#dc2626]/20 flex items-center justify-center group-hover:bg-[#dc2626]/30 transition-colors">
               <svg
-                className="w-6 h-6 text-secondary"
+                className="w-6 h-6 text-[#dc2626]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -368,7 +368,7 @@ function ContactCard() {
               <p className="text-xs text-white/50 font-medium uppercase tracking-wider">
                 WhatsApp
               </p>
-              <p className="text-sm sm:text-base text-white/80 group-hover:text-secondary transition-colors font-medium">
+              <p className="text-sm sm:text-base text-white/80 group-hover:text-[#ef4444] transition-colors font-medium">
                 +251 XX XXX XXXX
               </p>
             </div>
@@ -390,14 +390,14 @@ export default function FaqPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary via-primary-dark to-primary overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] overflow-hidden">
       {/* ═══════════════ HERO SECTION ═══════════════ */}
       <section className="relative pt-24 pb-8 overflow-hidden">
         <ParticleField />
         <div className="absolute inset-0">
-          <div className="absolute top-0 -left-40 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 -right-40 w-[30rem] h-[30rem] bg-accent/5 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-secondary/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 -left-40 w-96 h-96 bg-[#dc2626]/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 -right-40 w-[30rem] h-[30rem] bg-[#ef4444]/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-[#dc2626]/5 rounded-full blur-3xl" />
         </div>
 
         <FloatingBadge label="📚 11+ ጥያቄዎች" className="top-24 right-8" />
@@ -411,15 +411,15 @@ export default function FaqPage() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/20 border border-secondary/30 text-secondary text-xs sm:text-sm font-medium mb-4 sm:mb-6"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#dc2626]/20 border border-[#dc2626]/30 text-[#ef4444] text-xs sm:text-sm font-medium mb-4 sm:mb-6"
               >
-                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#dc2626] animate-pulse" />
                 ተደጋጋሚ ጥያቄዎች
               </motion.span>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 sm:mb-6 tracking-tight">
                 መልስ ያግኙ{" "}
-                <span className="bg-gradient-to-r from-secondary via-amber-400 to-accent bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                   ያፍሩ
                 </span>
               </h1>
@@ -464,7 +464,7 @@ export default function FaqPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-16 text-center">
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="inline-flex items-center gap-3 px-6 sm:px-8 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-secondary/20 via-accent/10 to-secondary/20 border border-secondary/30 hover:border-secondary/50 transition-all duration-300 cursor-pointer"
+              className="inline-flex items-center gap-3 px-6 sm:px-8 py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-[#dc2626]/20 via-[#ef4444]/10 to-[#dc2626]/20 border border-[#dc2626]/30 hover:border-[#dc2626]/50 transition-all duration-300 cursor-pointer"
             >
               <span className="text-2xl">🚀</span>
               <div>
@@ -473,7 +473,7 @@ export default function FaqPage() {
                 </p>
                 <Link
                   href="/courses"
-                  className="text-secondary hover:text-accent text-xs sm:text-sm underline underline-offset-4 decoration-secondary/30 hover:decoration-secondary transition-all"
+                  className="text-[#ef4444] hover:text-[#dc2626] text-xs sm:text-sm underline underline-offset-4 decoration-[#dc2626]/30 hover:decoration-[#dc2626] transition-all"
                 >
                   ኮርሶቻችንን ይመልከቱ →
                 </Link>
