@@ -111,16 +111,6 @@ const faqData: FaqItem[] = [
 ];
 
 /* ─── Categories ────────────────────────────────────────── */
-const categories = [
-  { key: "ሁሉም", label: "ሁሉም", icon: "📋" },
-  { key: "መግቢያ", label: "መግቢያ", icon: "🎓" },
-  { key: "ተሳትፎ", label: "ተሳትፎ", icon: "🎯" },
-  { key: "መስፈርቶች", label: "መስፈርቶች", icon: "🚀" },
-  { key: "ተደራሽነት", label: "ተደራሽነት", icon: "📱" },
-  { key: "ውጤት", label: "ውጤት", icon: "📊" },
-  { key: "ክፍያ", label: "ክፍያ", icon: "💳" },
-  { key: "ድጋፍ", label: "ድጋፍ", icon: "💬" },
-];
 
 /* ─── Particle Field ───────────────────────────────────── */
 function ParticleField() {
@@ -160,15 +150,6 @@ function ParticleField() {
 }
 
 /* ─── Section Divider ──────────────────────────────────── */
-function SectionDivider() {
-  return (
-    <div className="flex items-center justify-center gap-3 py-4">
-      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
-      <div className="w-2 h-2 rounded-full bg-secondary rotate-45" />
-      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
-    </div>
-  );
-}
 
 /* ─── Floating Badge ───────────────────────────────────── */
 function FloatingBadge({
