@@ -101,9 +101,9 @@ export async function GET(request: Request) {
       );
     }
 
-    const rootFolder =
-      env.bunny.defaultFolder?.trim() || "educational-platform";
-    const videoFiles = await collectVideoFiles(rootFolder);
+    // Search from the storage zone root to find hero videos
+    // Files are expected in a "Hero Video" folder at root level
+    const videoFiles = await collectVideoFiles("");
 
     // If no videos found, provide a fallback video if configured
     if (!videoFiles.length) {

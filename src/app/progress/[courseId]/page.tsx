@@ -104,9 +104,10 @@ export default function ProgressPage() {
   return (
     <>
       <ConfettiEffect active={showConfetti} duration={4000} />
-      <div className="min-h-screen bg-[#0a0604]">
+      <div className="min-h-screen bg-[#0a0a0a]">
         {/* Header */}
-        <div className="bg-[#0a0604] text-white relative overflow-hidden">\n        <div className=\"absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#a30000]/8 rounded-full blur-[80px] pointer-events-none\" />
+        <div className="bg-[#0a0a0a] text-white relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#dc2626]/8 rounded-full blur-[80px] pointer-events-none" />
           <div className="max-w-4xl mx-auto px-4 py-8">
             <motion.h1
               className="text-2xl font-bold"
@@ -129,7 +130,7 @@ export default function ProgressPage() {
                     percentage={data.stats.progressPercentage}
                     size={120}
                     strokeWidth={10}
-                    color={isComplete ? "#22c55e" : "#a30000"}
+                    color={isComplete ? "#22c55e" : "#dc2626"}
                   >
                     <div className="text-center">
                       <span

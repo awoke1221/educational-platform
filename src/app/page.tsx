@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import ComingSoonForm from "@/components/ComingSoonForm";
+import { useHeroVideo } from "@/lib/hooks/useHeroVideo";
+
+// ⚡ Lazy-load below-the-fold components for faster initial render
+const ComingSoonForm = dynamic(() => import("@/components/ComingSoonForm"), {
+  ssr: false,
+});
 
 const LAUNCH_DATE =
   process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00";
@@ -87,14 +93,96 @@ const videoVariants = {
   },
 };
 
+// ─── Rotating Text Component (Typewriter Effect) ──────
+function RotatingText({ phrases }: { phrases: string[] }) {
+  const [index, setIndex] = useState(0);
+  const [text, setText] = useState("");
+  const [phase, setPhase] = useState<"typing" | "dots" | "waiting">("typing");
+  const dotRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [dots, setDots] = useState("");
+
+  // Typewriter effect
+  useEffect(() => {
+    const fullText = phrases[index];
+    let charIndex = 0;
+    setText("");
+    setPhase("typing");
+    setDots("");
+
+    const typingInterval = setInterval(
+      () => {
+        charIndex++;
+        if (charIndex <= fullText.length) {
+          setText(fullText.slice(0, charIndex));
+        } else {
+          clearInterval(typingInterval);
+          setPhase("dots");
+        }
+      },
+      60 + Math.random() * 40,
+    ); // Varied typing speed for realism
+
+    return () => clearInterval(typingInterval);
+  }, [index, phrases]);
+
+  // Blinking dots after typing
+  useEffect(() => {
+    if (phase !== "dots") {
+      setDots("");
+      return;
+    }
+
+    let dotCount = 0;
+    const dotInterval = setInterval(() => {
+      dotCount = (dotCount + 1) % 4;
+      setDots(".".repeat(dotCount));
+    }, 400);
+
+    // After showing dots for 1.5s, move to next phrase
+    const nextTimeout = setTimeout(() => {
+      clearInterval(dotInterval);
+      setPhase("waiting");
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % phrases.length);
+      }, 300);
+    }, 1500);
+
+    return () => {
+      clearInterval(dotInterval);
+      clearTimeout(nextTimeout);
+    };
+  }, [phase]);
+
+  return (
+    <div className="h-14 sm:h-16 md:h-20 flex items-center justify-center overflow-hidden">
+      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight font-mono tracking-wide">
+        <span className="bg-gradient-to-r from-[#7f1d1d] via-[#dc2626] to-[#ef4444] bg-clip-text text-transparent">
+          {text}
+          <motion.span
+            animate={{ opacity: [1, 0] }}
+            transition={{
+              duration: 0.6,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+            className="inline-block w-[2px] h-[1em] bg-[#ef4444] ml-0.5 align-middle"
+          />
+        </span>
+      </h1>
+    </div>
+  );
+}
+
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [proxyUrl, setProxyUrl] = useState<string | null>(null);
-  const [videoType, setVideoType] = useState("mp4");
-  const [videoPoster, setVideoPoster] = useState("");
-  const [videoLoaded, setVideoLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { heroVideo, heroLoading } = useHeroVideo();
+
+  const videoUrl = heroVideo?.videoUrl ?? null;
+  const proxyUrl = heroVideo?.proxyUrl ?? null;
+  const videoType = heroVideo?.type ?? "mp4";
+  const videoPoster = heroVideo?.poster ?? "";
+  const videoLoaded = !heroLoading;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 100);
@@ -102,30 +190,8 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Fetch hero video on mount
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/bunny/hero-video")
-      .then((r) => r.json())
-      .then((json) => {
-        if (!cancelled && json.success && json.data) {
-          setVideoUrl(json.data.videoUrl);
-          setProxyUrl(json.data.proxyUrl || null);
-          setVideoType(json.data.type || "mp4");
-          setVideoPoster(json.data.poster || "");
-          setVideoLoaded(true);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setVideoLoaded(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   // Handle CDN failure - fallback to proxy
-  const handleVideoError = () => {
+  const handleVideoError = useCallback(() => {
     const video = videoRef.current;
     if (!video || !proxyUrl) return;
     const sources = video.getElementsByTagName("source");
@@ -133,7 +199,81 @@ export default function Home() {
       sources[0].remove();
       video.load();
     }
-  };
+  }, [proxyUrl]);
+
+  // Memoize video player to prevent re-renders from destroying the <video> element
+  const videoPlayerContent = useMemo(() => {
+    if (!videoLoaded) {
+      return (
+        <div className="w-full aspect-video flex items-center justify-center bg-black/60">
+          <div className="flex flex-col items-center gap-3">
+            <motion.div
+              className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+            <span className="text-white/40 text-xs animate-pulse">
+              Loading video...
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    if (videoUrl) {
+      return (
+        <div className="relative w-full aspect-video bg-black">
+          <video
+            ref={videoRef}
+            className="w-full h-full"
+            controls
+            playsInline
+            preload="auto"
+            poster={videoPoster}
+            onError={handleVideoError}
+          >
+            {/* 🐰 Primary: Direct Bunny CDN */}
+            <source src={videoUrl} type={`video/${videoType}`} />
+            {/* 🔄 Fallback: Proxy through server when CDN blocked */}
+            {proxyUrl && <source src={proxyUrl} type={`video/${videoType}`} />}
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-full aspect-video flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm">
+        <div className="text-center">
+          <svg
+            className="w-12 h-12 mx-auto mb-2 opacity-40"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
+            />
+          </svg>
+          Video unavailable
+        </div>
+      </div>
+    );
+  }, [
+    videoLoaded,
+    videoUrl,
+    proxyUrl,
+    videoType,
+    videoPoster,
+    handleVideoError,
+  ]);
 
   return (
     <div>
@@ -204,32 +344,34 @@ export default function Home() {
             initial="hidden"
             animate="visible"
           >
-            {/* Title & Description */}
+            {/* Title & Rotating Text */}
             <motion.div
               className="text-center max-w-3xl"
               variants={itemVariants}
             >
-              <motion.h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4"
-                initial={{ opacity: 0, y: 20 }}
+              {/* Static top title - always visible, larger than rotating text */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="mb-4"
               >
-                ከ6 ሚሊዮን በላይ ሰዎች የሚያውቁት{" "}
-                <span className="bg-gradient-to-r from-[#7f1d1d] via-[#dc2626] to-[#ef4444] bg-clip-text text-transparent">
-                  የፐርሰናል ብራንዲንግ
-                </span>{" "}
-                እና TikTok እድገት ባለሙያ
-              </motion.h1>
-              <motion.p
-                className="text-base sm:text-lg text-white/80 mb-8 max-w-xl mx-auto leading-relaxed"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                ቢሊዮኖች እይታዎችን ያመጡ ስልቶችን ይማሩ፣ ብራንድዎን ይገንቡ፣ እና ሰዎች ሊረሱት የማይችሉት ሰው
-                ይሁኑ።
-              </motion.p>
+                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-tight text-white leading-tight whitespace-nowrap">
+                  Adonay TikTok Academy
+                </h1>
+              </motion.div>
+
+              {/* Rotating text */}
+              <RotatingText
+                phrases={[
+                  "# ከ6 M+ followers",
+                  "የፐርሰናል ብራንዲንግ Expert",
+                  "Top TikTok",
+                  "Learn",
+                  "Create",
+                  "Go Viral",
+                ]}
+              />
             </motion.div>
 
             {/* Video Player with animated gradient border */}
@@ -238,63 +380,7 @@ export default function Home() {
               variants={videoVariants}
               whileHover={{ scale: 1.01 }}
             >
-              {!videoLoaded ? (
-                <div className="w-full aspect-video flex items-center justify-center bg-black/60">
-                  <div className="flex flex-col items-center gap-3">
-                    <motion.div
-                      className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                    <span className="text-white/40 text-xs animate-pulse">
-                      Loading video...
-                    </span>
-                  </div>
-                </div>
-              ) : videoUrl ? (
-                <div className="relative w-full aspect-video bg-black">
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full"
-                    controls
-                    playsInline
-                    preload="auto"
-                    poster={videoPoster}
-                    onError={handleVideoError}
-                  >
-                    {/* 🐰 Primary: Direct Bunny CDN */}
-                    <source src={videoUrl} type={`video/${videoType}`} />
-                    {/* 🔄 Fallback: Proxy through server when CDN blocked */}
-                    {proxyUrl && (
-                      <source src={proxyUrl} type={`video/${videoType}`} />
-                    )}
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-              ) : (
-                <div className="w-full aspect-video flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm">
-                  <div className="text-center">
-                    <svg
-                      className="w-12 h-12 mx-auto mb-2 opacity-40"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
-                      />
-                    </svg>
-                    Video unavailable
-                  </div>
-                </div>
-              )}
+              {videoPlayerContent}
             </motion.div>
 
             {/* ── Coming Soon Section ───────────────── */}

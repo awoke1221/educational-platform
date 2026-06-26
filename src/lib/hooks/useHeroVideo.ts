@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 
 const CACHE_KEY = "hero-video-cache";
 const PLAYBACK_KEY = "hero-video-playback";
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes in ms
+const FETCHED_KEY = "hero-video-fetched"; // guards against StrictMode double-fetch
 
 interface HeroVideoData {
   videoUrl: string;
@@ -38,19 +40,35 @@ export function useHeroVideo() {
   const [heroVideo, setHeroVideo] = useState<HeroVideoData | null>(null);
   const [heroLoading, setHeroLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  // Guard against React StrictMode double-invocation in dev
+  const fetchedRef = useRef(false);
 
   // Fetch / restore cached video data
   useEffect(() => {
+    // Prevent double-fetch caused by React StrictMode (dev only)
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     let cancelled = false;
 
-    // Clear stale cache to force fresh fetch
-    sessionStorage.removeItem(CACHE_KEY);
+    // Check cache first — skip network if valid
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const entry: CacheEntry = JSON.parse(cached);
+        if (Date.now() - entry.timestamp < CACHE_TTL) {
+          setHeroVideo(entry.data);
+          setHeroLoading(false);
+          return; // ✅ Cache hit — no fetch needed
+        }
+      }
+    } catch {
+      // Corrupt cache — ignore, will re-fetch
+    }
 
     (async () => {
       try {
-        // Fetch from API
         const res = await fetch("/api/bunny/hero-video");
-
         if (res.ok) {
           const contentType = res.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -58,7 +76,7 @@ export function useHeroVideo() {
             if (!cancelled) {
               if (json.success && json.data) {
                 setHeroVideo(json.data);
-                // Store in sessionStorage
+                // Store in sessionStorage with timestamp
                 const entry: CacheEntry = {
                   data: json.data,
                   timestamp: Date.now(),

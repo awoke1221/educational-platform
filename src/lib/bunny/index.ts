@@ -353,7 +353,11 @@ export class BunnyService {
     if (!env.bunny.accessKey)
       throw new Error("Bunny access key not configured");
 
-    const endpoint = buildStorageEndpoint(normalizePath(path));
+    // Don't use normalizePath here — it replaces spaces with dashes,
+    // but Bunny Storage supports spaces in folder/file names.
+    // The buildStorageEndpoint function handles URL-encoding correctly.
+    const cleaned = path.replace(/^\/+/, "");
+    const endpoint = buildStorageEndpoint(cleaned);
     const response = await fetch(`${endpoint}/`, {
       method: "GET",
       headers: getAuthHeaders(),

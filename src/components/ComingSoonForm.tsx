@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, type Variants, AnimatePresence } from "framer-motion";
 import ComingSoonCountdown from "./ComingSoonCountdown";
 
 // ─── Types ───────────────────────────────────────────────
@@ -26,7 +26,11 @@ interface FormState {
 
 const fadeSlideUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" as const },
+  },
   exit: { opacity: 0, y: -10, transition: { duration: 0.25 } },
 };
 
@@ -313,7 +317,7 @@ export default function ComingSoonForm({
         )}
 
         {/* ── FORM: Dynamic based on location ─────────── */}
-        {step === "form" && (
+        {["form", "submitting"].includes(step) && (
           <motion.div
             key="form"
             variants={fadeSlideUp}
