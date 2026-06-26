@@ -205,7 +205,7 @@ export default function Home() {
   const videoPlayerContent = useMemo(() => {
     if (!videoLoaded) {
       return (
-        <div className="w-full aspect-video flex items-center justify-center bg-black/60">
+        <div className="w-full max-h-[80vh] flex items-center justify-center bg-black/60" style={{ aspectRatio: 'auto' }}>
           <div className="flex flex-col items-center gap-3">
             <motion.div
               className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full"
@@ -226,10 +226,10 @@ export default function Home() {
 
     if (videoUrl) {
       return (
-        <div className="relative w-full aspect-video bg-black">
+        <div className="relative w-full max-h-[80vh] bg-black flex items-center justify-center">
           <video
             ref={videoRef}
-            className="w-full h-full"
+            className="w-full h-full max-h-[80vh] object-contain"
             controls
             playsInline
             preload="auto"
@@ -247,7 +247,7 @@ export default function Home() {
     }
 
     return (
-      <div className="w-full aspect-video flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm">
+      <div className="w-full max-h-[80vh] flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm" style={{ aspectRatio: 'auto' }}>
         <div className="text-center">
           <svg
             className="w-12 h-12 mx-auto mb-2 opacity-40"
