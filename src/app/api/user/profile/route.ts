@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
 import { updateProfileSchema } from "@/lib/validators/schemas";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -26,19 +26,49 @@ export async function GET(request: NextRequest) {
       return errorResponse("Unauthorized", 401);
     }
 
-    const { data: user, error } = await supabaseAdmin!
+    // Try by id first (fast path), then fall back to email for legacy
+    // users whose User.id doesn't match their Supabase Auth ID.
+    let { data: user, error } = await supabaseAdmin!
       .from("User")
       .select(
-        "id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt, pendingReceiptUrl, paymentMethod, paymentStatus",
+        `id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt,
+         UserRegistration (
+           pendingReceiptUrl, paymentMethod, paymentStatus
+         )`,
       )
       .eq("id", auth.userId)
-      .single();
+      .maybeSingle();
+
+    if (!user && !error && auth.email) {
+      // Fallback: look up by email for legacy records with mismatched IDs
+      const result = await supabaseAdmin!
+        .from("User")
+        .select(
+          `id, username, email, fullName, phoneNumber, profileImage, role, isActive, lastLogin, loginCount, createdAt,
+           UserRegistration (
+             pendingReceiptUrl, paymentMethod, paymentStatus
+           )`,
+        )
+        .eq("email", auth.email.toLowerCase())
+        .maybeSingle();
+      user = result.data;
+      error = result.error;
+    }
 
     if (error || !user) {
       return errorResponse("User not found", 404);
     }
 
-    return successResponse(user, "Profile retrieved successfully");
+    // Flatten the nested UserRegistration data into the response
+    const { UserRegistration: reg, ...profile } = user as any;
+    const flattened = {
+      ...profile,
+      pendingReceiptUrl: reg?.pendingReceiptUrl ?? null,
+      paymentMethod: reg?.paymentMethod ?? null,
+      paymentStatus: reg?.paymentStatus ?? "none",
+    };
+
+    return successResponse(flattened, "Profile retrieved successfully");
   } catch (error) {
     console.error("[GET PROFILE ERROR]", error);
     return errorResponse("Failed to retrieve profile", 500);
@@ -114,4 +144,3 @@ export async function PUT(request: NextRequest) {
     return errorResponse("Failed to update profile", 500);
   }
 }
-

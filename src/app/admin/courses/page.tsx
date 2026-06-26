@@ -60,7 +60,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <div className="bg-surface rounded-xl p-4 shadow-sm border border-surface/50">
       <p className="text-xs text-gray-500 mb-1">{label}</p>
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
     </div>
@@ -353,7 +353,7 @@ export default function AdminCoursesPage() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <div className="bg-surface rounded-xl shadow-sm border border-surface/50 p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <form onSubmit={handleSearch} className="flex-1 flex gap-2">
@@ -381,7 +381,7 @@ export default function AdminCoursesPage() {
             </div>
             <button
               type="submit"
-              className="bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
+              className="bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-4 py-2 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#a30000]/20 hover:-translate-y-0.5 transition-all duration-300"
             >
               Search
             </button>
@@ -403,7 +403,7 @@ export default function AdminCoursesPage() {
                 }}
                 className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   statusFilter === f.value
-                    ? "bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white"
+                    ? "bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -415,7 +415,7 @@ export default function AdminCoursesPage() {
       </div>
 
       {/* Courses Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-surface rounded-xl shadow-sm border border-surface/50 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
@@ -448,7 +448,7 @@ export default function AdminCoursesPage() {
             </p>
             <Link
               href="/admin/courses/new"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#a30000]/20 hover:-translate-y-0.5 transition-all duration-300"
             >
               <svg
                 className="w-4 h-4"
@@ -546,7 +546,7 @@ export default function AdminCoursesPage() {
                 <div className="md:col-span-2 flex flex-wrap justify-end gap-2">
                   <Link
                     href={`/admin/courses/${course.id}`}
-                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-3 py-2 rounded-lg text-xs font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300 shadow-sm"
+                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-3 py-2 rounded-lg text-xs font-medium hover:shadow-lg hover:shadow-[#a30000]/20 hover:-translate-y-0.5 transition-all duration-300 shadow-sm"
                     title="Manage course - add lectures, upload videos, edit settings"
                   >
                     <svg

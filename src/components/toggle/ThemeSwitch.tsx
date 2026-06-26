@@ -28,7 +28,7 @@ export default function ThemeSwitch({
 
   if (labeled) {
     return (
-      <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-white/5 border border-[#c9952a]/10">
+      <div className="flex items-center justify-between px-3 py-3 rounded-xl bg-white/5 border border-[#a30000]/10">
         <span className="text-sm font-medium text-white/70">
           {isDark ? "🌙 Dark Mode" : "☀️ Light Mode"}
         </span>
@@ -43,7 +43,7 @@ export default function ThemeSwitch({
           {/* Track */}
           <motion.span
             className="absolute inset-0 rounded-full"
-            animate={{ backgroundColor: isDark ? "#c9952a" : "#e2e8f0" }}
+            animate={{ backgroundColor: isDark ? "#a30000" : "#e2e8f0" }}
             transition={{ duration: 0.2 }}
           />
           {/* Knob */}

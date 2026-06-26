@@ -251,35 +251,110 @@ function TextTestimonialsSection() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {textTestimonials.map((testimonial) => (
-        <div
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+      {textTestimonials.map((testimonial, idx) => (
+        <motion.div
           key={testimonial.id}
-          className="group bg-gradient-to-br from-white to-surface rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-border-light hover:border-primary"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: idx * 0.1 }}
+          whileHover={{ y: -4 }}
+          className="group relative"
         >
-          <div className="flex items-center gap-1 mb-3">
-            {[...Array(5)].map((_, i) => (
-              <svg
-                key={i}
-                className={`w-4 h-4 ${i < testimonial.rating ? "text-secondary" : "text-gray-300"}`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
-          <p className="text-text-muted text-sm leading-relaxed mb-4 italic">
-            "{testimonial.text}"
-          </p>
-          <div className="border-t border-border-light pt-4">
-            <p className="font-semibold text-primary">{testimonial.name}</p>
-            <p className="text-xs text-primary font-medium">
-              {testimonial.title}
+          {/* Glow on hover */}
+          <div className="absolute -inset-0.5 bg-gradient-to-br from-[#dc2626]/20 via-transparent to-[#ef4444]/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+          <div className="relative bg-gradient-to-br from-white/[0.05] to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-7 hover:border-[#dc2626]/30 transition-all duration-500 h-full">
+            {/* Rating */}
+            <div className="flex items-center gap-1 mb-4">
+              {[...Array(5)].map((_, i) => (
+                <motion.svg
+                  key={i}
+                  className={`w-4 h-4 ${i < testimonial.rating ? "text-[#ef4444]" : "text-white/10"}`}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: 0.1 + i * 0.05 }}
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </motion.svg>
+              ))}
+            </div>
+
+            {/* Quote icon */}
+            <svg
+              className="w-6 h-6 text-[#dc2626]/30 mb-2"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+            </svg>
+
+            <p className="text-white/60 text-sm leading-relaxed mb-5 italic">
+              "{testimonial.text}"
             </p>
-            <p className="text-xs text-text-muted">{testimonial.company}</p>
+
+            {/* Author */}
+            <div className="border-t border-white/10 pt-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#7f1d1d] to-[#dc2626] flex items-center justify-center text-white text-sm font-bold">
+                  {testimonial.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-semibold text-white text-sm">
+                    {testimonial.name}
+                  </p>
+                  <p className="text-xs text-white/40">
+                    {testimonial.title} — {testimonial.company}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom accent */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#dc2626]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-center rounded-full" />
           </div>
-        </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Particle Field ─────────────────────────────────────
+function ParticleField({ count = 20 }: { count?: number }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted)
+    return (
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" />
+    );
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {Array.from({ length: count }, (_, i) => (
+        <motion.div
+          key={i}
+          className={`absolute rounded-full bg-white/10 blur-[1px]`}
+          style={{
+            left: `${(i * 19 + 5) % 100}%`,
+            top: `${(i * 13 + 11) % 100}%`,
+            width: 2 + (i % 3) * 2,
+            height: 2 + (i % 3) * 2,
+          }}
+          animate={{
+            y: [0, -20 - (i % 8), 0],
+            opacity: [0.1, 0.35, 0.1],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 4 + (i % 4),
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: (i % 6) * 0.3,
+          }}
+        />
       ))}
     </div>
   );
@@ -945,33 +1020,42 @@ export default function TestimonialsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-gray-900">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Hero Banner */}
-      <section className="relative bg-gradient-to-br from-primary via-primary-light to-secondary overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl"
-            animate={{ y: [0, -15, 0] }}
-            transition={{ duration: 8, repeat: Infinity }}
-          />
-          <motion.div
-            className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-secondary/10 blur-3xl"
-            animate={{ y: [0, 15, 0] }}
-            transition={{ duration: 10, repeat: Infinity }}
-          />
+      <section className="relative bg-[#0a0a0a] overflow-hidden">
+        {/* Particles & Orbs */}
+        <ParticleField count={25} />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <motion.div className="absolute -top-40 -right-40 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-[#dc2626]/8 to-[#ef4444]/3 blur-3xl animate-orb" />
+          <motion.div className="absolute -bottom-32 -left-32 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#7f1d1d]/10 to-transparent blur-3xl animate-orb-slow" />
+          <motion.div className="absolute top-1/4 right-1/4 w-20 h-20 rounded-full border border-[#dc2626]/10 animate-spin-slow" />
         </div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#dc2626]/8 rounded-full blur-[100px] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center max-w-3xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-[#ef4444]/20 text-white/70 text-xs font-semibold px-4 py-1.5 rounded-full mb-4">
+                <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                Real Results from Real Students
+              </span>
+            </motion.div>
             <motion.h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              Student Testimonials
+              Student{" "}
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
+                Testimonials
+              </span>
             </motion.h1>
             <motion.p
-              className="text-base sm:text-lg text-white/90 mb-8 max-w-xl mx-auto"
+              className="text-base sm:text-lg text-white/70 mb-8 max-w-xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -987,41 +1071,41 @@ export default function TestimonialsPage() {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent drop-shadow-lg">
                   6M+
                 </div>
-                <div className="text-xs sm:text-sm text-white/80 mt-1">
+                <div className="text-xs sm:text-sm text-white/50 mt-1">
                   followers built
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent drop-shadow-lg">
                   1.3B+
                 </div>
-                <div className="text-xs sm:text-sm text-white/80 mt-1">
+                <div className="text-xs sm:text-sm text-white/50 mt-1">
                   views generated
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent drop-shadow-lg">
                   1,000+
                 </div>
-                <div className="text-xs sm:text-sm text-white/80 mt-1">
+                <div className="text-xs sm:text-sm text-white/50 mt-1">
                   students trained
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent drop-shadow-lg">
                   🏆 2025
                 </div>
-                <div className="text-xs sm:text-sm text-white/80 mt-1">
+                <div className="text-xs sm:text-sm text-white/50 mt-1">
                   TikToker of the Year
                 </div>
               </div>
             </motion.div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0a0604] to-transparent" />
       </section>
 
       {/* Tab Navigation */}

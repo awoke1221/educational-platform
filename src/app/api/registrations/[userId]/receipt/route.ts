@@ -93,13 +93,40 @@ export async function POST(
       );
     }
 
-    // ── Persist receipt info on the User record ──
+    // ── Persist receipt info on the UserRegistration record ──
+    const { data: existingReg } = await supabaseAdmin!
+      .from("UserRegistration")
+      .select("id")
+      .eq("userId", userId)
+      .maybeSingle();
+
+    if (existingReg) {
+      await supabaseAdmin!
+        .from("UserRegistration")
+        .update({
+          pendingReceiptUrl: uploadResult.publicUrl,
+          paymentMethod: paymentChannel || paymentMethod || "telebirr",
+          paymentStatus: "pending",
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("id", existingReg.id);
+    } else {
+      await supabaseAdmin!.from("UserRegistration").insert({
+        id: crypto.randomUUID(),
+        userId,
+        pendingReceiptUrl: uploadResult.publicUrl,
+        paymentMethod: paymentChannel || paymentMethod || "telebirr",
+        paymentStatus: "pending",
+        submittedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // Also update User name/phone
     const { error: updateError } = await supabaseAdmin!
       .from("User")
       .update({
-        pendingReceiptUrl: uploadResult.publicUrl,
-        paymentMethod: paymentChannel || paymentMethod,
-        paymentStatus: "submitted",
         fullName: fullName.trim(),
         phoneNumber: phoneNumber.trim(),
       })
@@ -217,6 +244,12 @@ export async function POST(
           .eq("enrollmentId", enrollment.id)
           .maybeSingle();
 
+        // Map front-end payment channel values to database-allowed values.
+        // Allowed: telebirr, cb_birr, bank_transfer, laki_pay
+        const dbPaymentMethod = (paymentChannel || paymentMethod || "telebirr")
+          .replace("paypal", "laki_pay")
+          .replace("creditcard", "laki_pay");
+
         const paymentData = {
           enrollmentId: enrollment.id,
           userId,
@@ -224,7 +257,7 @@ export async function POST(
           amount: course.price || 0,
           currency: course.currency || "ETB",
           paymentType: paymentMethod || "local",
-          paymentMethod: paymentChannel || paymentMethod || "telebirr",
+          paymentMethod: dbPaymentMethod,
           status: "pending",
           transactionId: transactionId || null,
           receiptScreenshotUrl: uploadResult.publicUrl,

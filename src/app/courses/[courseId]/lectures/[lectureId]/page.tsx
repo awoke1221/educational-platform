@@ -13,6 +13,7 @@ import {
   markLectureCompleted,
   isLectureCompleted,
 } from "@/lib/utils/videoPersistence";
+import { formatDuration } from "@/lib/utils/common";
 import {
   isCacheAvailable,
   isVideoUrl,
@@ -34,6 +35,8 @@ interface LectureDetail {
   cloudinaryPublicId: string | null;
   streamingUrl: string | null;
   signedVideoUrl: string | null;
+  cdnVideoUrl: string | null;
+  /** @deprecated Use cdnVideoUrl instead — proxy removed in favor of direct CDN */
   proxiedVideoUrl: string | null;
   isPublished: boolean;
   courseId: string;
@@ -216,7 +219,11 @@ export default function LecturePlayerPage() {
         // Process enrollment
         if (!admin) {
           const enrData = enrResult.data;
-          const items = enrData.data?.data || enrData.data || [];
+          const items =
+            enrData.data?.data?.data ||
+            enrData.data?.data ||
+            enrData.data ||
+            [];
           const activeEnrollment = items.some(
             (e: any) =>
               (e.courseId || e.course?.id) === courseId &&
@@ -268,7 +275,7 @@ export default function LecturePlayerPage() {
 
   // ============================================
   // Preload next lecture video when current one is playing
-  // Uses the same video proxy pattern as the hero video
+  // Uses direct Bunny CDN URL (served from nearest edge PoP)
   // ============================================
 
   useEffect(() => {
@@ -278,15 +285,17 @@ export default function LecturePlayerPage() {
     const next = lectures.lectures.find((l) => l.id === nextLecture.id);
     if (!next) return;
 
-    // Build the proxy URL from the Bunny storage path (same pattern as hero video)
+    // Get the CDN URL for preloading
     const storagePath = next.cloudinaryPublicId || next.videoUrl || "";
     if (!storagePath) return;
 
     // Wait until user is past 50% of the current video, then preload next
     if (!duration || currentTime / duration < 0.5) return;
 
-    // Build video proxy URL (same pattern as hero video)
-    const nextSrc = `/api/bunny/video-proxy?path=${encodeURIComponent(storagePath)}`;
+    // Use direct CDN URL — Bunny serves from nearest global edge PoP
+    const nextSrc = storagePath.startsWith("http")
+      ? storagePath
+      : `/api/bunny/video-proxy?path=${encodeURIComponent(storagePath)}`;
     if (isCacheAvailable()) {
       preloadVideo(nextSrc);
     }
@@ -425,9 +434,9 @@ export default function LecturePlayerPage() {
 
     // Cache the video in the background for future plays
     const video = videoRef.current;
-    // Same priority as the video src: proxied > signed > streaming > raw
+    // Priority: cdnVideoUrl (direct CDN edge) > streaming > raw
     const src =
-      lecture?.proxiedVideoUrl ||
+      lecture?.cdnVideoUrl ||
       lecture?.signedVideoUrl ||
       lecture?.streamingUrl ||
       lecture?.videoUrl ||
@@ -712,7 +721,7 @@ export default function LecturePlayerPage() {
               <>
                 <Link
                   href="/auth/login"
-                  className="bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
+                  className="bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
                 >
                   ግባ
                 </Link>
@@ -768,7 +777,7 @@ export default function LecturePlayerPage() {
           <p className="text-gray-400 mb-6">ይህን ቪዲዮ ለማየት በመጀመሪያ ለኮርሱ ይመዝገቡ።</p>
           <Link
             href={`/courses/${courseId}`}
-            className="bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
+            className="bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
           >
             ወደ ኮርሱ ተመለስ
           </Link>
@@ -782,16 +791,30 @@ export default function LecturePlayerPage() {
   // ============================================
 
   const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
-  // Priority: proxied (same origin, no CDN/CORS issues) > signed > streaming > raw
-  // The video proxy (/api/bunny/video-proxy) uses the same approach as the hero video —
-  // it serves video through our server with HTTP Range (byte-serving), avoiding all
-  // Bunny CDN token auth issues, CORS/ORB blocking, and works reliably on Vercel.
+  // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
+  // No proxy through Vercel: lower latency, zero bandwidth cost, no timeout limits.
+  // Token-authenticated signed URLs ensure secure access.
   const videoUrl =
-    lecture.proxiedVideoUrl ||
+    lecture.cdnVideoUrl ||
     lecture.signedVideoUrl ||
     lecture.streamingUrl ||
+    lecture.proxiedVideoUrl ||
     lecture.videoUrl ||
     "";
+
+  // Determine video MIME type from URL extension
+  const videoType = (() => {
+    const ext = videoUrl.split(".").pop()?.split("?")[0]?.toLowerCase();
+    const mimeMap: Record<string, string> = {
+      mp4: "video/mp4",
+      webm: "video/webm",
+      ogv: "video/ogg",
+      ogg: "video/ogg",
+      mov: "video/quicktime",
+      m3u8: "application/x-mpegURL",
+    };
+    return mimeMap[ext || ""] || "video/mp4";
+  })();
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -893,7 +916,6 @@ export default function LecturePlayerPage() {
             <video
               ref={videoRef}
               className="w-full aspect-video cursor-pointer relative z-10"
-              src={videoUrl}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onPlay={handlePlay}
@@ -904,7 +926,15 @@ export default function LecturePlayerPage() {
               onClick={togglePlay}
               playsInline
               preload="metadata"
-            />
+            >
+              {/* 🐰 Primary: Direct Bunny CDN (nearest edge PoP) */}
+              <source src={videoUrl} type={videoType} />
+              {/* 🔄 Fallback: Proxy through server when CDN blocked by CORS/ORB */}
+              {lecture.proxiedVideoUrl && (
+                <source src={lecture.proxiedVideoUrl} type={videoType} />
+              )}
+              Your browser does not support the video tag.
+            </video>
 
             {/* Buffering indicator */}
             <AnimatePresence>
@@ -998,7 +1028,7 @@ export default function LecturePlayerPage() {
                     [&::-moz-range-thumb]:bg-secondary [&::-moz-range-thumb]:rounded-full
                     [&::-moz-range-thumb]:border-0"
                   style={{
-                    background: `linear-gradient(to right, #C9952A ${progress}%, rgba(75,85,99,0.5) ${progress}%)`,
+                    background: `linear-gradient(to right, #a30000 ${progress}%, rgba(75,85,99,0.5) ${progress}%)`,
                   }}
                 />
                 {/* Time tooltip on hover */}
@@ -1457,7 +1487,7 @@ export default function LecturePlayerPage() {
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-gray-400 dark:text-gray-500">
-                          {lec.duration || 0} ደቂቃ
+                          {formatDuration(lec.duration)}
                         </span>
                         {lecCompleted && (
                           <span className="text-xs text-green-500">ተጠናቋል</span>

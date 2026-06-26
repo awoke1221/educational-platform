@@ -1,14 +1,18 @@
 // ============================================
 // ⭐ Course Reviews API
 // ============================================
-// GET  /api/reviews?courseId=...  - List reviews for a course
-// POST /api/reviews               - Submit a review
+// GET  /api/reviews?courseId=...  - List reviews for a course (public)
+// POST /api/reviews               - Submit a review (authenticated)
 // ============================================
+//
+// GET uses admin client (public read — no RLS needed for approved reviews).
+// POST uses the user-scoped client so RLS enforces userId matching.
 
 import { NextRequest } from "next/server";
 import crypto from "node:crypto";
 import { verifyAuth } from "@/lib/auth/middleware";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { getUserClientFromRequest } from "@/lib/db/supabaseUserClient";
 import {
   successResponse,
   errorResponse,
@@ -16,14 +20,15 @@ import {
 } from "@/lib/utils/api";
 
 // ============================================
-// GET - List reviews for a course
+// GET - List reviews for a course (public)
 // ============================================
 
 export async function GET(request: NextRequest) {
   try {
     const courseId = request.nextUrl.searchParams.get("courseId");
+    const admin = getSupabaseAdmin();
 
-    let query = supabaseAdmin!
+    let query = admin!
       .from("Review")
       .select("*, user:User(id, fullName, profileImage)")
       .eq("isApproved", true);
@@ -63,13 +68,16 @@ export async function GET(request: NextRequest) {
 }
 
 // ============================================
-// POST - Submit a review
+// POST - Submit a review (authenticated, RLS-enforced)
 // ============================================
 
 export async function POST(request: NextRequest) {
   try {
     const auth = await verifyAuth(request);
     if (!auth) return errorResponse("Unauthorized", 401);
+
+    const supabase = getUserClientFromRequest(request);
+    if (!supabase) return errorResponse("Unauthorized", 401);
 
     const body = await request.json().catch(() => null);
     if (!body) return errorResponse("Invalid JSON body", 400);
@@ -85,11 +93,10 @@ export async function POST(request: NextRequest) {
       return errorResponse("Rating must be between 1 and 5", 400);
     }
 
-    // Check if already reviewed
-    const { data: existing } = await supabaseAdmin!
+    // Check if already reviewed (user-scoped — RLS returns own reviews + approved)
+    const { data: existing } = await supabase
       .from("Review")
       .select("id")
-      .eq("userId", auth.userId)
       .eq("courseId", courseId)
       .maybeSingle();
 
@@ -97,11 +104,10 @@ export async function POST(request: NextRequest) {
       return errorResponse("You already reviewed this course", 409);
     }
 
-    // Check enrollment (must be enrolled to review)
-    const { data: enrollment } = await supabaseAdmin!
+    // Check enrollment (user-scoped — RLS returns own enrollments)
+    const { data: enrollment } = await supabase
       .from("Enrollment")
       .select("id")
-      .eq("userId", auth.userId)
       .eq("courseId", courseId)
       .eq("status", "active")
       .maybeSingle();
@@ -110,7 +116,8 @@ export async function POST(request: NextRequest) {
       return errorResponse("You must be enrolled to review this course", 403);
     }
 
-    const { data: review, error } = await supabaseAdmin!
+    // Insert review (user-scoped — RLS enforces "userId" = auth.uid())
+    const { data: review, error } = await supabase
       .from("Review")
       .insert({
         id: crypto.randomUUID(),

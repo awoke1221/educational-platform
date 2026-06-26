@@ -3,7 +3,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireRole } from "@/lib/auth/middleware";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
   successResponse,
   errorResponse,
@@ -30,7 +30,13 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin!
       .from("User")
-      .select("*", { count: "exact" })
+      .select(
+        `*,
+         UserRegistration (
+           isApproved, pendingReceiptUrl, paymentMethod, paymentStatus, submittedAt, reviewedAt, reviewedBy
+         )`,
+        { count: "exact" },
+      )
       .order("createdAt", { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
@@ -147,4 +153,3 @@ export async function PATCH(request: NextRequest) {
     return handleApiError(error);
   }
 }
-

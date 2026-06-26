@@ -41,7 +41,7 @@ function ReceiptModal({
       onClick={onClose}
     >
       <div
-        className="relative max-w-3xl max-h-[90vh] mx-4 bg-white rounded-xl shadow-2xl overflow-hidden"
+        className="relative max-w-3xl max-h-[90vh] mx-4 bg-surface rounded-xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
@@ -90,7 +90,7 @@ function ConfirmDialog({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-2xl p-6 mx-4 max-w-md w-full">
+      <div className="bg-surface rounded-xl shadow-2xl p-6 mx-4 max-w-md w-full">
         <h3 className="text-lg font-bold mb-2">{title}</h3>
         <p className="text-gray-600 mb-6">{message}</p>
         <div className="flex justify-end gap-3">
@@ -520,6 +520,7 @@ export default function AdminRegistrationsPage() {
                         username: it.fullName,
                         userId: it.id,
                         courseId: it.courseId,
+                        courseTitle: it.courseTitle,
                       })
                     }
                     disabled={isProcessing}

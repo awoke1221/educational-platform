@@ -328,7 +328,7 @@ export default function NewCoursePage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Course Cover Image */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-border-light">
+        <div className="bg-surface rounded-xl p-6 shadow-sm border border-surface/50">
           <h3 className="font-semibold text-primary mb-4">
             🖼️ Course Cover Image
           </h3>
@@ -390,7 +390,7 @@ export default function NewCoursePage() {
         </div>
 
         {/* Lectures are added from the course detail page after creation */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-border-light">
+        <div className="bg-surface rounded-xl p-6 shadow-sm border border-surface/50">
           <h3 className="font-semibold text-primary">🎥 Lectures</h3>
           <p className="text-sm text-gray-500">
             Add lectures (videos) after creating the course. You'll be
@@ -400,7 +400,7 @@ export default function NewCoursePage() {
         </div>
 
         {/* Course Details */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-border-light space-y-4">
+        <div className="bg-surface rounded-xl p-6 shadow-sm border border-surface/50 space-y-4">
           <h3 className="font-semibold text-primary mb-2">📝 Course Details</h3>
 
           <div>
@@ -598,7 +598,7 @@ export default function NewCoursePage() {
             disabled={
               loading || !form.title || Object.keys(fieldErrors).length > 0
             }
-            className="flex-1 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Creating..." : "Create Course"}
           </button>

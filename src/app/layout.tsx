@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { ThemeProvider } from "@/lib/ThemeProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import SessionKeepalive from "@/components/SessionKeepalive";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,11 +47,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ServiceWorkerRegister />
+          <SessionKeepalive />
           <Navbar />
           <main className="flex-1">{children}</main>
-          <footer className="bg-gradient-to-r from-[#0a0a0a] via-[#111111] to-[#1a1a1a] border-t border-[#c9952a]/20 py-8 sm:py-10 mt-auto">
+          <footer className="bg-gradient-to-r from-[#0a0a0a] via-[#111111] to-[#1a1a1a] border-t border-[#a30000]/20 py-8 sm:py-10 mt-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <p className="text-xs sm:text-sm bg-gradient-to-r from-[#c9952a] to-[#d4a843] bg-clip-text text-transparent font-semibold tracking-wide">
+              <p className="text-xs sm:text-sm bg-gradient-to-r from-[#a30000] to-[#d40000] bg-clip-text text-transparent font-semibold tracking-wide">
                 © 2026 Adonay TikTok Academy
               </p>
             </div>
@@ -67,8 +69,8 @@ export default function RootLayout({
                 fontWeight: 500,
               },
               success: {
-                iconTheme: { primary: "#c9952a", secondary: "#fff" },
-                style: { borderLeft: "4px solid #c9952a" },
+                iconTheme: { primary: "#a30000", secondary: "#fff" },
+                style: { borderLeft: "4px solid #a30000" },
               },
               error: {
                 style: { borderLeft: "4px solid #ef4444" },

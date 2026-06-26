@@ -25,9 +25,9 @@ import {
 } from "@/components/AnimatedSection";
 
 const COLORS = [
-  "#c9952a",
-  "#1b2a4a",
-  "#d4a843",
+  "#a30000",
+  "#d40000",
+  "#5c0000",
   "#2c3e6b",
   "#22c55e",
   "#ef4444",
@@ -215,9 +215,9 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-gray-900">
+    <div className="min-h-screen bg-[#0a0604]">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary via-primary-light to-secondary text-white">
+      <div className="bg-[#0a0604] text-white">
         <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10">
           <motion.div
             className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -254,7 +254,7 @@ export default function AdminPage() {
               </Link>
               <Link
                 href="/admin/courses/new"
-                className="text-sm bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/20 hover:-translate-y-0.5 transition-all duration-300"
+                className="text-sm bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-[#a30000]/20 hover:-translate-y-0.5 transition-all duration-300"
               >
                 ➕ New Course
               </Link>
@@ -419,7 +419,7 @@ export default function AdminPage() {
                           />
                           <Bar
                             dataKey="revenue"
-                            fill="#c9952a"
+                            fill="#a30000"
                             radius={[4, 4, 0, 0]}
                           />
                         </BarChart>

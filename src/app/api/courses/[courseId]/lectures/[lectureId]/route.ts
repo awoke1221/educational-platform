@@ -101,18 +101,20 @@ export async function GET(
 
     if (lecture && lecture.courseId === courseId) {
       let streamingUrl = null;
-      let signedVideoUrl = null;
+      let cdnVideoUrl = null;
       let proxiedVideoUrl = null;
 
       if (lecture.cloudinaryPublicId) {
-        streamingUrl = BunnyService.getStreamingUrl(lecture.cloudinaryPublicId);
-        signedVideoUrl = BunnyService.generateSignedUrl(
+        // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
+        // No proxy through Vercel: lower latency, zero bandwidth cost,
+        // no serverless timeout limits. Token auth ensures secure access.
+        cdnVideoUrl = BunnyService.generateSignedUrl(
           lecture.cloudinaryPublicId,
           { expiresIn: 86400 },
         );
+        streamingUrl = BunnyService.getStreamingUrl(lecture.cloudinaryPublicId);
 
-        // Build a video proxy URL (same pattern as hero video)
-        // This avoids all Bunny CDN token auth and CORS issues
+        // Fallback: proxy through our server when CDN token key is misconfigured
         const reqUrl = new URL(request.url);
         const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`;
         const encodedPath = encodeURIComponent(lecture.cloudinaryPublicId);
@@ -120,7 +122,7 @@ export async function GET(
       }
 
       return successResponse(
-        { ...lecture, streamingUrl, signedVideoUrl, proxiedVideoUrl },
+        { ...lecture, streamingUrl, cdnVideoUrl, proxiedVideoUrl },
         "Lecture retrieved",
       );
     }

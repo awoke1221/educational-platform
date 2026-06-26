@@ -28,7 +28,7 @@ export default function HamburgerToggle({
   isOpen,
   onClick,
   size = "md",
-  activeColor = "#c9952a",
+  activeColor = "#a30000",
   inactiveColor = "#ffffffcc",
   ariaLabel = "Toggle navigation menu",
 }: HamburgerToggleProps) {

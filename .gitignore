@@ -43,5 +43,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Supabase CLI (secrets and local auth tokens)
+supabase/.temp
+supabase/.branches
+
 .vercel
 .env*

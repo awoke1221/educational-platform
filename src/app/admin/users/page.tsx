@@ -130,7 +130,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <div className="bg-surface rounded-xl shadow-sm border border-surface/50 p-4 mb-6">
         <div className="flex flex-wrap gap-3">
           <input
             type="text"
@@ -177,7 +177,7 @@ export default function AdminUsersPage() {
       ) : users.length === 0 ? (
         <div className="text-center py-12 text-gray-500">No users found</div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-surface rounded-xl shadow-sm border border-surface/50 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

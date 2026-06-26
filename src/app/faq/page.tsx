@@ -450,7 +450,7 @@ export default function FaqPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary via-primary-dark to-primary overflow-hidden">
+    <div className="min-h-screen bg-[#0a0604] overflow-hidden">
       {/* ═══════════════ HERO SECTION ═══════════════ */}
       <section className="relative min-h-[60vh] sm:min-h-[50vh] flex items-center pt-24 pb-16 overflow-hidden">
         <ParticleField />

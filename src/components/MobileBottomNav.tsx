@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
+const LAUNCH_DATE =
+  typeof process !== "undefined"
+    ? process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00"
+    : "2026-09-01T00:00:00";
+
 interface UserInfo {
   profileImage?: string;
 }
@@ -13,6 +18,16 @@ export default function MobileBottomNav() {
   const [token, setToken] = useState<string>("");
   const [user, setUser] = useState<UserInfo | null>(null);
   const [userImageFailed, setUserImageFailed] = useState(false);
+
+  const [comingSoon, setComingSoon] = useState(true);
+
+  useEffect(() => {
+    if (LAUNCH_DATE) {
+      setComingSoon(new Date(LAUNCH_DATE).getTime() > Date.now());
+    } else {
+      setComingSoon(false);
+    }
+  }, []);
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -56,7 +71,7 @@ export default function MobileBottomNav() {
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
-          fill={active ? "#C9952A" : "none"}
+          fill={active ? "#a30000" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -75,7 +90,7 @@ export default function MobileBottomNav() {
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
-          fill={active ? "#C9952A" : "none"}
+          fill={active ? "#a30000" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -94,7 +109,7 @@ export default function MobileBottomNav() {
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
-          fill={active ? "#C9952A" : "none"}
+          fill={active ? "#a30000" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -113,7 +128,7 @@ export default function MobileBottomNav() {
       icon: (active: boolean) => (
         <svg
           className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
-          fill={active ? "#C9952A" : "none"}
+          fill={active ? "#a30000" : "none"}
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
@@ -127,8 +142,8 @@ export default function MobileBottomNav() {
       ),
     },
     {
-      path: "/dashboard",
-      label: token ? "Profile" : "Sign In",
+      path: comingSoon ? "" : "/dashboard",
+      label: comingSoon ? "Coming Soon" : token ? "Profile" : "Sign In",
       icon: (active: boolean) => {
         if (user?.profileImage && !userImageFailed) {
           return (
@@ -144,7 +159,7 @@ export default function MobileBottomNav() {
         return (
           <svg
             className={`w-6 h-6 ${active ? "text-secondary" : "text-gray-600"}`}
-            fill={active ? "#C9952A" : "none"}
+            fill={active ? "#a30000" : "none"}
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
@@ -165,7 +180,17 @@ export default function MobileBottomNav() {
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const active = isActive(item.path);
-          return (
+          return comingSoon && item.path === "" ? (
+            <span
+              key={item.label}
+              className="flex-1 flex flex-col items-center justify-center py-3 px-2 opacity-40 cursor-not-allowed"
+            >
+              {item.icon(false)}
+              <span className="text-xs mt-1 text-center text-gray-400">
+                {item.label}
+              </span>
+            </span>
+          ) : (
             <Link
               key={item.path}
               href={item.path}
@@ -177,7 +202,7 @@ export default function MobileBottomNav() {
             >
               {item.icon(active)}
               <span
-                className={`text-xs mt-1 text-center ${active ? "text-secondary font-semibold" : "text-gray-600 dark:text-gray-400"}`}
+                className={`text-xs mt-1 text-center ${active ? "text-[#a30000] font-semibold" : "text-gray-600 dark:text-gray-400"}`}
               >
                 {item.label}
               </span>

@@ -276,3 +276,16 @@ export function deepClone<T>(obj: T): T {
 
   return obj;
 }
+
+// ============================================
+// Format Duration (seconds → "X min Y sec")
+// ============================================
+
+export function formatDuration(seconds: number | undefined | null): string {
+  if (!seconds || seconds <= 0) return "0 min";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  if (mins === 0) return secs + " sec";
+  if (secs === 0) return mins + " min";
+  return mins + " min " + secs + " sec";
+}

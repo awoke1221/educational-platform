@@ -91,6 +91,21 @@ export const API_ENDPOINTS = {
 } as const;
 
 // ============================================
+// Coming Soon
+// ============================================
+
+export const COMMINGSOON_SOURCE = {
+  HOMEPAGE: "homepage",
+  COURSES: "courses",
+  REGISTER: "register",
+} as const;
+
+export const COMMINGSOON_LOCATION_TYPE = {
+  LOCAL: "local",
+  DIASPORA: "diaspora",
+} as const;
+
+// ============================================
 // HTTP Status Codes
 // ============================================
 

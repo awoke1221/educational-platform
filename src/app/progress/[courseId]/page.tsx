@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedAuthFetchJson } from "@/lib/utils/cache";
+import { formatDuration } from "@/lib/utils/common";
 import { ProgressRing } from "@/components/ProgressRing";
 import { ConfettiEffect } from "@/components/ConfettiEffect";
 import {
@@ -103,9 +104,10 @@ export default function ProgressPage() {
   return (
     <>
       <ConfettiEffect active={showConfetti} duration={4000} />
-      <div className="min-h-screen bg-surface dark:bg-gray-900">
+      <div className="min-h-screen bg-[#0a0a0a]">
         {/* Header */}
-        <div className="bg-gradient-to-br from-primary via-primary-light to-secondary text-white">
+        <div className="bg-[#0a0a0a] text-white relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#dc2626]/8 rounded-full blur-[80px] pointer-events-none" />
           <div className="max-w-4xl mx-auto px-4 py-8">
             <motion.h1
               className="text-2xl font-bold"
@@ -128,7 +130,7 @@ export default function ProgressPage() {
                     percentage={data.stats.progressPercentage}
                     size={120}
                     strokeWidth={10}
-                    color={isComplete ? "#22c55e" : "#c9952a"}
+                    color={isComplete ? "#22c55e" : "#dc2626"}
                   >
                     <div className="text-center">
                       <span
@@ -337,7 +339,7 @@ export default function ProgressPage() {
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        {lec.duration || 0} ደቂቃ
+                        {formatDuration(lec.duration)}
                       </span>
                       {lec.progress.watchPercentage > 0 && (
                         <span>{lec.progress.watchPercentage}% ተመልክቷል</span>

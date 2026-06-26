@@ -70,7 +70,7 @@ export default function SegmentedToggle<T extends string = string>({
                 className="absolute inset-0 rounded-2xl"
                 initial={false}
                 animate={{
-                  borderColor: isSelected ? "#c9952a" : "transparent",
+                  borderColor: isSelected ? "#a30000" : "transparent",
                   borderWidth: isSelected ? 2 : 0,
                 }}
                 transition={{ duration: 0.2 }}
@@ -83,7 +83,7 @@ export default function SegmentedToggle<T extends string = string>({
                     className="inline-flex h-9 w-9 rounded-full items-center justify-center text-white text-sm font-bold shrink-0"
                     animate={{
                       background: isSelected
-                        ? "linear-gradient(135deg, #c9952a, #d4a843)"
+                        ? "linear-gradient(135deg, #a30000, #d40000)"
                         : "linear-gradient(135deg, #1b2a4a, #2c3e6b)",
                     }}
                     transition={{ duration: 0.3 }}
@@ -94,7 +94,7 @@ export default function SegmentedToggle<T extends string = string>({
                     <motion.h3
                       className="font-semibold text-sm"
                       animate={{
-                        color: isSelected ? "#c9952a" : "inherit",
+                        color: isSelected ? "#a30000" : "inherit",
                       }}
                     >
                       {opt.label}

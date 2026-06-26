@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { jwtService } from "@/lib/auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth, hasRole } from "@/lib/auth/middleware";
 
 function getDb() {
   try {
@@ -12,15 +12,9 @@ function getDb() {
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify admin token
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const payload = jwtService.verifyAccessToken(token);
-    if (!payload || payload.role !== "admin") {
+    // Verify admin token via Supabase Auth
+    const auth = await verifyAuth(req);
+    if (!auth || !(await hasRole(auth, ["admin"]))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -41,18 +35,46 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Build query
-    let query = db
-      .from("User")
-      .select("*", { count: "exact" })
-      .eq("isApproved", false)
-      .eq("paymentStatus", "submitted")
-      .order("createdAt", { ascending: false })
-      .range(offset, offset + limit - 1);
+    // Build query — reads from UserRegistration, JOINs User
+    let query = db.from("UserRegistration").select(
+      `
+        id,
+        userId,
+        isApproved,
+        pendingReceiptUrl,
+        paymentMethod,
+        paymentStatus,
+        submittedAt,
+        reviewedAt,
+        reviewedBy,
+        User!userId (
+          id,
+          fullName,
+          email
+        )
+      `,
+      { count: "exact" },
+    );
+
+    // Filter by status
+    if (status === "pending") {
+      // Registrations needing admin review: submitted payment, not yet approved
+      query = query.in("paymentStatus", ["pending", "rejected"]);
+    } else if (status === "approved") {
+      query = query.eq("isApproved", true);
+    } else if (status === "all") {
+      // No extra filter
+    }
 
     if (search) {
-      query = query.or(`email.ilike.%${search}%,fullName.ilike.%${search}%`);
+      query = query.or(
+        `User.fullName.ilike.%${search}%,User.email.ilike.%${search}%`,
+      );
     }
+
+    query = query
+      .order("submittedAt", { ascending: false, nullsFirst: false })
+      .range(offset, offset + limit - 1);
 
     const { data, count, error } = await query;
 
@@ -64,10 +86,25 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Flatten the nested response for the frontend
+    const registrations = (data || []).map((item: any) => ({
+      id: item.id,
+      userId: item.userId,
+      submittedAt: item.submittedAt,
+      isApproved: item.isApproved,
+      reviewedAt: item.reviewedAt,
+      reviewedBy: item.reviewedBy,
+      pendingReceiptUrl: item.pendingReceiptUrl,
+      paymentMethod: item.paymentMethod,
+      paymentStatus: item.paymentStatus,
+      fullName: item.User?.fullName ?? null,
+      email: item.User?.email ?? null,
+    }));
+
     return NextResponse.json({
       success: true,
       data: {
-        registrations: data || [],
+        registrations,
         total: count || 0,
         page,
         limit,
@@ -85,22 +122,16 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    // Verify admin token
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const payload = jwtService.verifyAccessToken(token);
-    if (!payload || payload.role !== "admin") {
+    // Verify admin token via Supabase Auth
+    const auth = await verifyAuth(req);
+    if (!auth || !(await hasRole(auth, ["admin"]))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { userId, action } = body;
+    const { registrationId, action } = body;
 
-    if (!userId || !["approve", "reject"].includes(action)) {
+    if (!registrationId || !["approve", "reject"].includes(action)) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
@@ -112,13 +143,25 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Update user approval status
+    // Update UserRegistration approval status
     const updateData =
       action === "approve"
-        ? { isApproved: true, paymentStatus: "approved" }
-        : { paymentStatus: "rejected" };
+        ? {
+            isApproved: true,
+            paymentStatus: "approved",
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: auth?.userId || null,
+          }
+        : {
+            paymentStatus: "rejected",
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: auth?.userId || null,
+          };
 
-    const { error } = await db.from("User").update(updateData).eq("id", userId);
+    const { error } = await db
+      .from("UserRegistration")
+      .update(updateData)
+      .eq("id", registrationId);
 
     if (error) {
       console.error("[ADMIN REGISTRATIONS PATCH]", error);
@@ -126,6 +169,38 @@ export async function PATCH(req: NextRequest) {
         { error: "Failed to update registration" },
         { status: 500 },
       );
+    }
+
+    // Also update the User role to 'user' on approval if not already set
+    if (action === "approve") {
+      const { data: reg } = await db
+        .from("UserRegistration")
+        .select("userId")
+        .eq("id", registrationId)
+        .single();
+      if (reg?.userId) {
+        await db
+          .from("User")
+          .update({ role: "user", isActive: true })
+          .eq("id", reg.userId);
+
+        // Also activate all pending enrollments and payments for this user
+        const now = new Date().toISOString();
+        await db
+          .from("Enrollment")
+          .update({ status: "active", updatedAt: now })
+          .eq("userId", reg.userId)
+          .eq("status", "processing");
+        await db
+          .from("Payment")
+          .update({
+            status: "approved",
+            approvedAt: now,
+            approvedBy: auth?.userId || null,
+          })
+          .eq("userId", reg.userId)
+          .eq("status", "pending");
+      }
     }
 
     return NextResponse.json({

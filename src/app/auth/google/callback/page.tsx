@@ -21,6 +21,11 @@ export default function GoogleCallbackPage() {
     phoneNumber?: string;
     providerUserId?: string | null;
     providerIdentityId?: string | null;
+    accessToken?: string;
+    refreshToken?: string;
+    expiresIn?: number;
+    expiresAt?: number;
+    authUserId?: string;
   }) {
     setError(null);
     setStatus("Completing sign-in...");
@@ -37,6 +42,11 @@ export default function GoogleCallbackPage() {
           profileImage: payload.profileImage,
           providerUserId: payload.providerUserId,
           providerIdentityId: payload.providerIdentityId,
+          accessToken: payload.accessToken,
+          refreshToken: payload.refreshToken,
+          expiresIn: payload.expiresIn,
+          expiresAt: payload.expiresAt,
+          authUserId: payload.authUserId,
         }),
       });
 
@@ -52,6 +62,9 @@ export default function GoogleCallbackPage() {
       }
       if (data.tokens?.refreshToken) {
         localStorage.setItem("refreshToken", data.tokens.refreshToken);
+      }
+      if (data.tokens?.expiresAt != null) {
+        localStorage.setItem("tokenExpiresAt", String(data.tokens.expiresAt));
       }
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
@@ -156,6 +169,11 @@ export default function GoogleCallbackPage() {
           phoneNumber: userPhone.trim() || undefined,
           providerUserId,
           providerIdentityId,
+          accessToken: session.access_token,
+          refreshToken: session.refresh_token,
+          expiresIn: session.expires_in,
+          expiresAt: session.expires_at,
+          authUserId: session.user.id,
         };
 
         // Proceed immediately — phone is optional for Google OAuth.
@@ -174,8 +192,8 @@ export default function GoogleCallbackPage() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-surface to-white">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border-t-4 border-[#4285F4]">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-[#0a0604]">
+      <div className="w-full max-w-md bg-surface rounded-2xl shadow-lg p-8 border-t-4 border-[#4285F4]">
         <h1 className="text-2xl font-bold text-center mb-2">Google sign-in</h1>
         <p className="text-center text-sm text-primary mb-6">
           Complete your login using Google.

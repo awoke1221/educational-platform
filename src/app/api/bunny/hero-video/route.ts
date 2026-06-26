@@ -74,15 +74,24 @@ export async function GET(request: Request) {
 
       if (!storagePath) return errorResponse("Invalid path/url provided", 400);
 
-      const encodedPath = encodeURIComponent(storagePath);
+      // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
+      // No proxy through Vercel: lower latency, zero bandwidth cost.
+      const cdnUrl = BunnyService.generateSignedUrl(storagePath, {
+        expiresIn: 86400,
+      });
+
+      // Fallback proxy URL when CDN token auth key is misconfigured
       const requestUrl = new URL(request.url);
       const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-      const proxiedVideoUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedPath}`;
+      const encodedStoragePath = encodeURIComponent(storagePath);
+      const proxyUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedStoragePath}`;
+
       const type = storagePath.split(".").pop()?.toLowerCase() || "mp4";
 
       return successResponse(
         {
-          videoUrl: proxiedVideoUrl,
+          videoUrl: cdnUrl,
+          proxyUrl,
           poster: "",
           filename: storagePath.split("/").pop(),
           type,
@@ -92,9 +101,9 @@ export async function GET(request: Request) {
       );
     }
 
-    const rootFolder =
-      env.bunny.defaultFolder?.trim() || "educational-platform";
-    const videoFiles = await collectVideoFiles(rootFolder);
+    // Search from the storage zone root to find hero videos
+    // Files are expected in a "Hero Video" folder at root level
+    const videoFiles = await collectVideoFiles("");
 
     // If no videos found, provide a fallback video if configured
     if (!videoFiles.length) {
@@ -137,19 +146,25 @@ export async function GET(request: Request) {
     const { storagePath } = selected;
     const objectName =
       selected.fileInfo.ObjectName || selected.fileInfo.objectName || "";
-    const encodedStoragePath = encodeURIComponent(storagePath);
 
-    // Use the proxy endpoint to serve the video (avoids CORS/ORB blocking).
-    // The proxy now supports HTTP Range (byte-serving) so each chunk request
-    // stays well within Vercel's serverless limits.
+    // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
+    // No proxy through Vercel: lower latency, zero bandwidth cost.
+    const cdnUrl = BunnyService.generateSignedUrl(storagePath, {
+      expiresIn: 86400,
+    });
+
+    // Fallback proxy URL when CDN token auth key is misconfigured
     const requestUrl = new URL(request.url);
     const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-    const proxiedVideoUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedStoragePath}`;
+    const encodedStoragePath = encodeURIComponent(storagePath);
+    const proxyUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedStoragePath}`;
+
     const type = objectName.split(".").pop()?.toLowerCase() || "mp4";
 
     return successResponse(
       {
-        videoUrl: proxiedVideoUrl,
+        videoUrl: cdnUrl,
+        proxyUrl,
         poster: "",
         filename: objectName,
         type,

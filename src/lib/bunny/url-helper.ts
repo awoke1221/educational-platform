@@ -1,8 +1,13 @@
 // ============================================
 // 🐰 Bunny CDN URL Helpers
 // ============================================
-// Centralized utilities for converting Bunny CDN URLs
-// to local proxy URLs to avoid CORS/ORB blocking.
+// Utilities for working with Bunny CDN URLs.
+// Videos and images are served directly from Bunny's global CDN edge,
+// NOT proxied through Vercel/Next.js. This ensures:
+//  - Lowest latency (served from nearest PoP)
+//  - Zero bandwidth cost on Vercel
+//  - No serverless timeout limits
+//  - Global edge caching via Bunny's 100+ PoPs
 // ============================================
 
 /**
@@ -38,9 +43,11 @@ export function extractBunnyStoragePath(url: string): string | null {
 }
 
 /**
- * Convert a Bunny CDN URL to a local image proxy URL.
- * Uses the video-proxy endpoint (which handles all file types) to avoid
- * CORS/ORB blocking issues (ERR_BLOCKED_BY_ORB) in the browser.
+ * Convert a Bunny CDN image URL to a local proxy URL.
+ * Images are small (~150KB) and proxying them through Vercel avoids
+ * Bunny Token Auth issues without significant cost or latency impact.
+ * Videos use direct CDN URLs (with token auth) for bandwidth savings.
+ *
  * Returns the original URL if it's not a Bunny CDN URL.
  */
 export function toImageProxyUrl(url: string, baseUrl?: string): string {
@@ -57,25 +64,23 @@ export function toImageProxyUrl(url: string, baseUrl?: string): string {
 }
 
 /**
- * Convert a Bunny CDN URL to a local video proxy URL.
- * Returns the original URL if it's not a Bunny CDN URL.
+ * Return the original Bunny CDN URL unchanged.
+ * Videos are served DIRECTLY from Bunny CDN edge with signed tokens.
+ * This ensures lowest latency and zero Vercel bandwidth cost for video.
+ *
+ * Previously this converted URLs to proxy format:
+ *   /api/bunny/video-proxy?path=...
  */
-export function toVideoProxyUrl(url: string, baseUrl?: string): string {
-  if (!url || !isBunnyCdnUrl(url)) return url;
-
-  const path = extractBunnyStoragePath(url);
-  if (!path) return url;
-
-  const encodedPath = encodeURIComponent(path);
-  if (baseUrl) {
-    return `${baseUrl}/api/bunny/video-proxy?path=${encodedPath}`;
-  }
-  return `/api/bunny/video-proxy?path=${encodedPath}`;
+export function toVideoProxyUrl(url: string, _baseUrl?: string): string {
+  // Videos use direct CDN URLs (with token auth generated server-side).
+  return url;
 }
 
 /**
- * Proxify a course object: converts all Bunny CDN URLs in coverImage
- * and instructor profileImage to use local proxy endpoints.
+ * Transform a course object's image URLs for delivery.
+ * - Cover images & profile pictures → served via proxy (small files,
+ *   avoids Token Auth issues without significant cost)
+ * - Videos → passed through unchanged (use direct CDN with signed tokens)
  */
 export function proxifyCourse<
   T extends {
@@ -87,7 +92,7 @@ export function proxifyCourse<
 
   const result = { ...course };
 
-  // Proxy cover image
+  // Proxy cover image (small file, avoids Token Auth complexity)
   if ((result as any).coverImage) {
     (result as any).coverImage = toImageProxyUrl(
       (result as any).coverImage,
@@ -95,7 +100,7 @@ export function proxifyCourse<
     );
   }
 
-  // Proxy instructor profile image
+  // Proxy instructor profile image (small file)
   if (result.instructor && result.instructor.profileImage) {
     result.instructor = {
       ...result.instructor,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { requireRole } from "@/lib/auth/middleware";
+import { requireRole, verifyAuth } from "@/lib/auth/middleware";
 
 export async function POST(
   request: NextRequest,
@@ -10,6 +10,10 @@ export async function POST(
     // require admin role
     const roleErr = await requireRole(request, ["admin"]);
     if (roleErr) return roleErr;
+
+    const auth = await verifyAuth(request);
+    if (!auth)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { userId } = await params;
 
@@ -81,30 +85,44 @@ export async function POST(
         );
       }
 
+      const now = new Date().toISOString();
       const { error: userError } = await supabaseAdmin!
-        .from("User")
-        .update({ isApproved: true, paymentStatus: "approved" })
-        .eq("id", userId);
+        .from("UserRegistration")
+        .update({
+          isApproved: true,
+          paymentStatus: "approved",
+          reviewedAt: now,
+          reviewedBy: auth.userId,
+        })
+        .eq("userId", userId);
 
       if (userError) {
-        console.error("[APPROVE USER ERROR]", userError);
+        console.error("[APPROVE USERREGISTRATION ERROR]", userError);
         return NextResponse.json(
           { error: "Failed to update user approval status" },
           { status: 500 },
         );
       }
 
-      const { data: course } = await supabaseAdmin!
-        .from("Course")
-        .select("enrollmentCount")
-        .eq("id", courseId)
-        .single();
+      // enrollmentCount is now updated automatically by the trigger
+      // trg_sync_course_enrollment_count on Enrollment (see migration
+      // 20260625060000_fix_write_hotspots.sql). No manual UPDATE needed.
 
-      if (course) {
+      // Mark the AdminApprovalQueue entry as reviewed
+      const { data: approvedPayment } = await supabaseAdmin!
+        .from("Payment")
+        .select("id")
+        .eq("enrollmentId", enrollment.id)
+        .eq("status", "approved")
+        .maybeSingle();
+
+      if (approvedPayment) {
         await supabaseAdmin!
-          .from("Course")
-          .update({ enrollmentCount: (course.enrollmentCount || 0) + 1 })
-          .eq("id", courseId);
+          .from("AdminApprovalQueue")
+          .update({ isReviewed: true, viewedAt: new Date().toISOString() })
+          .eq("paymentId", approvedPayment.id)
+          .eq("isReviewed", false)
+          .maybeSingle();
       }
 
       console.log(
@@ -115,18 +133,77 @@ export async function POST(
       return NextResponse.json({ success: true, courseId }, { status: 200 });
     }
 
-    // Otherwise, legacy behavior: approve the user globally
+    // ── Global approval: approve the user and ALL their pending enrollments ──
+    // Also update any processing enrollments and their pending payments so
+    // the user's course statuses reflect the approval.
+    const { data: pendingEnrollments } = await supabaseAdmin!
+      .from("Enrollment")
+      .select("id, courseId")
+      .eq("userId", userId)
+      .eq("status", "processing");
+
+    if (pendingEnrollments && pendingEnrollments.length > 0) {
+      const enrollmentIds = pendingEnrollments.map((e: any) => e.id);
+
+      // Update all processing enrollments to active
+      const { error: batchEnrollErr } = await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "active", updatedAt: new Date().toISOString() })
+        .in("id", enrollmentIds);
+
+      if (batchEnrollErr) {
+        console.error("[APPROVE BATCH ENROLLMENT ERROR]", batchEnrollErr);
+      }
+
+      // Update all pending payments for these enrollments to approved
+      const { error: batchPaymentErr } = await supabaseAdmin!
+        .from("Payment")
+        .update({
+          status: "approved",
+          approvedAt: new Date().toISOString(),
+        })
+        .in("enrollmentId", enrollmentIds)
+        .eq("status", "pending");
+
+      if (batchPaymentErr) {
+        console.error("[APPROVE BATCH PAYMENT ERROR]", batchPaymentErr);
+      }
+    }
+
+    const now = new Date().toISOString();
     const { error } = await supabaseAdmin!
-      .from("User")
-      .update({ isApproved: true, paymentStatus: "approved" })
-      .eq("id", userId);
+      .from("UserRegistration")
+      .update({
+        isApproved: true,
+        paymentStatus: "approved",
+        reviewedAt: now,
+        reviewedBy: auth.userId,
+      })
+      .eq("userId", userId);
 
     if (error) {
-      console.error("[APPROVE USER ERROR]", error);
+      console.error("[APPROVE USERREGISTRATION ERROR]", error);
       return NextResponse.json(
         { error: "Failed to approve user" },
         { status: 500 },
       );
+    }
+
+    // Mark all unreviewed queue entries for this user's payments as reviewed
+    const { data: userPayments } = await supabaseAdmin!
+      .from("Payment")
+      .select("id")
+      .eq("userId", userId);
+
+    if (userPayments && userPayments.length > 0) {
+      await supabaseAdmin!
+        .from("AdminApprovalQueue")
+        .update({ isReviewed: true, viewedAt: new Date().toISOString() })
+        .eq("isReviewed", false)
+        .in(
+          "paymentId",
+          userPayments.map((p: any) => p.id),
+        );
     }
 
     console.log(`[APPROVE] User ${userId} approved (global)`);

@@ -1,25 +1,104 @@
 // src/lib/auth/middleware.ts
-// Advanced Authentication Middleware
+// Authentication Middleware — Supabase Auth
+//
+// All functions now validate the Supabase access token (from the
+// Authorization header) instead of a custom JWT. The token is
+// verified via supabase.auth.getUser() which calls the Supabase
+// Auth API.
 
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { jwtService, JWTPayload } from "./jwt";
-import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { env } from "@/config/env";
+
+// ── Auth user shape (compatible with the old JWTPayload) ──────────────
+
+export interface AuthUser {
+  userId: string;
+  email: string;
+  role: string;
+}
+
+// ── Internal: anon-key client used for token verification ─────────────
+
+function createAuthClient() {
+  return createClient(env.supabase.url, env.supabase.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
+
+// ── Public helpers ────────────────────────────────────────────────────
 
 /**
- * Verify JWT token from Authorization header
+ * Verify a Supabase access token from the Authorization header.
+ *
+ * Uses supabase.auth.getUser() which validates the JWT against the
+ * Supabase Auth API.  On success it returns { userId, email, role }
+ * where the role is looked up from the User table (cached lightweight).
+ *
+ * Returns null when the token is missing, expired, or invalid.
  */
 export async function verifyAuth(
   request: NextRequest,
-): Promise<JWTPayload | null> {
+): Promise<AuthUser | null> {
   try {
     const authHeader = request.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return null;
     }
 
-    const token = authHeader.substring(7);
-    return jwtService.verifyAccessToken(token);
+    const token = authHeader.slice(7);
+
+    // ── Verify the token via Supabase Auth API ─────────────────
+    const supabase = createAuthClient();
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data.user) {
+      return null;
+    }
+
+    const authUser = data.user;
+
+    // ── Look up role from the User table ──────────────────────
+    // Try by id first (fast path). If not found (e.g. the User record
+    // was created before the authUserId was fixed), fall back to
+    // looking up by email. This ensures existing users with a
+    // mismatched User.id still get the correct role.
+    let role = "user";
+    try {
+      const admin = getSupabaseAdmin();
+      const { data: profile } = await admin!
+        .from("User")
+        .select("role")
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      if (profile?.role) {
+        role = profile.role;
+      } else if (authUser.email) {
+        // Fallback: look up by email for users whose User.id
+        // doesn't match their Supabase Auth ID (legacy records).
+        const { data: emailProfile } = await admin!
+          .from("User")
+          .select("role")
+          .eq("email", authUser.email.toLowerCase())
+          .maybeSingle();
+        if (emailProfile?.role) role = emailProfile.role;
+      }
+    } catch {
+      // Default to "user" on error
+    }
+
+    return {
+      userId: authUser.id,
+      email: authUser.email ?? "",
+      role,
+    };
   } catch (error) {
     console.error("Auth verification error:", error);
     return null;
@@ -27,10 +106,10 @@ export async function verifyAuth(
 }
 
 /**
- * Check if user has required role
+ * Check if the authenticated user has one of the required roles.
  */
 export async function hasRole(
-  auth: JWTPayload | null,
+  auth: AuthUser | null,
   requiredRoles: string[],
 ): Promise<boolean> {
   if (!auth) return false;
@@ -38,14 +117,13 @@ export async function hasRole(
 }
 
 /**
- * Verify user exists and is active
+ * Verify user exists and is active.
  */
 export async function isUserActive(userId: string): Promise<boolean> {
   try {
-    const { supabaseAdmin } = await import("@/lib/db/supabaseAdmin");
-    if (!supabaseAdmin) return true; // Default allow if no DB
+    const admin = getSupabaseAdmin();
 
-    const { data, error } = await supabaseAdmin!
+    const { data, error } = await admin!
       .from("User")
       .select("isActive, isBanned")
       .eq("id", userId)
@@ -60,16 +138,16 @@ export async function isUserActive(userId: string): Promise<boolean> {
 }
 
 /**
- * Verify device session is valid
+ * Verify device session is valid.
  */
 export async function verifyDeviceSession(
   userId: string,
   deviceId: string,
 ): Promise<boolean> {
   try {
-    if (!supabaseAdmin) return false;
+    const admin = getSupabaseAdmin();
 
-    const { data, error } = await supabaseAdmin!
+    const { data, error } = await admin!
       .from("DeviceSession")
       .select("isActive")
       .eq("userId", userId)
@@ -85,16 +163,16 @@ export async function verifyDeviceSession(
 }
 
 /**
- * Check enrollment access
+ * Check enrollment access.
  */
 export async function checkEnrollmentAccess(
   userId: string,
   courseId: string,
 ): Promise<boolean> {
   try {
-    if (!supabaseAdmin) return false;
+    const admin = getSupabaseAdmin();
 
-    const { data: enrollment, error } = await supabaseAdmin!
+    const { data: enrollment, error } = await admin!
       .from("Enrollment")
       .select("status, payment:Payment(status)")
       .eq("userId", userId)
@@ -119,7 +197,7 @@ export async function checkEnrollmentAccess(
 }
 
 /**
- * Get device info from request
+ * Get device info from request.
  */
 export function getDeviceInfo(request: NextRequest): {
   deviceId: string;
@@ -167,45 +245,66 @@ export function getDeviceInfo(request: NextRequest): {
 }
 
 /**
- * Middleware to require authentication
+ * Middleware: require a valid authenticated session.
+ * Returns a 401 / 403 NextResponse on failure, or null to continue.
  */
-export async function requireAuth(
+/**
+ * Authenticate the request and return the AuthUser on success.
+ *
+ * Returns `{ auth, error }` where `error` is a NextResponse to return
+ * when authentication fails — this avoids calling verifyAuth() twice
+ * (each call makes a Supabase Auth API request).
+ */
+export async function authenticate(
   request: NextRequest,
-): Promise<NextResponse | null> {
+): Promise<{ auth: AuthUser | null; error: NextResponse | null }> {
   const auth = await verifyAuth(request);
-
   if (!auth) {
-    return NextResponse.json(
-      { error: "Unauthorized - Invalid or missing token" },
-      { status: 401 },
-    );
+    return {
+      auth: null,
+      error: NextResponse.json(
+        { error: "Unauthorized - Invalid or missing token" },
+        { status: 401 },
+      ),
+    };
   }
 
   const isActive = await isUserActive(auth.userId);
   if (!isActive) {
-    return NextResponse.json(
-      { error: "Unauthorized - User account is inactive" },
-      { status: 403 },
-    );
+    return {
+      auth: null,
+      error: NextResponse.json(
+        { error: "Unauthorized - User account is inactive" },
+        { status: 403 },
+      ),
+    };
   }
 
-  return null; // Continue to handler
+  return { auth, error: null };
 }
 
 /**
- * Middleware to require specific role
+ * Legacy wrapper — kept for backward compatibility.
+ * Still calls verifyAuth() once (via authenticate).
+ */
+export async function requireAuth(
+  request: NextRequest,
+): Promise<NextResponse | null> {
+  const { error } = await authenticate(request);
+  return error;
+}
+
+/**
+ * Middleware: require a valid session AND one of the listed roles.
+ * Calls verifyAuth() only ONCE instead of twice (previous implementation
+ * called it via requireAuth + verifyAuth separately).
  */
 export async function requireRole(
   request: NextRequest,
   requiredRoles: string[],
 ): Promise<NextResponse | null> {
-  const authError = await requireAuth(request);
-  if (authError) return authError;
-
-  const auth = await verifyAuth(request);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { auth, error } = await authenticate(request);
+  if (error) return error;
 
   const hasRequiredRole = await hasRole(auth, requiredRoles);
   if (!hasRequiredRole) {
@@ -219,21 +318,17 @@ export async function requireRole(
 }
 
 /**
- * Middleware to check course enrollment
+ * Middleware to check course enrollment.
+ * Calls verifyAuth() only ONCE instead of twice.
  */
 export async function requireCourseAccess(
   request: NextRequest,
   courseId: string,
 ): Promise<NextResponse | null> {
-  const authError = await requireAuth(request);
-  if (authError) return authError;
+  const { auth, error } = await authenticate(request);
+  if (error) return error;
 
-  const auth = await verifyAuth(request);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const hasAccess = await checkEnrollmentAccess(auth.userId, courseId);
+  const hasAccess = await checkEnrollmentAccess(auth!.userId, courseId);
   if (!hasAccess) {
     return NextResponse.json(
       { error: "Forbidden - No access to this course" },

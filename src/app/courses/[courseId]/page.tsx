@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch } from "@/lib/utils/cache";
 import CourseReviews from "@/components/CourseReviews";
+import { formatDuration } from "@/lib/utils/common";
 
 interface CourseDetail {
   id: string;
@@ -80,7 +81,11 @@ export default function CourseDetailPage() {
               }
             }
 
-            const items = enrResult.data?.data || enrResult.data || [];
+            const items =
+              enrResult.data?.data?.data ||
+              enrResult.data?.data ||
+              enrResult.data ||
+              [];
             const matched = items.find(
               (e: any) => (e.courseId || e.course?.id) === courseId,
             );
@@ -174,12 +179,13 @@ export default function CourseDetailPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <motion.div
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-border-light dark:border-gray-700"
+        className="bg-surface rounded-2xl shadow-lg overflow-hidden border border-surface/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="bg-gradient-to-br from-primary via-primary-light to-secondary p-8 text-white">
+        <div className="bg-[#0a0604] p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-[#a30000]/8 rounded-full blur-[60px] pointer-events-none" />
           <motion.span
             className="bg-white/20 backdrop-blur-sm text-xs px-3 py-1 rounded-full text-white font-medium inline-block"
             initial={{ opacity: 0, x: -10 }}
@@ -206,7 +212,7 @@ export default function CourseDetailPage() {
           </motion.p>
           <div className="flex flex-wrap gap-4 mt-4 text-sm text-white/80">
             <span>{course.videoCount} ቪዲዮዎች</span>
-            <span>{course.duration || 0} ደቂቃ</span>
+            <span>{formatDuration(course.duration)}</span>
             <span>{course.enrollmentCount} ተማሪዎች</span>
           </div>
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -282,7 +288,7 @@ export default function CourseDetailPage() {
                   }
                 }}
                 disabled={enrolling}
-                className="border-2 border-[#1b2a4a] text-[#1b2a4a] px-8 py-3 rounded-lg font-semibold hover:bg-[#1b2a4a] hover:text-white hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50"
+                className="border-2 border-[#a30000] text-[#a30000] px-8 py-3 rounded-lg font-semibold hover:bg-[#a30000] hover:text-white hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50"
               >
                 {enrolling
                   ? "በመመዝገብ ላይ..."
@@ -405,7 +411,7 @@ export default function CourseDetailPage() {
                       {lec.title}
                     </p>
                     <p className="text-xs text-text-muted">
-                      {lec.duration || 0} ደቂቃ
+                      {formatDuration(lec.duration)}
                     </p>
                   </div>
                   {isEnrolled ? (
