@@ -412,6 +412,203 @@ body {
   animation: shimmer-text 3s linear infinite;
 }
 
+/* ═══════════════════════════════════════════════
+   🚀 HIGH-PERFORMANCE PARTICLE ANIMATIONS
+   Pure CSS @keyframes — runs on GPU compositor
+   thread, ZERO main thread JavaScript cost.
+   ═══════════════════════════════════════════════ */
+
+/* Particle variant A — gentle upward-right drift */
+@keyframes particle-drift-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.1;
+  }
+  25% {
+    transform: translate(12px, -18px) scale(1.2);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-6px, -30px) scale(0.9);
+    opacity: 0.25;
+  }
+  75% {
+    transform: translate(8px, -12px) scale(1.05);
+    opacity: 0.35;
+  }
+}
+.anim-particle-a {
+  animation: particle-drift-a 6s ease-in-out infinite;
+}
+
+/* Particle variant B — gentle upward-left drift */
+@keyframes particle-drift-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.1;
+  }
+  25% {
+    transform: translate(-15px, -14px) scale(1.15);
+    opacity: 0.38;
+  }
+  50% {
+    transform: translate(10px, -28px) scale(0.85);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translate(-8px, -10px) scale(1.1);
+    opacity: 0.3;
+  }
+}
+.anim-particle-b {
+  animation: particle-drift-b 7s ease-in-out infinite;
+}
+
+/* Particle variant C — mostly vertical float */
+@keyframes particle-drift-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.08;
+  }
+  33% {
+    transform: translate(5px, -22px) scale(1.1);
+    opacity: 0.35;
+  }
+  66% {
+    transform: translate(-3px, -8px) scale(0.95);
+    opacity: 0.2;
+  }
+}
+.anim-particle-c {
+  animation: particle-drift-c 5s ease-in-out infinite;
+}
+
+/* Particle variant D — slow pulse-only (minimal movement) */
+@keyframes particle-pulse {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.3);
+  }
+}
+.anim-particle-d {
+  animation: particle-pulse 4s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════
+   🎨 FLOATING DECORATIVE ELEMENTS (GPU)
+   Replaces framer-motion animated decorations.
+   ═══════════════════════════════════════════════ */
+
+/* Large decorative blur — slow vertical float */
+@keyframes decor-float-large {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(0, -20px) scale(1.05);
+  }
+}
+.anim-decor-large {
+  animation: decor-float-large 8s ease-in-out infinite;
+}
+
+/* Medium decorative blur — slower float */
+@keyframes decor-float-medium {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(0, 15px) scale(1.08);
+  }
+}
+.anim-decor-medium {
+  animation: decor-float-medium 10s ease-in-out infinite;
+}
+
+/* Small decorative dot — vertical bounce */
+@keyframes decor-bounce-small {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(0, -30px);
+    opacity: 0.5;
+  }
+}
+.anim-decor-bounce {
+  animation: decor-bounce-small 5s ease-in-out infinite;
+}
+
+/* Tiny decorative dot — with horizontal drift */
+@keyframes decor-drift-tiny {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(0, 20px);
+    opacity: 0.6;
+  }
+}
+.anim-decor-drift {
+  animation: decor-drift-tiny 6s ease-in-out infinite 1s;
+}
+
+/* Medium dot — diagonal drift */
+@keyframes decor-diagonal {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translate(10px, -25px);
+    opacity: 0.25;
+  }
+}
+.anim-decor-diagonal {
+  animation: decor-diagonal 7s ease-in-out infinite 0.5s;
+}
+
+/* ═══════════════════════════════════════════════
+   ⚡ GPU LAYER PROMOTION
+   Forces blur-heavy elements onto GPU.
+   ═══════════════════════════════════════════════ */
+.gpu-layer {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* ═══════════════════════════════════════════════
+   🔄 CSS SPINNER (replaces framer-motion spinner)
+   ═══════════════════════════════════════════════ */
+.anim-spinner {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   🖼️ GRADIENT BORDER (unchanged)
+   ═══════════════════════════════════════════════ */
+
 /* Gradient Border */
 .gradient-border {
   position: relative;
