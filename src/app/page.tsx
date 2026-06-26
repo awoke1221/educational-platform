@@ -63,14 +63,9 @@ function ParticleField({ count = 15 }: { count?: number }) {
 function FloatingOrbs() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#dc2626]/8 to-[#ef4444]/3 blur-3xl animate-orb gpu-layer" />
-      <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-[#7f1d1d]/10 to-transparent blur-3xl animate-orb-slow gpu-layer" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full bg-gradient-to-r from-[#ef4444]/5 via-[#dc2626]/5 to-transparent blur-3xl animate-orb-slower gpu-layer" />
-      <div className="absolute top-1/4 right-1/4 w-32 h-32 rounded-full border border-[#dc2626]/10 animate-spin-slow" />
-      <div
-        className="absolute bottom-1/3 left-1/3 w-24 h-24 rounded-full border border-[#ef4444]/10 animate-spin-slow"
-        style={{ animationDirection: "reverse" }}
-      />
+      <div className="absolute -top-40 -right-40 w-[450px] h-[450px] rounded-full bg-gradient-to-br from-[#dc2626]/8 to-[#ef4444]/3 blur-3xl animate-orb gpu-layer" />
+      <div className="absolute -bottom-32 -left-32 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#7f1d1d]/10 to-transparent blur-3xl animate-orb-slow gpu-layer" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[250px] h-[250px] rounded-full bg-gradient-to-r from-[#ef4444]/5 via-[#dc2626]/5 to-transparent blur-3xl animate-orb-slower gpu-layer" />
     </div>
   );
 }
@@ -124,7 +119,7 @@ function RotatingText({ phrases }: { phrases: string[] }) {
           setPhase("dots");
         }
       },
-      60 + Math.random() * 40,
+      100 + Math.random() * 80,
     );
 
     return () => clearInterval(typingInterval);
@@ -352,31 +347,17 @@ export default function Home() {
       {/* Hero - Video Section */}
       <section className="relative bg-[#0a0a0a] text-white min-h-[calc(100vh-4rem)] flex items-center overflow-hidden">
         {/* Particles & Orbs */}
-        <ParticleField count={40} />
+        <ParticleField count={12} />
         <FloatingOrbs />
 
         {/* Premium red glow accents — GPU-accelerated layers */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#dc2626]/10 rounded-full blur-[120px] pointer-events-none gpu-layer" />
-        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-[#7f1d1d]/10 rounded-full blur-[100px] pointer-events-none gpu-layer" />
-        <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-[#ef4444]/5 rounded-full blur-[80px] pointer-events-none gpu-layer" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[450px] bg-[#dc2626]/8 rounded-full blur-[100px] pointer-events-none gpu-layer" />
+        <div className="absolute -bottom-24 -right-24 w-[350px] h-[350px] bg-[#ef4444]/5 rounded-full blur-[80px] pointer-events-none gpu-layer" />
 
-        {/* Gradient mesh overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
-          style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, #dc2626 0%, transparent 50%),
-                            radial-gradient(circle at 80% 20%, #ef4444 0%, transparent 50%),
-                            radial-gradient(circle at 40% 80%, #7f1d1d 0%, transparent 50%)`,
-          }}
-        />
-
-        {/* Floating decorative elements — pure CSS animations (GPU composited) */}
+        {/* Floating decorative elements — minimal GPU-composited set */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl anim-decor-large" />
-          <div className="absolute -bottom-32 -left-32 w-[30rem] h-[30rem] rounded-full bg-[#ef4444]/10 blur-3xl anim-decor-medium" />
           <div className="absolute top-1/4 right-1/4 w-4 h-4 rounded-full bg-white/20 blur-sm anim-decor-bounce" />
           <div className="absolute bottom-1/3 left-1/4 w-3 h-3 rounded-full bg-[#ef4444]/30 blur-sm anim-decor-drift" />
-          <div className="absolute top-1/3 left-1/2 w-6 h-6 rounded-full bg-white/10 blur-md anim-decor-diagonal" />
         </div>
 
         <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
