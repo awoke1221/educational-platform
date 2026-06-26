@@ -385,12 +385,10 @@ export default function Home() {
 
               <RotatingText
                 phrases={[
-                  "# ከ6 M+ followers",
-                  "የፐርሰናል ብራንዲንግ Expert",
-                  "Top TikTok",
-                  "Learn",
-                  "Create",
-                  "Go Viral",
+                  "6M+ ተከታዮች",
+                  "2025 TikToker of the Year",
+                  "1.3B+ እይታዎች በሁለት ወራት",
+                  "1000+ የተሳካ ተማሪዎች",
                 ]}
               />
             </motion.div>
