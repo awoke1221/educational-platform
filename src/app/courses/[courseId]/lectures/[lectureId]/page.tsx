@@ -902,7 +902,7 @@ export default function LecturePlayerPage() {
         <div className="flex-1 lg:max-w-[calc(100%-380px)]">
           <div
             ref={containerRef}
-            className="relative bg-black group max-h-[65vh] overflow-hidden"
+            className="relative bg-black group max-h-[50vh] overflow-hidden rounded-xl"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => isPlaying && setShowControls(false)}
           >

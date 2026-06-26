@@ -231,6 +231,7 @@ function VideoPlayer({
     justifyContent: "center",
     overflow: "hidden",
     position: "relative",
+    borderRadius: "1rem",
   };
 
   // ── Loading skeleton ────────────────────────────────────────────────────
@@ -420,7 +421,7 @@ export default function Home() {
               is owned entirely by VideoPlayer's internal wrapperStyle.
             */}
             <motion.div
-              className="w-full max-w-sm sm:max-w-md rounded-2xl overflow-hidden shadow-2xl gradient-border"
+              className="w-full max-w-[280px] sm:max-w-sm rounded-2xl overflow-hidden shadow-2xl gradient-border"
               variants={videoVariants}
             >
               <VideoPlayer
