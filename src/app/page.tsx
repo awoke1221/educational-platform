@@ -218,11 +218,12 @@ function VideoPlayer({
   // ─── FIX #5 & #6: Stable aspect-ratio wrapper ────────────────────────────
   // - aspectRatio: "9/16" reserves the correct portrait space on ALL states
   //   (loading, loaded, error) — eliminates layout shift completely.
-  // - maxHeight: 80vh keeps it from overflowing the viewport on desktop.
+  // - maxHeight: 50vh keeps the portrait video shorter on desktop so it
+  //   doesn't dominate the hero section.
   // - The inner content fills this box with h-full / object-contain.
   const wrapperStyle: React.CSSProperties = {
     aspectRatio: "9 / 16",
-    maxHeight: "80vh",
+    maxHeight: "50vh",
     width: "100%",
     backgroundColor: "#000",
     display: "flex",

@@ -902,7 +902,7 @@ export default function LecturePlayerPage() {
         <div className="flex-1 lg:max-w-[calc(100%-380px)]">
           <div
             ref={containerRef}
-            className="relative bg-black group"
+            className="relative bg-black group max-h-[65vh] overflow-hidden"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => isPlaying && setShowControls(false)}
           >
@@ -915,7 +915,7 @@ export default function LecturePlayerPage() {
             {/* Video Element */}
             <video
               ref={videoRef}
-              className="w-full aspect-video cursor-pointer relative z-10"
+              className="w-full h-full object-contain cursor-pointer relative z-10"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onPlay={handlePlay}
@@ -1310,7 +1310,7 @@ export default function LecturePlayerPage() {
           {/* Lecture Info */}
           {/* ============================================ */}
           <motion.div
-            className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-800"
+            className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-800"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
