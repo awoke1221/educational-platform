@@ -199,7 +199,6 @@ function VideoPlayer({
   // FIX #3: Track error state to show user-visible fallback UI
   const [hasError, setHasError] = useState(false);
 
-<<<<<<< HEAD
   // FIX #3: Actionable error handler — updates UI state instead of silent console.warn
   const handleVideoError = useCallback(() => {
     const video = videoRef.current;
@@ -208,62 +207,6 @@ function VideoPlayer({
     if (video.networkState === 3) {
       console.error("[HeroVideo] All sources failed — showing fallback UI");
       setHasError(true);
-=======
-  const videoUrl = heroVideo?.videoUrl ?? null;
-  const proxyUrl = heroVideo?.proxyUrl ?? null;
-  const videoType = heroVideo?.type ?? "mp4";
-  const videoPoster = heroVideo?.poster ?? "";
-  const videoLoaded = !heroLoading;
-
-  // Combine the hook's callback ref with our local ref for error handling
-  const combinedVideoRef = useCallback(
-    (el: HTMLVideoElement | null) => {
-      videoRef.current = el;
-      setHeroVideoRef(el);
-    },
-    [setHeroVideoRef],
-  );
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 100);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Passive error logging — don't remove sources (let browser handle fallback)
-  const handleVideoError = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    console.warn(
-      "[HeroVideo] CDN playback issue, browser will use fallback source if available",
-    );
-  }, []);
-
-  // Memoize video player to prevent re-renders from destroying the <video> element
-  const videoPlayerContent = useMemo(() => {
-    if (!videoLoaded) {
-      return (
-        <div
-          className="w-full max-h-[80vh] flex items-center justify-center bg-black/60"
-          style={{ aspectRatio: "auto" }}
-        >
-          <div className="flex flex-col items-center gap-3">
-            <motion.div
-              className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 1,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-            <span className="text-white/40 text-xs animate-pulse">
-              Loading video...
-            </span>
-          </div>
-        </div>
-      );
->>>>>>> b8f065a68ccbd2f03715a266b4fc719db256cca7
     }
   }, [videoRef]);
 
@@ -292,7 +235,6 @@ function VideoPlayer({
   // ── Loading skeleton ────────────────────────────────────────────────────
   if (!videoLoaded) {
     return (
-<<<<<<< HEAD
       <div style={wrapperStyle}>
         <div className="flex flex-col items-center gap-3">
           <motion.div
@@ -313,13 +255,6 @@ function VideoPlayer({
     return (
       <div style={wrapperStyle}>
         <div className="flex flex-col items-center justify-center gap-3 px-4 text-center">
-=======
-      <div
-        className="w-full max-h-[80vh] flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] to-[#1a0a0a] text-white/40 text-sm"
-        style={{ aspectRatio: "auto" }}
-      >
-        <div className="text-center">
->>>>>>> b8f065a68ccbd2f03715a266b4fc719db256cca7
           <svg
             className="w-12 h-12 opacity-40 text-white"
             fill="none"
