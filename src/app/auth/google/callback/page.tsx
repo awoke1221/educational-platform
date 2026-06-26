@@ -192,8 +192,8 @@ export default function GoogleCallbackPage() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-surface to-white">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border-t-4 border-[#4285F4]">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-[#0a0604]">
+      <div className="w-full max-w-md bg-surface rounded-2xl shadow-lg p-8 border-t-4 border-[#4285F4]">
         <h1 className="text-2xl font-bold text-center mb-2">Google sign-in</h1>
         <p className="text-center text-sm text-primary mb-6">
           Complete your login using Google.

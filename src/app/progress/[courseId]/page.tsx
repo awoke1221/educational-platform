@@ -104,9 +104,9 @@ export default function ProgressPage() {
   return (
     <>
       <ConfettiEffect active={showConfetti} duration={4000} />
-      <div className="min-h-screen bg-surface dark:bg-gray-900">
+      <div className="min-h-screen bg-[#0a0604]">
         {/* Header */}
-        <div className="bg-gradient-to-br from-primary via-primary-light to-secondary text-white">
+        <div className="bg-[#0a0604] text-white relative overflow-hidden">\n        <div className=\"absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#a30000]/8 rounded-full blur-[80px] pointer-events-none\" />
           <div className="max-w-4xl mx-auto px-4 py-8">
             <motion.h1
               className="text-2xl font-bold"
@@ -129,7 +129,7 @@ export default function ProgressPage() {
                     percentage={data.stats.progressPercentage}
                     size={120}
                     strokeWidth={10}
-                    color={isComplete ? "#22c55e" : "#c9952a"}
+                    color={isComplete ? "#22c55e" : "#a30000"}
                   >
                     <div className="text-center">
                       <span

@@ -15,12 +15,16 @@ interface UserInfo {
   role: string;
 }
 
+const LAUNCH_DATE =
+  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00";
+
 export default function Navbar() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   // theme/toggleTheme used by ThemeSwitch child component
   const [user, setUser] = useState<UserInfo | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [comingSoon, setComingSoon] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -48,6 +52,12 @@ export default function Navbar() {
       }
     }
     setInitialized(true);
+
+    if (LAUNCH_DATE) {
+      setComingSoon(new Date(LAUNCH_DATE).getTime() > Date.now());
+    } else {
+      setComingSoon(false);
+    }
   }, []);
 
   // Keep nav in sync when user logs in/out (cross-tab)
@@ -143,7 +153,7 @@ export default function Navbar() {
     <nav
       className={`sticky top-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "bg-[#0a0a0a]/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#c9952a]/20 shadow-lg shadow-black/30"
+          ? "bg-[#0a0a0a]/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#dc2626]/20 shadow-lg shadow-black/30"
           : "bg-transparent border-b border-transparent"
       }`}
     >
@@ -154,7 +164,7 @@ export default function Navbar() {
             href="/"
             className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity group"
           >
-            <span className="relative h-10 w-10 sm:h-12 sm:w-12 overflow-hidden rounded-full bg-logo-bg shadow-sm ring-1 ring-border-light group-hover:ring-secondary transition-all duration-300">
+            <span className="relative h-10 w-10 sm:h-12 sm:w-12 overflow-hidden rounded-full bg-logo-bg shadow-md ring-2 ring-secondary/60 group-hover:ring-secondary group-hover:shadow-lg group-hover:shadow-secondary/20 transition-all duration-300">
               <Image
                 src="/logo-adlms.jpg"
                 alt="AD LMS"
@@ -163,9 +173,14 @@ export default function Navbar() {
                 className="object-cover"
               />
             </span>
-            <span className="text-[10px] sm:text-sm md:text-base font-extrabold bg-gradient-to-r from-secondary via-amber-400 to-primary bg-clip-text text-transparent tracking-tight">
-              Adonay TikTok Academy
-            </span>
+            <div className="flex flex-col">
+              <span className="text-[10px] sm:text-sm md:text-base font-extrabold bg-gradient-to-r from-[#dc2626] via-[#ef4444] to-[#ff3333] bg-clip-text text-transparent tracking-tight leading-tight">
+                Adonay TikTok Academy
+              </span>
+              <span className="text-[8px] sm:text-[10px] text-[#ef4444]/60 tracking-[0.15em] uppercase font-medium hidden sm:block">
+                LEARN. CREATE. GROW. GO VIRAL.
+              </span>
+            </div>
           </Link>
 
           {/* Right Side */}
@@ -174,25 +189,25 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-3 sm:gap-6">
               <Link
                 href="/courses"
-                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#ef4444] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#ef4444] after:transition-all after:duration-300 hover:after:w-full"
               >
                 Courses
               </Link>
               <Link
                 href="/about"
-                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#ef4444] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#ef4444] after:transition-all after:duration-300 hover:after:w-full"
               >
                 About
               </Link>
               <Link
                 href="/testimonials"
-                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#ef4444] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#ef4444] after:transition-all after:duration-300 hover:after:w-full"
               >
                 Testimonials
               </Link>
               <Link
                 href="/faq"
-                className="text-xs sm:text-sm text-white/80 hover:text-[#c9952a] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#c9952a] after:transition-all after:duration-300 hover:after:w-full"
+                className="text-xs sm:text-sm text-white/80 hover:text-[#ef4444] transition-colors font-medium relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#ef4444] after:transition-all after:duration-300 hover:after:w-full"
               >
                 FAQ
               </Link>
@@ -403,12 +418,18 @@ export default function Navbar() {
               ) : (
                 /* ── Logged Out: Get Started (Desktop) ── */
                 <div className="hidden md:flex items-center gap-3 sm:gap-6">
-                  <Link
-                    href="/auth/register"
-                    className="text-xs sm:text-sm bg-gradient-to-r from-[#c9952a] to-[#d4a843] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg hover:shadow-lg hover:shadow-[#c9952a]/30 hover:brightness-110 transition-all font-semibold whitespace-nowrap"
-                  >
-                    Get Started
-                  </Link>
+                  {comingSoon ? (
+                    <span className="text-xs sm:text-sm bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-semibold whitespace-nowrap opacity-70 cursor-not-allowed">
+                      🚀 በቅርቡ
+                    </span>
+                  ) : (
+                    <Link
+                      href="/auth/register"
+                      className="text-xs sm:text-sm bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg hover:shadow-lg hover:shadow-[#dc2626]/30 hover:brightness-110 transition-all font-semibold whitespace-nowrap"
+                    >
+                      Get Started
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
@@ -445,13 +466,13 @@ export default function Navbar() {
               animate={{ opacity: 1, y: 0, scaleY: 1 }}
               exit={{ opacity: 0, y: -20, scaleY: 0.95 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="md:hidden absolute left-0 right-0 top-full bg-[#0a0a0a]/98 backdrop-blur-xl border-b border-[#c9952a]/20 shadow-2xl shadow-black/40 z-50 overflow-hidden"
+              className="md:hidden absolute left-0 right-0 top-full bg-[#0a0a0a]/98 backdrop-blur-xl border-b border-[#dc2626]/20 shadow-2xl shadow-black/40 z-50 overflow-hidden"
             >
               <div className="px-4 py-5 space-y-1">
                 {/* ── Theme Toggle ─────────────────────── */}
                 <ThemeSwitch labeled />
 
-                <div className="h-px bg-[#c9952a]/10 my-2" />
+                <div className="h-px bg-[#dc2626]/10 my-2" />
 
                 {/* ── Mobile: General Nav Links (only items NOT in bottom nav) ──────────── */}
                 <MobileMenuItem
@@ -475,7 +496,7 @@ export default function Navbar() {
                   badge="New"
                   onClick={() => setMobileMenuOpen(false)}
                 />
-                <div className="h-px bg-[#c9952a]/10 my-2" />
+                <div className="h-px bg-[#dc2626]/10 my-2" />
 
                 {user ? (
                   /* ── Mobile: Logged In Menu ──────────── */
@@ -640,47 +661,60 @@ export default function Navbar() {
                 ) : (
                   /* ── Mobile: Logged Out Menu ─────────── */
                   <>
-                    <MobileMenuItem
-                      href="/auth/login"
-                      icon={
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                          />
-                        </svg>
-                      }
-                      label="Sign In"
-                      onClick={() => setMobileMenuOpen(false)}
-                    />
-                    <MobileMenuItem
-                      href="/auth/register"
-                      icon={
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                          />
-                        </svg>
-                      }
-                      label="Create Account"
-                      highlight
-                      onClick={() => setMobileMenuOpen(false)}
-                    />
+                    {comingSoon ? (
+                      <>
+                        <div className="px-4 py-3 text-center">
+                          <span className="inline-flex items-center gap-2 text-xs font-semibold text-[#ef4444] bg-black/40 px-3 py-1.5 rounded-full border border-[#ef4444]/20">
+                            <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                            🚀 Adony TikTok Academy በቅርቡ ይጀምራል
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <MobileMenuItem
+                          href="/auth/login"
+                          icon={
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                              />
+                            </svg>
+                          }
+                          label="Sign In"
+                          onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <MobileMenuItem
+                          href="/auth/register"
+                          icon={
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                              />
+                            </svg>
+                          }
+                          label="Create Account"
+                          highlight
+                          onClick={() => setMobileMenuOpen(false)}
+                        />
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -716,7 +750,7 @@ function MobileMenuItem({
       onClick={onClick}
       className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200 group ${
         highlight
-          ? "bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white shadow-md hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5"
+          ? "bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white shadow-md hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5"
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
       }`}
     >

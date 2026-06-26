@@ -1,10 +1,14 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/db/supabase";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
+import ComingSoonForm from "@/components/ComingSoonForm";
+
+const LAUNCH_DATE =
+  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00";
 
 function RegisterForm() {
   const router = useRouter();
@@ -13,6 +17,16 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [comingSoon, setComingSoon] = useState(true);
+
+  useEffect(() => {
+    const launch = LAUNCH_DATE;
+    if (launch) {
+      setComingSoon(new Date(launch).getTime() > Date.now());
+    } else {
+      setComingSoon(false);
+    }
+  }, []);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -98,14 +112,27 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-surface to-white">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border-t-4 border-secondary">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-[#0a0604]">
+      <div className="w-full max-w-md bg-surface rounded-2xl shadow-lg p-8 border-t-4 border-secondary">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent text-center mb-2">
           ይመዝገቡ
         </h1>
         <p className="text-primary text-center text-sm mb-6 font-medium">
           {showEmailForm ? "በኢሜል ይመዝገቡ" : "Google በመጠቀም ይመዝገቡ"}
         </p>
+
+        {/* Coming Soon Banner */}
+        <div className="mb-5 p-4 rounded-xl bg-black/40 border border-[#ef4444]/20 shadow-lg shadow-[#ef4444]/5">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+            <span className="text-xs font-semibold text-[#ef4444]/90">
+              🚀 Adony TikTok Academy — በቅርቡ ይጀምራል!
+            </span>
+          </div>
+          <div className="mt-3">
+            <ComingSoonForm source="register" launchDate={LAUNCH_DATE} />
+          </div>
+        </div>
 
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 border border-red-200">
@@ -187,10 +214,10 @@ function RegisterForm() {
             </div>
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white py-2.5 rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50"
+              disabled={loading || comingSoon}
+              className="w-full bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white py-2.5 rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50"
             >
-              {loading ? "በመመዝገብ ላይ..." : "ይመዝገቡ"}
+              {loading ? "በመመዝገብ ላይ..." : comingSoon ? "በቅርቡ ይጀምራል" : "ይመዝገቡ"}
             </button>
             <button
               type="button"
@@ -207,11 +234,11 @@ function RegisterForm() {
           <>
             <button
               type="button"
-              disabled={loading}
+              disabled={loading || comingSoon}
               onClick={handleGoogleSignIn}
-              className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-[#E0E0E0] bg-white py-3 text-sm font-semibold text-[#1F2937] shadow-sm hover:bg-slate-50 transition disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-white/20 bg-white/5 py-3 text-sm font-semibold text-white/80 shadow-sm hover:bg-white/10 transition disabled:opacity-50 backdrop-blur-md"
             >
-              <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white p-1">
+              <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10 p-1">
                 <Image
                   src="/google-logo.svg"
                   alt="Google"
@@ -220,7 +247,7 @@ function RegisterForm() {
                   className="object-contain"
                 />
               </span>
-              Continue with Google
+              {comingSoon ? "🚀 በቅርቡ ይጀምራል" : "Continue with Google"}
             </button>
 
             <div className="relative my-6">
@@ -228,14 +255,17 @@ function RegisterForm() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-gray-400">or</span>
+                <span className="bg-surface px-3 text-white/40">or</span>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() => setShowEmailForm(true)}
-              className="w-full inline-flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              disabled={comingSoon}
+              onClick={() => {
+                if (!comingSoon) setShowEmailForm(true);
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 border border-white/20 rounded-lg py-2.5 text-sm font-medium text-white/60 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-md"
             >
               <svg
                 className="w-4 h-4"
@@ -250,7 +280,7 @@ function RegisterForm() {
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                 />
               </svg>
-              Sign up with Email
+              {comingSoon ? "🚀 በቅርቡ ይጀምራል" : "Sign up with Email"}
             </button>
           </>
         )}

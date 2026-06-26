@@ -43,61 +43,38 @@ export function useHeroVideo() {
   useEffect(() => {
     let cancelled = false;
 
+    // Clear stale cache to force fresh fetch
+    sessionStorage.removeItem(CACHE_KEY);
+
     (async () => {
       try {
-        // 1. Try reading from sessionStorage cache first
-        const cached = sessionStorage.getItem(CACHE_KEY);
-        if (cached) {
-          const parsed: CacheEntry = JSON.parse(cached);
-          // Use cache if it's less than 30 minutes old
-          const isFresh = Date.now() - parsed.timestamp < 30 * 60 * 1000;
-          if (isFresh && parsed.data) {
-            if (!cancelled) {
-              setHeroVideo(parsed.data);
-              setHeroLoading(false);
-              return;
-            }
-          }
-        }
-
-        // 2. No valid cache — fetch from API
+        // Fetch from API
         const res = await fetch("/api/bunny/hero-video");
 
-        // Check if response is OK and content-type is JSON
-        if (!res.ok) {
-          console.warn(`Hero video API returned ${res.status}`);
-          if (!cancelled) setHeroLoading(false);
-          return;
-        }
-
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          console.warn("Hero video API returned non-JSON response");
-          if (!cancelled) setHeroLoading(false);
-          return;
-        }
-
-        const json = await res.json();
-        if (!cancelled) {
-          if (json.success) {
-            if (json.data) {
-              setHeroVideo(json.data);
-              // Store in sessionStorage
-              const entry: CacheEntry = {
-                data: json.data,
-                timestamp: Date.now(),
-              };
-              sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+        if (res.ok) {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const json = await res.json();
+            if (!cancelled) {
+              if (json.success && json.data) {
+                setHeroVideo(json.data);
+                // Store in sessionStorage
+                const entry: CacheEntry = {
+                  data: json.data,
+                  timestamp: Date.now(),
+                };
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+              }
             }
-            // If data is null, just set loading to false (video unavailable)
           }
+        } else {
+          console.warn(`Hero video API returned ${res.status}`);
         }
       } catch (err) {
         console.warn(
           "Hero video loading failed gracefully:",
           err instanceof Error ? err.message : err,
         );
-        // Don't log full error to avoid cluttering console
       } finally {
         if (!cancelled) setHeroLoading(false);
       }

@@ -29,7 +29,7 @@ export default function SampleVideoGallery({
           {samples.map((video, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
+              className="bg-surface rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
             >
               <div className="relative aspect-video bg-black overflow-hidden">
                 <video

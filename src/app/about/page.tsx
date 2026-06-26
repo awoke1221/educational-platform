@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import {
@@ -122,8 +122,8 @@ const timelineData = [
   },
 ];
 
-/* ─── Particles Background (client-side only) ──────────── */
-function ParticleField() {
+/* ─── Particles Background ─────────────────────────────── */
+function ParticleField({ count = 25 }: { count?: number }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted)
@@ -133,13 +133,15 @@ function ParticleField() {
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {[...Array(20)].map((_, i) => (
+      {Array.from({ length: count }, (_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 rounded-full bg-secondary/20 blur-sm"
+          className={`absolute rounded-full ${i % 5 === 0 ? "bg-[#ef4444]/15" : i % 4 === 0 ? "bg-white/8" : "bg-white/12"} blur-sm`}
           style={{
             left: `${(i * 17 + 3) % 100}%`,
             top: `${(i * 23 + 7) % 100}%`,
+            width: 2 + (i % 3) * 2,
+            height: 2 + (i % 3) * 2,
           }}
           animate={{
             y: [0, -30, 0],
@@ -154,6 +156,85 @@ function ParticleField() {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+// ─── Floating Orbs ─────────────────────────────────
+function FloatingOrbs() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <motion.div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#dc2626]/8 to-[#ef4444]/3 blur-3xl animate-orb" />
+      <motion.div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-[#7f1d1d]/10 to-transparent blur-3xl animate-orb-slow" />
+      <motion.div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full bg-gradient-to-r from-[#ef4444]/5 via-[#dc2626]/5 to-transparent blur-3xl animate-orb-slower" />
+      <motion.div className="absolute top-1/4 right-1/4 w-24 h-24 rounded-full border border-[#dc2626]/10 animate-spin-slow" />
+    </div>
+  );
+}
+
+// ─── Skill Bars ────────────────────────────────────
+const skills = [
+  { name: "TikTok Growth Strategy", level: 98, icon: "📈" },
+  { name: "Personal Branding", level: 95, icon: "⭐" },
+  { name: "Viral Content Creation", level: 97, icon: "🔥" },
+  { name: "Storytelling", level: 93, icon: "📖" },
+  { name: "Audience Psychology", level: 90, icon: "🧠" },
+  { name: "Content Strategy", level: 92, icon: "🎯" },
+];
+
+function SkillBar({
+  name,
+  level,
+  icon,
+  index,
+}: {
+  name: string;
+  level: number;
+  icon: string;
+  index: number;
+}) {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setIsVisible(true);
+      },
+      { threshold: 0.2 },
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-2 text-white/80 text-sm font-medium">
+          <span>{icon}</span>
+          {name}
+        </span>
+        <motion.span
+          className="text-[#ef4444] text-sm font-bold"
+          initial={{ opacity: 0 }}
+          animate={isVisible ? { opacity: 1 } : {}}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          {level}%
+        </motion.span>
+      </div>
+      <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+        <motion.div
+          className="h-full bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] rounded-full"
+          initial={{ width: 0 }}
+          animate={isVisible ? { width: `${level}%` } : {}}
+          transition={{
+            duration: 1.2,
+            delay: 0.1 + index * 0.1,
+            ease: "easeOut",
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -176,10 +257,10 @@ function CounterCard({
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 text-center hover:bg-white/10 transition-all duration-500 group-hover:border-secondary/30 group-hover:shadow-xl group-hover:shadow-secondary/5">
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 text-center hover:bg-white/10 transition-all duration-500 group-hover:border-[#dc2626]/30 group-hover:shadow-xl group-hover:shadow-[#dc2626]/5">
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-[#dc2626]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="relative z-10">
-          <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-secondary mb-2">
+          <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#ef4444] mb-2">
             {prefix}
             <AnimatedCounter
               from={0}
@@ -200,9 +281,9 @@ function CounterCard({
 function SectionDivider() {
   return (
     <div className="flex items-center justify-center gap-3 py-4">
-      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
-      <div className="w-2 h-2 rounded-full bg-secondary rotate-45" />
-      <div className="h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent" />
+      <div className="h-px w-12 bg-gradient-to-r from-transparent via-[#dc2626]/40 to-transparent" />
+      <div className="w-2 h-2 rounded-full bg-[#dc2626] rotate-45" />
+      <div className="h-px w-12 bg-gradient-to-r from-transparent via-[#dc2626]/40 to-transparent" />
     </div>
   );
 }
@@ -221,7 +302,7 @@ function FloatingBadge({
       animate={{ y: [0, -8, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
     >
-      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+      <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
       {label}
     </motion.div>
   );
@@ -232,14 +313,15 @@ function FloatingBadge({
    ═══════════════════════════════════════════════════════════ */
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary via-primary-dark to-primary overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] overflow-hidden">
       {/* ═══════════════ HERO SECTION ═══════════════ */}
       <section className="relative min-h-screen flex items-center pt-20 pb-16 overflow-hidden">
         {/* Background Effects */}
-        <ParticleField />
+        <ParticleField count={30} />
+        <FloatingOrbs />
         <div className="absolute inset-0">
-          <div className="absolute top-0 -left-40 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 -right-40 w-[30rem] h-[30rem] bg-accent/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 -left-40 w-96 h-96 bg-[#dc2626]/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 -right-40 w-[30rem] h-[30rem] bg-[#ef4444]/5 rounded-full blur-3xl" />
         </div>
 
         {/* Floating Badges */}
@@ -259,12 +341,12 @@ export default function AboutPage() {
             >
               {/* Badge */}
               <motion.div
-                className="inline-flex items-center gap-2 bg-secondary/20 backdrop-blur-sm border border-secondary/30 rounded-full px-4 py-1.5 text-secondary text-sm mb-6"
+                className="inline-flex items-center gap-2 bg-[#dc2626]/20 backdrop-blur-sm border border-[#dc2626]/30 rounded-full px-4 py-1.5 text-[#ef4444] text-sm mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#dc2626] animate-pulse" />
                 በኢትዮጵያ ከፍተኛ ተፅዕኖ ፈጣሪ
               </motion.div>
 
@@ -275,7 +357,7 @@ export default function AboutPage() {
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
                 ስለ{" "}
-                <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                   አዶናይ
                 </span>
               </motion.h1>
@@ -308,17 +390,17 @@ export default function AboutPage() {
               >
                 <Link
                   href="/courses"
-                  className="group relative bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-8 py-3.5 rounded-lg font-semibold transition-all duration-300 hover:shadow-xl hover:shadow-[#1b2a4a]/30 hover:-translate-y-0.5 overflow-hidden"
+                  className="group relative bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white px-8 py-3.5 rounded-lg font-semibold transition-all duration-300 hover:shadow-xl hover:shadow-[#dc2626]/30 hover:-translate-y-0.5 overflow-hidden"
                 >
                   <span className="relative z-10">ኮርሶችን ይመልከቱ</span>
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-[#1b2a4a] to-[#2c3e6b] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute inset-0 bg-gradient-to-r from-[#991b1b] to-[#e60000] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     initial={false}
                   />
                 </Link>
                 <Link
                   href="/testimonials"
-                  className="group relative bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-3.5 rounded-lg font-semibold transition-all duration-300 hover:bg-white/20 overflow-hidden"
+                  className="group relative bg-white/[0.06] backdrop-blur-sm border border-white/10 text-white px-8 py-3.5 rounded-lg font-semibold transition-all duration-300 hover:bg-white/[0.1] hover:border-[#ef4444]/40 overflow-hidden"
                 >
                   <span className="relative z-10">ምስክርነቶችን ይመልከቱ</span>
                 </Link>
@@ -337,7 +419,7 @@ export default function AboutPage() {
                   { num: "1000+", label: "ተማሪዎች" },
                 ].map((stat, i) => (
                   <div key={i} className="text-center">
-                    <div className="text-xl font-bold text-secondary">
+                    <div className="text-xl font-bold text-[#ef4444]">
                       {stat.num}
                     </div>
                     <div className="text-xs text-white/50">{stat.label}</div>
@@ -355,7 +437,7 @@ export default function AboutPage() {
             >
               <div className="relative w-full max-w-md">
                 {/* Glow behind image */}
-                <div className="absolute -inset-8 bg-gradient-to-br from-secondary/20 via-accent/10 to-transparent rounded-full blur-3xl" />
+                <div className="absolute -inset-8 bg-gradient-to-br from-[#dc2626]/20 via-[#ef4444]/10 to-transparent rounded-full blur-3xl" />
 
                 {/* Image Container */}
                 <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl group">
@@ -367,7 +449,7 @@ export default function AboutPage() {
                   />
 
                   {/* Overlay gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                   {/* Image bottom info */}
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -397,7 +479,7 @@ export default function AboutPage() {
             transition={{ duration: 2, repeat: Infinity }}
           >
             <motion.div
-              className="w-1.5 h-1.5 bg-secondary rounded-full"
+              className="w-1.5 h-1.5 bg-[#ef4444] rounded-full"
               animate={{ y: [0, 12, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
@@ -416,13 +498,40 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ═══════════════ SKILLS SECTION ═══════════════ */}
+      <section className="relative py-20 lg:py-28 overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-1/2 right-0 w-96 h-96 bg-[#dc2626]/5 rounded-full blur-[100px]" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <AnimatedSection className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+              የባለሙያ{" "}
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
+                ብቃቶች
+              </span>
+            </h2>
+            <SectionDivider />
+            <p className="text-white/50 max-w-lg mx-auto text-sm sm:text-base">
+              ሚሊዮኖችን ያመጡ የተረጋገጡ ችሎታዎች
+            </p>
+          </AnimatedSection>
+
+          <div className="max-w-2xl mx-auto space-y-5">
+            {skills.map((skill, i) => (
+              <SkillBar key={i} {...skill} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════ STORY / JOURNEY SECTION ═══════════════ */}
       <section className="relative py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
               የአዶናይ{" "}
-              <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                 ጉዞ
               </span>
             </h2>
@@ -436,7 +545,7 @@ export default function AboutPage() {
           {/* Timeline */}
           <div className="relative">
             {/* Timeline Line */}
-            <div className="absolute left-4 lg:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-secondary/40 via-secondary/20 to-transparent" />
+            <div className="absolute left-4 lg:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-[#dc2626]/40 via-[#dc2626]/20 to-transparent" />
 
             <div className="space-y-12 lg:space-y-16">
               {timelineData.map((item, i) => (
@@ -451,7 +560,7 @@ export default function AboutPage() {
                   transition={{ duration: 0.6, delay: i * 0.1 }}
                 >
                   {/* Timeline Dot */}
-                  <div className="absolute left-4 lg:left-1/2 w-4 h-4 -translate-x-1/2 rounded-full bg-secondary border-4 border-primary z-10 mt-1" />
+                  <div className="absolute left-4 lg:left-1/2 w-4 h-4 -translate-x-1/2 rounded-full bg-[#dc2626] border-4 border-[#0a0a0a] z-10 mt-1" />
 
                   {/* Content */}
                   <div
@@ -459,17 +568,23 @@ export default function AboutPage() {
                       i % 2 === 0 ? "lg:pr-8 lg:text-right" : "lg:pl-8"
                     }`}
                   >
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:border-secondary/20 group">
-                      <span className="inline-block text-xs font-semibold text-secondary bg-secondary/10 rounded-full px-3 py-1 mb-3">
+                    <motion.div
+                      className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 transition-all duration-500 group"
+                      whileHover={{ y: -3, scale: 1.01 }}
+                    >
+                      {/* Glow on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#dc2626]/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute -inset-0.5 bg-gradient-to-br from-[#dc2626]/10 via-transparent to-[#ef4444]/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+                      <span className="relative z-10 inline-block text-xs font-semibold text-[#ef4444] bg-[#dc2626]/10 rounded-full px-3 py-1 mb-3">
                         {item.year}
                       </span>
-                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-secondary transition-colors">
+                      <h3 className="relative z-10 text-lg font-bold text-white mb-2 group-hover:text-[#ef4444] transition-colors">
                         {item.title}
                       </h3>
-                      <p className="text-white/60 text-sm leading-relaxed">
+                      <p className="relative z-10 text-white/60 text-sm leading-relaxed">
                         {item.desc}
                       </p>
-                    </div>
+                    </motion.div>
                   </div>
 
                   {/* Empty column for alternating */}
@@ -484,7 +599,7 @@ export default function AboutPage() {
       {/* ═══════════════ PHILOSOPHY SECTION ═══════════════ */}
       <section className="relative py-20 lg:py-28 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#dc2626]/5 rounded-full blur-3xl" />
         </div>
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -495,21 +610,21 @@ export default function AboutPage() {
               transition={{ duration: 0.3 }}
             >
               {/* Decorative quotes */}
-              <div className="absolute -top-8 -left-4 text-6xl text-secondary/20 font-serif leading-none">
+              <div className="absolute -top-8 -left-4 text-6xl text-[#ef4444]/20 font-serif leading-none">
                 &ldquo;
               </div>
-              <div className="absolute -bottom-12 -right-4 text-6xl text-secondary/20 font-serif leading-none">
+              <div className="absolute -bottom-12 -right-4 text-6xl text-[#ef4444]/20 font-serif leading-none">
                 &rdquo;
               </div>
 
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 sm:p-12 lg:p-16">
                 <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-relaxed mb-6">
                   ሰዎች ኮንቴንትን አይከተሉም።{" "}
-                  <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                     ሰዎችን ይከተላሉ።
                   </span>
                 </p>
-                <div className="w-16 h-0.5 bg-gradient-to-r from-secondary to-accent mx-auto mb-6" />
+                <div className="w-16 h-0.5 bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] mx-auto mb-6" />
                 <p className="text-white/50 text-base sm:text-lg max-w-2xl mx-auto">
                   እውነተኝነት፣ ስሜት፣ ታሪክ አቀራረብ፣ እምነት እና ቀጣይነት የማንኛውም ጠንካራ ፐርሰናል ብራንድ
                   መሠረቶች ናቸው።
@@ -526,7 +641,7 @@ export default function AboutPage() {
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
               የTikTok{" "}
-              <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                 አናሊቲክስ
               </span>
             </h2>
@@ -545,7 +660,7 @@ export default function AboutPage() {
                 transition={{ duration: 0.3 }}
               >
                 {/* Glow */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-secondary/10 via-accent/10 to-transparent rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute -inset-4 bg-gradient-to-r from-[#dc2626]/10 via-[#ef4444]/10 to-transparent rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl">
                   <Image
@@ -558,7 +673,7 @@ export default function AboutPage() {
                   />
 
                   {/* Overlay with stats on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end">
                     <div className="p-6">
                       <div className="flex gap-4">
                         {[
@@ -570,7 +685,7 @@ export default function AboutPage() {
                             key={i}
                             className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/10"
                           >
-                            <div className="text-lg font-bold text-secondary">
+                            <div className="text-lg font-bold text-[#ef4444]">
                               {s.value}
                             </div>
                             <div className="text-xs text-white/60">
@@ -647,13 +762,13 @@ export default function AboutPage() {
 
       {/* ═══════════════ EXPERTISE SECTION ═══════════════ */}
       <section className="relative py-20 lg:py-28">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/0 via-primary-light/20 to-primary/0" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#dc2626]/5 to-transparent" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
               የልዩ{" "}
-              <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                 ብቃት
               </span>{" "}
               መስኮች
@@ -672,10 +787,18 @@ export default function AboutPage() {
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-accent/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 h-full hover:border-secondary/30 transition-all duration-300">
-                    <span className="text-3xl mb-4 block">{area.icon}</span>
-                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-secondary transition-colors">
+                  {/* Glow on hover */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-br from-[#dc2626]/20 via-transparent to-[#ef4444]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#dc2626]/5 to-[#ef4444]/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 h-full hover:border-[#dc2626]/30 transition-all duration-500">
+                    <motion.span
+                      className="text-3xl mb-4 block"
+                      whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      {area.icon}
+                    </motion.span>
+                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#ef4444] transition-colors">
                       {area.title}
                     </h3>
                     <p className="text-white/50 text-sm leading-relaxed">
@@ -692,15 +815,15 @@ export default function AboutPage() {
       {/* ═══════════════ WHY LEARN SECTION ═══════════════ */}
       <section className="relative py-20 lg:py-28 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#dc2626]/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#ef4444]/5 rounded-full blur-3xl" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
               ለምን ሺዎች{" "}
-              <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                 ይማራሉ?
               </span>
             </h2>
@@ -726,7 +849,7 @@ export default function AboutPage() {
               },
             ].map((item, i) => (
               <AnimatedSection key={i} delay={i * 0.1}>
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center hover:bg-white/10 transition-all duration-300 hover:border-secondary/20 group">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-8 text-center hover:bg-white/10 transition-all duration-300 hover:border-[#dc2626]/20 group">
                   <motion.div
                     className="text-4xl mb-4"
                     whileHover={{ scale: 1.2, rotate: 5 }}
@@ -734,7 +857,7 @@ export default function AboutPage() {
                   >
                     {item.icon}
                   </motion.div>
-                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-secondary transition-colors">
+                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#ef4444] transition-colors">
                     {item.title}
                   </h3>
                   <p className="text-white/50 text-sm leading-relaxed">
@@ -749,17 +872,17 @@ export default function AboutPage() {
 
       {/* ═══════════════ MISSION SECTION ═══════════════ */}
       <section className="relative py-20 lg:py-28">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-dark via-primary to-primary-dark" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a] to-[#0a0a0a]" />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <AnimatedSection>
             <motion.div
-              className="bg-gradient-to-br from-secondary/10 via-accent/5 to-transparent border border-secondary/20 rounded-2xl p-8 sm:p-12 lg:p-16"
-              whileHover={{ boxShadow: "0 0 40px rgba(201,149,42,0.1)" }}
+              className="bg-gradient-to-br from-[#dc2626]/10 via-[#ef4444]/5 to-transparent border border-[#dc2626]/20 rounded-2xl p-8 sm:p-12 lg:p-16"
+              whileHover={{ boxShadow: "0 0 40px rgba(220,38,38,0.1)" }}
               transition={{ duration: 0.3 }}
             >
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-8">
-                <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                   ተልዕኮው
                 </span>
               </h2>
@@ -771,7 +894,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="w-16 h-0.5 bg-gradient-to-r from-secondary to-accent mx-auto my-8" />
+              <div className="w-16 h-0.5 bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] mx-auto my-8" />
 
               <div className="grid sm:grid-cols-3 gap-6 max-w-2xl mx-auto">
                 {[
@@ -800,7 +923,7 @@ export default function AboutPage() {
                 <p className="text-white/60 text-sm sm:text-base leading-relaxed">
                   ትኩረትን መቆጣጠር ስትችል፣ ተከታዮችን ብቻ አትገነባም።
                 </p>
-                <p className="text-secondary font-bold text-lg sm:text-xl mt-2">
+                <p className="text-[#ef4444] font-bold text-lg sm:text-xl mt-2">
                   ዘላቂ ተፅዕኖ ትፈጥራለህ።
                 </p>
               </div>
@@ -811,13 +934,13 @@ export default function AboutPage() {
 
       {/* ═══════════════ CTA SECTION ═══════════════ */}
       <section className="relative py-20 lg:py-28">
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/0 via-secondary/5 to-primary/0" />
+        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#dc2626]/5 to-transparent" />
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <AnimatedSection>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
               ዛሬውኑ{" "}
-              <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                 ይጀምሩ
               </span>
             </h2>
@@ -829,17 +952,17 @@ export default function AboutPage() {
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 href="/courses"
-                className="group relative bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all duration-300 hover:shadow-xl hover:shadow-[#1b2a4a]/30 hover:-translate-y-0.5 overflow-hidden"
+                className="group relative bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all duration-300 hover:shadow-xl hover:shadow-[#dc2626]/30 hover:-translate-y-0.5 overflow-hidden"
               >
                 <span className="relative z-10">ኮርሶችን ይመልከቱ</span>
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-[#1b2a4a] to-[#2c3e6b] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  className="absolute inset-0 bg-gradient-to-r from-[#991b1b] to-[#e60000] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   initial={false}
                 />
               </Link>
               <Link
                 href="/dashboard"
-                className="group relative bg-white/10 backdrop-blur-sm border border-white/20 text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all duration-300 hover:bg-white/20 overflow-hidden"
+                className="group relative bg-white/[0.06] backdrop-blur-sm border border-white/10 text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all duration-300 hover:bg-white/[0.1] hover:border-[#ef4444]/40 overflow-hidden"
               >
                 <span className="relative z-10">ዳሽቦርድ</span>
               </Link>

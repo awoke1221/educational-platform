@@ -20,8 +20,17 @@ export async function GET(request: NextRequest) {
 
     // ── Parse pagination params ─────────────────────────────────
     const { searchParams } = new URL(request.url);
-    const page = Math.max(1, parseInt(searchParams.get("page") || String(DEFAULT_PAGE), 10));
-    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT), 10)));
+    const page = Math.max(
+      1,
+      parseInt(searchParams.get("page") || String(DEFAULT_PAGE), 10),
+    );
+    const limit = Math.min(
+      MAX_LIMIT,
+      Math.max(
+        1,
+        parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT), 10),
+      ),
+    );
     const offset = (page - 1) * limit;
 
     // ── Step 1: Fetch total count + page of pending registrations ──
@@ -121,7 +130,7 @@ export async function GET(request: NextRequest) {
             isApproved: r.isApproved,
             courseId: enr.courseId,
             courseTitle: courseInfo?.title || null,
-            coursePrice: courseInfo?.price ? Number(courseInfo.price) : null,
+            coursePrice: courseInfo?.price != null ? Number(courseInfo.price) : null,
           });
         }
       } else {

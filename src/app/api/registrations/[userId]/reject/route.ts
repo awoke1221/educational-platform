@@ -1,6 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { requireRole, verifyAuth } from "@/lib/auth/middleware";
+import { StorageService } from "@/lib/storage/supabase";
+
+/**
+ * Delete a receipt file from storage and clear its URL/key from the DB.
+ * This is a best-effort cleanup — failures are logged but never fail the
+ * overall rejection operation.
+ */
+async function clearReceiptFromPayment(payment: any): Promise<void> {
+  if (payment?.receiptScreenshotKey) {
+    const result = await StorageService.deleteFile(payment.receiptScreenshotKey);
+    if (!result.success) {
+      console.warn(
+        "[REJECT] Failed to delete receipt file from storage:",
+        payment.receiptScreenshotKey,
+        result.error,
+      );
+    }
+  }
+
+  // Clear the URL and storage key from the Payment record
+  const clearFields: Record<string, any> = {
+    receiptScreenshotUrl: null,
+    receiptScreenshotKey: null,
+  };
+  // Only include fields that currently have a value (to avoid unnecessary writes)
+  if (!payment?.receiptScreenshotUrl) delete clearFields.receiptScreenshotUrl;
+  if (!payment?.receiptScreenshotKey) delete clearFields.receiptScreenshotKey;
+
+  if (Object.keys(clearFields).length > 0) {
+    const { error: clearErr } = await supabaseAdmin!
+      .from("Payment")
+      .update(clearFields)
+      .eq("id", payment.id);
+    if (clearErr) {
+      console.warn("[REJECT] Failed to clear Payment receipt fields:", clearErr);
+    }
+  }
+}
+
+/**
+ * Clear the pendingReceiptUrl from a UserRegistration record.
+ */
+async function clearRegistrationReceiptUrl(userId: string): Promise<void> {
+  const { error: clearErr } = await supabaseAdmin!
+    .from("UserRegistration")
+    .update({ pendingReceiptUrl: null })
+    .eq("userId", userId);
+  if (clearErr) {
+    console.warn(
+      "[REJECT] Failed to clear UserRegistration pendingReceiptUrl:",
+      clearErr,
+    );
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -54,7 +108,6 @@ export async function POST(
         .update({
           status: "rejected",
           updatedAt: new Date().toISOString(),
-          rejectionReason,
         })
         .eq("id", enrollment.id);
 
@@ -103,6 +156,20 @@ export async function POST(
         );
       }
 
+      // ── Cleanup: delete receipt file from storage and clear URL fields ──
+      // Fetch the payment record to get the storage key
+      const { data: paymentForCleanup } = await supabaseAdmin!
+        .from("Payment")
+        .select("id, receiptScreenshotUrl, receiptScreenshotKey")
+        .eq("enrollmentId", enrollment.id)
+        .eq("status", "rejected")
+        .maybeSingle();
+
+      if (paymentForCleanup) {
+        await clearReceiptFromPayment(paymentForCleanup);
+      }
+      await clearRegistrationReceiptUrl(userId);
+
       // Mark the AdminApprovalQueue entry as reviewed
       const { data: rejectedPayment } = await supabaseAdmin!
         .from("Payment")
@@ -146,7 +213,6 @@ export async function POST(
         .update({
           status: "rejected",
           updatedAt: new Date().toISOString(),
-          rejectionReason: rejectionReason || null,
         })
         .in("id", enrollmentIds);
 
@@ -168,7 +234,23 @@ export async function POST(
       if (batchPaymentErr) {
         console.error("[REJECT BATCH PAYMENT ERROR]", batchPaymentErr);
       }
+
+      // ── Cleanup: delete receipt files from storage and clear URL fields ──
+      const { data: paymentsForCleanup } = await supabaseAdmin!
+        .from("Payment")
+        .select("id, receiptScreenshotUrl, receiptScreenshotKey")
+        .in("enrollmentId", enrollmentIds)
+        .eq("status", "rejected");
+
+      if (paymentsForCleanup && paymentsForCleanup.length > 0) {
+        await Promise.allSettled(
+          paymentsForCleanup.map((p: any) => clearReceiptFromPayment(p)),
+        );
+      }
     }
+
+    // Also clear the UserRegistration pendingReceiptUrl
+    await clearRegistrationReceiptUrl(userId);
 
     const now = new Date().toISOString();
     const { error } = await supabaseAdmin!

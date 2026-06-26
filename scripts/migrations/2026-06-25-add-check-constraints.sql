@@ -8,7 +8,7 @@
 
 -- ============================================================================
 -- Enrollment.status
--- Allowed values: 'active', 'completed', 'cancelled', 'processing'
+-- Allowed values: 'active', 'completed', 'cancelled', 'processing', 'rejected'
 -- ============================================================================
 DO $$
 BEGIN
@@ -19,7 +19,7 @@ BEGIN
     ) THEN
         ALTER TABLE "Enrollment"
         ADD CONSTRAINT enrollment_status_check
-        CHECK (status IN ('active', 'completed', 'cancelled', 'processing')) NOT VALID;
+        CHECK (status IN ('active', 'completed', 'cancelled', 'processing', 'rejected')) NOT VALID;
     END IF;
 END $$;
 

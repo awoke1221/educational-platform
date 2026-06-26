@@ -4,6 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch } from "@/lib/utils/cache";
+import ComingSoonForm from "@/components/ComingSoonForm";
+
+const LAUNCH_DATE =
+  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00";
 
 const staggerContainer = {
   hidden: {},
@@ -39,6 +43,43 @@ const LEVEL_LABELS: Record<string, string> = {
   intermediate: "መካከለኛ",
   advanced: "ከፍተኛ",
 };
+
+// ─── Particle Field ─────────────────────────────────
+function ParticleField({ count = 20 }: { count?: number }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted)
+    return (
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" />
+    );
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {Array.from({ length: count }, (_, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full bg-white/8 blur-[1px]"
+          style={{
+            left: `${(i * 17 + 7) % 100}%`,
+            top: `${(i * 19 + 3) % 100}%`,
+            width: 2 + (i % 3),
+            height: 2 + (i % 3),
+          }}
+          animate={{
+            y: [0, -15 - (i % 5), 0],
+            opacity: [0.1, 0.3, 0.1],
+          }}
+          transition={{
+            duration: 4 + (i % 3),
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: (i % 5) * 0.3,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 // ─── Skeleton Loader ─────────────────────────────────────
 function SkeletonCard() {
@@ -127,7 +168,7 @@ export default function CoursesPage() {
   const [enrollmentMap, setEnrollmentMap] = useState<Map<string, any>>(
     new Map(),
   );
-  // Search & Filter state
+  // Search state
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -225,52 +266,123 @@ export default function CoursesPage() {
   const totalCount = courses.length;
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* ── Hero Banner ─────────────────────────────── */}
-      <section className="relative bg-gradient-to-br from-primary via-primary-light to-secondary overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-secondary/10 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-white/5 blur-3xl" />
+      <section className="relative bg-[#0a0a0a] overflow-hidden">
+        <ParticleField count={25} />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <motion.div className="absolute -top-40 -right-40 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-[#dc2626]/8 to-[#ef4444]/3 blur-3xl animate-orb" />
+          <motion.div className="absolute -bottom-32 -left-32 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#7f1d1d]/10 to-transparent blur-3xl animate-orb-slow" />
+          <motion.div className="absolute top-1/4 right-1/4 w-20 h-20 rounded-full border border-[#dc2626]/10 animate-spin-slow" />
         </div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#dc2626]/8 rounded-full blur-[100px] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
-              ኮርሶች
-            </h1>
-            <p className="text-base sm:text-lg text-white/90 mb-8 max-w-xl mx-auto">
-              ቢሊዮኖች እይታዎችን ያመጡ ስልቶችን ይማሩ፣ ብራንድዎን ይገንቡ፣
-            </p>
-            <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-lg mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-[#ef4444]/20 text-white/70 text-xs font-semibold px-4 py-1.5 rounded-full mb-4">
+                <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                Adonay TikTok Academy
+              </span>
+            </motion.div>
+            <motion.h1
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              የእኛ{" "}
+              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
+                ኮርሶች
+              </span>
+            </motion.h1>
+            <motion.p
+              className="text-base sm:text-lg text-white/70 mb-8 max-w-xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              ቢሊዮኖች እይታዎችን ያመጡ ስልቶችን ይማሩ፣ ብራንድዎን ይገንቡ
+            </motion.p>
+            <motion.div
+              className="grid grid-cols-3 gap-4 sm:gap-8 max-w-lg mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               {[
                 { value: isLoaded ? totalCount : "—", label: "ኮርሶች" },
                 { value: "24/7", label: "ድጋፍ" },
                 { value: "ቀላል", label: "ምዝገባ" },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent drop-shadow-lg">
                     {stat.value}
                   </div>
-                  <div className="text-xs sm:text-sm text-white/80 mt-1">
+                  <div className="text-xs sm:text-sm text-white/50 mt-1">
                     {stat.label}
                   </div>
                 </div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-surface to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+      </section>
+
+      {/* ── Coming Soon Banner ──────────────────────── */}
+      <section className="relative overflow-hidden bg-black">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#7f1d1d] via-[#dc2626] to-[#ef4444] opacity-[0.08]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.06)_0%,transparent_70%)]" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+          <div className="text-center space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <span className="inline-flex items-center gap-2 bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-[#dc2626]/30">
+                <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
+                Adony TikTok Academy — በቅርቡ ይጀምራል!
+              </span>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-sm text-white/60 max-w-lg mx-auto"
+            >
+              አዲሱ የ Adony TikTok Academy በቅርቡ ይጀምራል። ቀደም ብለው ይመዝገቡ እና ልዩ የሆኑ
+              ጥቅሞችን ያግኙ!
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <ComingSoonForm source="courses" launchDate={LAUNCH_DATE} />
+            </motion.div>
+          </div>
+        </div>
       </section>
 
       {/* ── All Courses Grid ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
-            <span className="w-1.5 h-7 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+          <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-3">
+            <span className="w-1.5 h-7 bg-gradient-to-b from-[#7f1d1d] to-[#dc2626] rounded-full inline-block" />
             ሁሉም ኮርሶች
           </h2>
           {isLoaded && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+            <span className="text-xs text-white/40 font-medium bg-white/5 border border-white/10 px-3 py-1 rounded-full">
               {courses.length} ኮርሶች
             </span>
           )}
@@ -389,8 +501,10 @@ export default function CoursesPage() {
               <motion.div
                 key={course.id}
                 variants={staggerItem}
-                className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border border-gray-100 dark:border-gray-700 hover:border-primary/30 dark:hover:border-secondary/50 hover:-translate-y-1"
+                className="group bg-white/[0.03] backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-[#dc2626]/15 transition-all duration-500 border border-white/5 hover:border-[#dc2626]/40 hover:-translate-y-2 relative"
               >
+                {/* Card glow on hover */}
+                <div className="absolute -inset-0.5 bg-gradient-to-br from-[#dc2626]/20 via-transparent to-[#ef4444]/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm pointer-events-none" />
                 <div className="relative h-48 bg-gradient-to-br from-primary via-primary-light to-secondary overflow-hidden">
                   <img
                     src={course.coverImage}
@@ -444,181 +558,46 @@ export default function CoursesPage() {
                     {course.enrollmentCount || 0} enrolled
                   </div>
 
-                  {/* Lock overlay for not-enrolled */}
-                  {!enrolledIds.has(course.id) && !isAdmin && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
-                  )}
+                  {/* No enrollment lock overlay — all courses are coming soon */}
                 </div>
-                <div className="p-5">
+                <div className="p-5 relative z-10">
                   {/* Category tag */}
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[11px] font-medium text-primary dark:text-gray-200 bg-primary/5 dark:bg-gray-700/50 px-2.5 py-0.5 rounded-full ring-1 ring-primary/10 dark:ring-gray-600">
+                    <span className="text-[11px] font-medium text-white bg-[#dc2626]/20 px-2.5 py-0.5 rounded-full ring-1 ring-[#dc2626]/20">
                       {course.category}
                     </span>
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1.5 line-clamp-2 group-hover:text-primary dark:group-hover:text-secondary transition-colors text-base leading-snug">
+                  <h3 className="font-bold text-white mb-1.5 line-clamp-2 group-hover:text-[#ef4444] transition-colors text-base leading-snug">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-4">
+                  <p className="text-sm text-white/50 line-clamp-2 leading-relaxed mb-4">
                     {course.shortDescription}
                   </p>
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                  <div className="flex items-center justify-between pt-3 border-t border-white/10">
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[11px] text-white font-bold shrink-0 shadow-sm">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7f1d1d] to-[#dc2626] flex items-center justify-center text-[11px] text-white font-bold shrink-0 shadow-sm">
                         {course.instructor?.fullName?.charAt(0) || "A"}
                       </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      <span className="text-xs text-white/50 truncate">
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="text-sm font-semibold">
-                        {rejectedCourseIds.has(course.id) ? (
-                          <span className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2.5 py-1 rounded-lg text-xs">
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                            Rejected
-                          </span>
-                        ) : enrolledIds.has(course.id) ? (
-                          <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-lg text-xs font-medium">
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                            </svg>
-                            Enrolled
-                          </span>
-                        ) : pendingCourseIds.has(course.id) ? (
-                          <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-lg text-xs font-medium">
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            Pending
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700/50 px-2.5 py-1 rounded-lg text-xs font-medium">
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                              />
-                            </svg>
-                            {(course.currency || "ETB") +
-                              " " +
-                              (course.price ?? 0)}
-                          </span>
-                        )}
-                      </div>
-                      {/* CTA */}
-                      {isAdmin ? (
-                        <Link
-                          href={`/courses/${course.id}`}
-                          className="inline-flex items-center justify-center bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300"
-                        >
-                          View course
-                        </Link>
-                      ) : enrolledIds.has(course.id) ? (
-                        <Link
-                          href={`/courses/${course.id}`}
-                          className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5 transition-all duration-300"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                            />
-                          </svg>
-                          Continue
-                        </Link>
-                      ) : pendingCourseIds.has(course.id) ? (
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-xs font-semibold px-4 py-2 rounded-lg cursor-not-allowed"
-                          disabled
-                        >
-                          Pending
-                        </button>
-                      ) : token ? (
-                        <Link
-                          href={`/auth/register/payment?${userId ? `userId=${userId}&` : ""}redirect=/courses/${course.id}&courseId=${course.id}`}
-                          className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                            />
-                          </svg>
-                          Enroll
-                        </Link>
-                      ) : (
-                        <Link
-                          href={`/auth/register?redirect=${encodeURIComponent(
-                            `/auth/register/payment?courseId=${course.id}&redirect=/courses/${course.id}`,
-                          )}`}
-                          className="inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-300"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                            />
-                          </svg>
-                          Enroll
-                        </Link>
-                      )}
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/25 px-3 py-1.5 rounded-lg text-xs font-bold">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                        />
+                      </svg>
+                      በቅርቡ ይጀምራል
+                    </span>
                   </div>
                 </div>
               </motion.div>

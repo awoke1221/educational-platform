@@ -117,9 +117,10 @@ export default function InstructorDashboard() {
   if (!token) return null;
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-gray-900">
+    <div className="min-h-screen bg-[#0a0604] dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary via-primary-light to-secondary text-white">
+      <div className="bg-[#0a0604] text-white relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#a30000]/8 rounded-full blur-[80px] pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -137,7 +138,7 @@ export default function InstructorDashboard() {
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/admin/courses/new"
-                className="text-sm bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300 font-medium"
+                className="text-sm bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300 font-medium"
               >
                 ➕ New Course
               </Link>
@@ -191,12 +192,10 @@ export default function InstructorDashboard() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xl">{stat.icon}</span>
               </div>
-              <p
-                className={`text-2xl font-bold ${stat.color} dark:text-gray-100`}
-              >
+              <p className={`text-2xl font-bold ${stat.color} text-white/90`}>
                 {stat.value}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
+              <p className="text-xs text-white/50 mt-0.5">{stat.label}</p>
             </motion.div>
           ))}
         </div>
@@ -210,11 +209,11 @@ export default function InstructorDashboard() {
 
         {/* My Courses */}
         {!loading && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
+          <div className="bg-surface rounded-2xl shadow-sm border border-surface/50 overflow-hidden mb-8">
             <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-              <h2 className="font-semibold text-primary dark:text-gray-100 flex items-center gap-2">
+              <h2 className="font-semibold text-primary flex items-center gap-2">
                 📖 My Courses
-                <span className="text-xs font-normal text-gray-400">
+                <span className="text-xs font-normal text-white/50">
                   ({courses.length})
                 </span>
               </h2>
@@ -231,15 +230,13 @@ export default function InstructorDashboard() {
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">📚</span>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 font-medium mb-1">
-                  No courses yet
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                <p className="text-white/60 font-medium mb-1">No courses yet</p>
+                <p className="text-xs text-white/50 mb-4">
                   Create your first course to get started
                 </p>
                 <Link
                   href="/admin/courses/new"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0f1b3a] to-[#1b2a4a] text-white px-5 py-2 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#1b2a4a]/25 hover:-translate-y-0.5 transition-all duration-300"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-5 py-2 rounded-lg text-sm font-medium hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
                 >
                   ➕ Create Course
                 </Link>
@@ -258,7 +255,7 @@ export default function InstructorDashboard() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      className="p-4 hover:bg-white/5 transition-colors"
                     >
                       <div className="flex items-start gap-4">
                         {/* Thumbnail */}
@@ -280,7 +277,7 @@ export default function InstructorDashboard() {
                         {/* Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                            <h3 className="text-sm font-semibold text-white/90 truncate">
                               {course.title}
                             </h3>
                             {course.isPublished ? (
@@ -293,7 +290,7 @@ export default function InstructorDashboard() {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                          <div className="flex items-center gap-3 mt-1 text-xs text-white/50">
                             <span>
                               {levelLabels[course.level] || course.level}
                             </span>
@@ -319,7 +316,7 @@ export default function InstructorDashboard() {
                           <Link
                             href={`/courses/${course.id}`}
                             target="_blank"
-                            className="p-1.5 text-gray-400 hover:text-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                            className="p-1.5 text-white/40 hover:text-primary rounded-lg hover:bg-white/10 transition-colors"
                             title="View public page"
                           >
                             <svg
@@ -348,8 +345,8 @@ export default function InstructorDashboard() {
         {/* Quick Stats Row */}
         {!loading && courses.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-              <h3 className="font-semibold text-sm text-primary dark:text-gray-100 mb-3">
+            <div className="bg-surface rounded-xl p-5 shadow-sm border border-surface/50">
+              <h3 className="font-semibold text-sm text-primary mb-3">
                 📹 Video Content
               </h3>
               <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
@@ -359,17 +356,17 @@ export default function InstructorDashboard() {
                 Total videos across all courses
               </p>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-              <h3 className="font-semibold text-sm text-primary dark:text-gray-100 mb-3">
+            <div className="bg-surface rounded-xl p-5 shadow-sm border border-surface/50">
+              <h3 className="font-semibold text-sm text-primary mb-3">
                 📈 Engagement
               </h3>
-              <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+              <p className="text-2xl font-bold text-white/90">
                 {courses.reduce((sum, c) => sum + (c.enrollmentCount || 0), 0)}
               </p>
-              <p className="text-xs text-gray-400">Total student enrollments</p>
+              <p className="text-xs text-white/50">Total student enrollments</p>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-              <h3 className="font-semibold text-sm text-primary dark:text-gray-100 mb-3">
+            <div className="bg-surface rounded-xl p-5 shadow-sm border border-surface/50">
+              <h3 className="font-semibold text-sm text-primary mb-3">
                 💰 Revenue
               </h3>
               <p className="text-2xl font-bold text-secondary">
@@ -382,7 +379,7 @@ export default function InstructorDashboard() {
                   .toLocaleString()}{" "}
                 ETB
               </p>
-              <p className="text-xs text-gray-400">Estimated total revenue</p>
+              <p className="text-xs text-white/50">Estimated total revenue</p>
             </div>
           </div>
         )}

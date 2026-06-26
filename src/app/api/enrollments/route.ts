@@ -29,7 +29,10 @@ export async function GET(request: NextRequest) {
     // ── Parse pagination params ─────────────────────────────────
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
+    const limit = Math.min(
+      200,
+      Math.max(1, parseInt(searchParams.get("limit") || "50", 10)),
+    );
     const offset = (page - 1) * limit;
 
     // Count query (lightweight — no related data)
