@@ -11,7 +11,7 @@ const ComingSoonForm = dynamic(() => import("@/components/ComingSoonForm"), {
 });
 
 const LAUNCH_DATE =
-  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00";
+  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00";
 
 // ─── Enhanced Particle Background ────────────────────
 // 🚀 OPTIMIZED: Pure CSS animations instead of Framer Motion.
@@ -397,7 +397,7 @@ export default function Home() {
                 className="mb-4"
               >
                 <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold tracking-tight text-white leading-tight whitespace-nowrap">
-                  Welcome to Adonay TikTok Academy
+                  Adonay TikTok Academy
                 </h1>
               </motion.div>
 

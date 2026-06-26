@@ -30,12 +30,12 @@ interface ImageTestimonial {
 // Skeleton Loader
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
-      <div className="h-48 bg-gray-200" />
+    <div className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 animate-pulse">
+      <div className="h-48 bg-white/10" />
       <div className="p-5 space-y-3">
-        <div className="h-5 w-3/4 rounded bg-gray-200" />
-        <div className="h-4 w-full rounded bg-gray-100" />
-        <div className="h-4 w-2/3 rounded bg-gray-100" />
+        <div className="h-5 w-3/4 rounded bg-white/20" />
+        <div className="h-4 w-full rounded bg-white/10" />
+        <div className="h-4 w-2/3 rounded bg-white/10" />
       </div>
     </div>
   );
@@ -77,7 +77,7 @@ function VideoTestimonialsSection() {
   if (videoTestimonials.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">
+        <p className="text-white/50">
           No video testimonials are available yet. Please check back later for
           real student submissions.
         </p>
@@ -91,7 +91,7 @@ function VideoTestimonialsSection() {
         {videoTestimonials.map((testimonial) => (
           <div
             key={testimonial.id}
-            className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border-light hover:border-primary cursor-pointer"
+            className="group bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-white/20 hover:border-secondary/50 cursor-pointer"
             onClick={() => setSelectedVideo(testimonial)}
           >
             <div className="relative h-48 bg-gradient-to-br from-primary to-secondary overflow-hidden">
@@ -100,7 +100,7 @@ function VideoTestimonialsSection() {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                <button className="bg-white/90 hover:bg-white text-[#1b2a4a] p-3 rounded-full transition-all transform group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[#1b2a4a]/20">
+                <button className="bg-white/90 hover:bg-white text-primary p-3 rounded-full transition-all transform group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-black/20">
                   <svg
                     className="w-6 h-6"
                     fill="currentColor"
@@ -115,13 +115,9 @@ function VideoTestimonialsSection() {
               </div>
             </div>
             <div className="p-5">
-              <h3 className="font-bold text-primary mb-1">
-                {testimonial.name}
-              </h3>
-              <p className="text-sm text-text-muted mb-3">
-                {testimonial.title}
-              </p>
-              <p className="text-xs text-primary font-medium">Watch now</p>
+              <h3 className="font-bold text-white mb-1">{testimonial.name}</h3>
+              <p className="text-sm text-white/50 mb-3">{testimonial.title}</p>
+              <p className="text-xs text-secondary font-medium">Watch now</p>
             </div>
           </div>
         ))}
@@ -154,7 +150,7 @@ function VideoTestimonialsSection() {
               <p className="text-secondary font-medium mb-3">
                 {selectedVideo.title}
               </p>
-              <p className="text-gray-300 text-sm">
+              <p className="text-white/60 text-sm">
                 Learn how AD LMS helped these students grow with engaging
                 courses and practical skills training.
               </p>
@@ -239,11 +235,11 @@ function TextTestimonialsSection() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse space-y-4"
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10 animate-pulse space-y-4"
           >
-            <div className="h-4 w-3/4 rounded bg-gray-200" />
-            <div className="h-3 w-full rounded bg-gray-100" />
-            <div className="h-3 w-2/3 rounded bg-gray-100" />
+            <div className="h-4 w-3/4 rounded bg-white/20" />
+            <div className="h-3 w-full rounded bg-white/10" />
+            <div className="h-3 w-2/3 rounded bg-white/10" />
           </div>
         ))}
       </div>
@@ -263,14 +259,14 @@ function TextTestimonialsSection() {
           className="group relative"
         >
           {/* Glow on hover */}
-          <div className="absolute -inset-0.5 bg-gradient-to-br from-[#dc2626]/20 via-transparent to-[#ef4444]/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
-          <div className="relative bg-gradient-to-br from-white/[0.05] to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-7 hover:border-[#dc2626]/30 transition-all duration-500 h-full">
+          <div className="absolute -inset-0.5 bg-gradient-to-br from-secondary/20 via-transparent to-accent/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+          <div className="relative bg-gradient-to-br from-white/[0.05] to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-7 hover:border-secondary/30 transition-all duration-500 h-full">
             {/* Rating */}
             <div className="flex items-center gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
                 <motion.svg
                   key={i}
-                  className={`w-4 h-4 ${i < testimonial.rating ? "text-[#ef4444]" : "text-white/10"}`}
+                  className={`w-4 h-4 ${i < testimonial.rating ? "text-secondary" : "text-white/10"}`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   initial={{ scale: 0 }}
@@ -285,7 +281,7 @@ function TextTestimonialsSection() {
 
             {/* Quote icon */}
             <svg
-              className="w-6 h-6 text-[#dc2626]/30 mb-2"
+              className="w-6 h-6 text-secondary/30 mb-2"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -299,7 +295,7 @@ function TextTestimonialsSection() {
             {/* Author */}
             <div className="border-t border-white/10 pt-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#7f1d1d] to-[#dc2626] flex items-center justify-center text-white text-sm font-bold">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-bold">
                   {testimonial.name.charAt(0)}
                 </div>
                 <div>
@@ -314,7 +310,7 @@ function TextTestimonialsSection() {
             </div>
 
             {/* Bottom accent */}
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#dc2626]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-center rounded-full" />
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-secondary/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-center rounded-full" />
           </div>
         </motion.div>
       ))}
@@ -427,7 +423,7 @@ function StarRating({
       {[...Array(5)].map((_, i) => (
         <svg
           key={i}
-          className={`${sizeClass} ${i < rating ? "text-secondary" : "text-gray-200"}`}
+          className={`${sizeClass} ${i < rating ? "text-secondary" : "text-white/20"}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -505,12 +501,12 @@ function PortraitCard({
         transition: `all 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s`,
       }}
     >
-      <div className="relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-border-light hover:border-primary/30 group">
+      <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-white/20 hover:border-secondary/40 group">
         {/* Image Container */}
         <div className="relative h-56 sm:h-64 overflow-hidden">
           {/* Shimmer loading effect */}
           {!imgLoaded && (
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/20 to-white/10 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]" />
           )}
           <img
             src={testimonial.image}
@@ -531,7 +527,7 @@ function PortraitCard({
           {/* Quote icon */}
           <div className="absolute top-3 left-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-2 group-hover:translate-x-0">
             <svg
-              className="w-4 h-4 text-primary"
+              className="w-4 h-4 text-secondary"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -545,10 +541,10 @@ function PortraitCard({
           {/* Name & Title */}
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="font-bold text-primary text-base">
+              <h3 className="font-bold text-white text-base">
                 {testimonial.name}
               </h3>
-              <p className="text-xs text-primary font-medium">
+              <p className="text-xs text-white/60 font-medium">
                 {testimonial.title}
               </p>
             </div>
@@ -566,14 +562,14 @@ function PortraitCard({
             >
               <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
             </svg>
-            <p className="text-sm text-text-muted leading-relaxed italic relative z-10 pl-4">
+            <p className="text-sm text-white/70 leading-relaxed italic relative z-10 pl-4">
               "{testimonial.text}"
             </p>
           </div>
         </div>
 
         {/* Bottom accent bar on hover */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-accent to-secondary scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
       </div>
     </div>
   );
@@ -610,7 +606,7 @@ function ScreenshotCard({
       >
         {/* Shimmer loading */}
         {!imgLoaded && (
-          <div className="w-full aspect-[3/4] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]" />
+          <div className="w-full aspect-[3/4] bg-gradient-to-r from-white/10 via-white/20 to-white/10 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]" />
         )}
 
         {/* Image */}
@@ -901,7 +897,7 @@ function ImageTestimonialsSection() {
   return (
     <div>
       {/* ── Category Switcher ── */}
-      <div className="flex items-center gap-2 mb-8 bg-white dark:bg-gray-800 rounded-xl p-1.5 shadow-sm border border-border-light max-w-xs mx-auto sm:mx-0">
+      <div className="flex items-center gap-2 mb-8 bg-white/10 backdrop-blur-sm rounded-xl p-1.5 border border-white/20 max-w-xs mx-auto sm:mx-0">
         {[
           {
             id: "portraits" as const,
@@ -922,7 +918,7 @@ function ImageTestimonialsSection() {
             className={`relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
               activeCategory === cat.id
                 ? "bg-gradient-to-r from-primary to-primary-light text-white shadow-md"
-                : "text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-700"
+                : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
             <span>{cat.icon}</span>
@@ -931,7 +927,7 @@ function ImageTestimonialsSection() {
               className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                 activeCategory === cat.id
                   ? "bg-white/20 text-white"
-                  : "bg-gray-100 dark:bg-gray-700 text-text-muted"
+                  : "bg-white/10 text-white/50"
               }`}
             >
               {cat.count}
@@ -966,7 +962,7 @@ function ImageTestimonialsSection() {
 
           {/* View all badge */}
           <AnimatedCard delay={0.3} className="text-center mt-8">
-            <p className="text-sm text-text-muted inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-5 py-2.5 rounded-full shadow-sm border border-border-light">
+            <p className="text-sm text-white/60 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/20">
               <svg
                 className="w-4 h-4 text-secondary"
                 fill="none"
@@ -1020,17 +1016,17 @@ export default function TestimonialsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-gradient-to-b from-primary via-primary-dark to-primary">
       {/* Hero Banner */}
-      <section className="relative bg-[#0a0a0a] overflow-hidden">
+      <section className="relative overflow-hidden">
         {/* Particles & Orbs */}
         <ParticleField count={25} />
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div className="absolute -top-40 -right-40 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-[#dc2626]/8 to-[#ef4444]/3 blur-3xl animate-orb" />
-          <motion.div className="absolute -bottom-32 -left-32 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#7f1d1d]/10 to-transparent blur-3xl animate-orb-slow" />
-          <motion.div className="absolute top-1/4 right-1/4 w-20 h-20 rounded-full border border-[#dc2626]/10 animate-spin-slow" />
+          <motion.div className="absolute -top-40 -right-40 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-secondary/10 to-accent/5 blur-3xl animate-orb" />
+          <motion.div className="absolute -bottom-32 -left-32 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-secondary/10 to-transparent blur-3xl animate-orb-slow" />
+          <motion.div className="absolute top-1/4 right-1/4 w-20 h-20 rounded-full border border-secondary/10 animate-spin-slow" />
         </div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#dc2626]/8 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-secondary/8 rounded-full blur-[100px] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center max-w-3xl mx-auto">
             <motion.div
@@ -1038,8 +1034,8 @@ export default function TestimonialsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-[#ef4444]/20 text-white/70 text-xs font-semibold px-4 py-1.5 rounded-full mb-4">
-                <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+              <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-secondary/30 text-white/70 text-xs font-semibold px-4 py-1.5 rounded-full mb-4">
+                <span className="w-2 h-2 rounded-full bg-secondary animate-pulse shadow-[0_0_6px_rgba(201,149,42,0.6)]" />
                 Real Results from Real Students
               </span>
             </motion.div>
@@ -1050,7 +1046,7 @@ export default function TestimonialsPage() {
               transition={{ duration: 0.5 }}
             >
               Student{" "}
-              <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
                 Testimonials
               </span>
             </motion.h1>
@@ -1105,7 +1101,7 @@ export default function TestimonialsPage() {
             </motion.div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0a0604] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-primary-dark to-transparent" />
       </section>
 
       {/* Tab Navigation */}
@@ -1118,7 +1114,7 @@ export default function TestimonialsPage() {
               className={`relative flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all duration-300 ${
                 activeTab === tab.id
                   ? "text-white shadow-lg"
-                  : "bg-white dark:bg-gray-800 text-primary dark:text-gray-200 border-2 border-border-light dark:border-gray-700 hover:border-primary"
+                  : "bg-white/10 backdrop-blur-sm text-white/70 border border-white/20 hover:bg-white/20 hover:text-white"
               }`}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -1148,8 +1144,8 @@ export default function TestimonialsPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-8 flex items-center gap-2">
-                <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+              <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-gradient-to-b from-secondary to-accent rounded-full inline-block" />
                 Video Testimonials
               </h2>
               <VideoTestimonialsSection />
@@ -1164,8 +1160,8 @@ export default function TestimonialsPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-8 flex items-center gap-2">
-                <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+              <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-gradient-to-b from-secondary to-accent rounded-full inline-block" />
                 Text Testimonials
               </h2>
               <TextTestimonialsSection />
@@ -1180,8 +1176,8 @@ export default function TestimonialsPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-8 flex items-center gap-2">
-                <span className="w-1.5 h-8 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
+              <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+                <span className="w-1.5 h-8 bg-gradient-to-b from-secondary to-accent rounded-full inline-block" />
                 Image Testimonials
               </h2>
               <ImageTestimonialsSection />

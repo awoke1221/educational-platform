@@ -8,7 +8,7 @@ import { authFetchJson } from "@/lib/utils/auth-fetch";
 import ComingSoonForm from "@/components/ComingSoonForm";
 
 const LAUNCH_DATE =
-  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00";
+  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00";
 
 function RegisterForm() {
   const router = useRouter();

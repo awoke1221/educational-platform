@@ -31,7 +31,13 @@ interface ExpertiseItem {
 const heroStats: StatItem[] = [
   { value: "6", label: "ተከታዮች", suffix: "M+", numValue: 6, decimals: 0 },
   { value: "1.3", label: "እይታዎች", suffix: "B+", numValue: 1.3, decimals: 1 },
-  { value: "2025", label: "TikToker of the Year", suffix: "" },
+  {
+    value: "2025",
+    label: "TikToker of the Year",
+    suffix: "",
+    numValue: 2025,
+    decimals: 0,
+  },
   {
     value: "1000",
     label: "የተሳካ ተማሪዎች",

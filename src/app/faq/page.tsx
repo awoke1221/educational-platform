@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -108,18 +108,6 @@ const faqData: FaqItem[] = [
       "ምክንያቱም የሚሰጡት ትምህርቶች ከቲዎሪ የተለየ፣ በቢሊዮኖች እይታዎች የተፈተነ እና በተግባር ውጤት ያሳየ ልምድ ላይ የተመሰረቱ ናቸው። ዓላማችን ተከታዮችን ብቻ ማሳደግ አይደለም፤ የማይረሳ ፐርሰናል ብራንድ እንዲገነቡ ማገዝ ነው።",
     icon: "🏆",
   },
-];
-
-/* ─── Categories ────────────────────────────────────────── */
-const categories = [
-  { key: "ሁሉም", label: "ሁሉም", icon: "📋" },
-  { key: "መግቢያ", label: "መግቢያ", icon: "🎓" },
-  { key: "ተሳትፎ", label: "ተሳትፎ", icon: "🎯" },
-  { key: "መስፈርቶች", label: "መስፈርቶች", icon: "🚀" },
-  { key: "ተደራሽነት", label: "ተደራሽነት", icon: "📱" },
-  { key: "ውጤት", label: "ውጤት", icon: "📊" },
-  { key: "ክፍያ", label: "ክፍያ", icon: "💳" },
-  { key: "ድጋፍ", label: "ድጋፍ", icon: "💬" },
 ];
 
 /* ─── Particle Field ───────────────────────────────────── */
@@ -396,51 +384,15 @@ function ContactCard() {
    ══════════════════════════════════════════════════════════ */
 export default function FaqPage() {
   const [activeId, setActiveId] = useState<number | null>(null);
-  const [activeCategory, setActiveCategory] = useState("ሁሉም");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [scrolled, setScrolled] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  // Scroll listener for sticky header effect
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 200);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Filtered FAQs
-  const filteredFaqs = useMemo(() => {
-    return faqData.filter((item) => {
-      const matchesCategory =
-        activeCategory === "ሁሉም" || item.category === activeCategory;
-      const matchesSearch =
-        searchQuery === "" ||
-        item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.answer.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, searchQuery]);
 
   const toggleFaq = (id: number) => {
     setActiveId(activeId === id ? null : id);
   };
 
-  // Keyboard shortcut: Ctrl+K or Cmd+K to focus search
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary via-primary-dark to-primary overflow-hidden">
       {/* ═══════════════ HERO SECTION ═══════════════ */}
-      <section className="relative min-h-[60vh] sm:min-h-[50vh] flex items-center pt-24 pb-16 overflow-hidden">
+      <section className="relative pt-24 pb-8 overflow-hidden">
         <ParticleField />
         <div className="absolute inset-0">
           <div className="absolute top-0 -left-40 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
@@ -472,92 +424,8 @@ export default function FaqPage() {
                 </span>
               </h1>
               <p className="text-base sm:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
-                ስለ Adonay TikTok Academy በተደጋጋሚ የሚጠየቁ ጥያቄዎች መልስ ያግኙ። የሚፈልጉትን መረጃ
-                ለማግኘት ከታች ያስሱ።
+                ስለ Adonay TikTok Academy በተደጋጋሚ የሚጠየቁ ጥያቄዎች መልስ ያግኙ።
               </p>
-            </div>
-
-            {/* Search Bar */}
-            <div className="max-w-xl mx-auto mb-6 sm:mb-8">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-secondary/30 via-accent/20 to-secondary/30 rounded-2xl blur-xl opacity-30 group-focus-within:opacity-60 transition-opacity duration-500" />
-                <div className="relative flex items-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden focus-within:border-secondary/50 focus-within:bg-white/[0.12] transition-all duration-300 shadow-xl shadow-black/20">
-                  <div className="flex-shrink-0 pl-4 sm:pl-5">
-                    <svg
-                      className="w-5 h-5 text-white/40"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setActiveId(null);
-                    }}
-                    placeholder="ጥያቄ ይፈልጉ... (Ctrl+K)"
-                    className="w-full bg-transparent text-white placeholder-white/40 px-3 sm:px-4 py-3.5 sm:py-4 text-sm sm:text-base focus:outline-none"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="flex-shrink-0 pr-4 sm:pr-5 text-white/40 hover:text-white/70 transition-colors"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                  <kbd className="hidden sm:inline-flex flex-shrink-0 mr-4 items-center gap-1 px-2 py-1 rounded-lg bg-white/10 text-[10px] text-white/30 font-mono">
-                    <span className="text-xs">⌘</span>K
-                  </kbd>
-                </div>
-              </div>
-            </div>
-          </AnimatedSection>
-
-          {/* Category Pills */}
-          <AnimatedSection direction="up" delay={0.2} duration={0.5}>
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              {categories.map((cat) => (
-                <motion.button
-                  key={cat.key}
-                  onClick={() => {
-                    setActiveCategory(cat.key);
-                    setActiveId(null);
-                  }}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
-                    activeCategory === cat.key
-                      ? "bg-gradient-to-r from-secondary to-accent text-white shadow-lg shadow-secondary/30 scale-105"
-                      : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white/80 border border-white/10"
-                  }`}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.label}</span>
-                </motion.button>
-              ))}
             </div>
           </AnimatedSection>
         </div>
@@ -565,127 +433,21 @@ export default function FaqPage() {
 
       {/* ═══════════════ FAQ LIST SECTION ═══════════════ */}
       <section className="relative pb-16 sm:pb-24">
-        {/* Results count */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8">
-          <AnimatedSection direction="up" delay={0.1}>
-            <div className="flex items-center justify-between">
-              <p className="text-xs sm:text-sm text-white/50">
-                {searchQuery || activeCategory !== "ሁሉም"
-                  ? `${filteredFaqs.length} ውጤቶች ተገኝተዋል`
-                  : `${faqData.length} ጥያቄዎች`}
-              </p>
-              {filteredFaqs.length > 0 && (
-                <button
-                  onClick={() => {
-                    if (activeId !== null) {
-                      setActiveId(null);
-                    } else {
-                      filteredFaqs.forEach((_, i) => {
-                        // Toggle all: open all
-                        const allIds = filteredFaqs.map((f) => f.id);
-                        // If none open, open all
-                        if (allIds.every((id) => id !== activeId)) {
-                          // We can't open all at once in our single-select design,
-                          // but we can expand them one by one
-                        }
-                      });
-                    }
-                  }}
-                  className="text-xs text-white/40 hover:text-secondary transition-colors"
-                >
-                  {activeId !== null ? "ሁሉንም ዝጋ" : "ሁሉንም ክፈት"}
-                </button>
-              )}
-            </div>
-          </AnimatedSection>
-        </div>
-
         {/* FAQ Items */}
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 sm:space-y-4">
-          {filteredFaqs.length > 0 ? (
-            <StaggerContainer staggerDelay={0.04}>
-              {filteredFaqs.map((item, index) => (
-                <StaggerItem key={item.id}>
-                  <AccordionItem
-                    item={item}
-                    isOpen={activeId === item.id}
-                    onToggle={() => toggleFaq(item.id)}
-                    index={index}
-                  />
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16 sm:py-20"
-            >
-              <div className="text-5xl sm:text-6xl mb-4">🔍</div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                ምንም ውጤት አልተገኘም
-              </h3>
-              <p className="text-white/50 mb-6">
-                እባክዎ የተለየ ቃል ይሞክሩ ወይም ምድብ ይምረጡ።
-              </p>
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setActiveCategory("ሁሉም");
-                }}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-secondary to-accent text-white font-semibold hover:shadow-lg hover:shadow-secondary/30 transition-all"
-              >
-                ሁሉንም አሳይ
-              </button>
-            </motion.div>
-          )}
+          <StaggerContainer staggerDelay={0.04}>
+            {faqData.map((item, index) => (
+              <StaggerItem key={item.id}>
+                <AccordionItem
+                  item={item}
+                  isOpen={activeId === item.id}
+                  onToggle={() => toggleFaq(item.id)}
+                  index={index}
+                />
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         </div>
-
-        {/* Expand All / Collapse All */}
-        {filteredFaqs.length > 1 && (
-          <div className="text-center mt-6 sm:mt-8">
-            <button
-              onClick={() => setActiveId(activeId === null ? -1 : null)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 border border-white/10 hover:bg-white/20 hover:border-white/30 text-white/70 hover:text-white text-sm transition-all duration-300"
-            >
-              {activeId !== null ? (
-                <>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 15l7-7 7 7"
-                    />
-                  </svg>
-                  ሁሉንም ዝጋ
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                  ሁሉንም ክፈት
-                </>
-              )}
-            </button>
-          </div>
-        )}
 
         {/* ═══════════════ DIVIDER ═══════════════ */}
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 my-12 sm:my-16">

@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 
 const LAUNCH_DATE =
   typeof process !== "undefined"
-    ? process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-09-01T00:00:00"
-    : "2026-09-01T00:00:00";
+    ? process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00"
+    : "2026-07-26T00:00:00";
 
 interface UserInfo {
   profileImage?: string;
