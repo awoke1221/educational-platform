@@ -20,24 +20,10 @@ interface FormState {
   email: string;
   phoneNumber: string;
   gender: string;
+  country: string;
 }
 
 // ─── Animation Variants ──────────────────────────────────
-
-const fadeSlideUp: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: "easeOut" },
-  },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.25 } },
-};
-
-const stagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
 
 const overlayBackdrop: Variants = {
   hidden: { opacity: 0 },
@@ -78,6 +64,73 @@ const RED_RING = "focus:ring-[#dc2626]/40 focus:border-[#dc2626]";
 const GENDERS = [
   { value: "male", label: "ወንድ", labelEn: "Male" },
   { value: "female", label: "ሴት", labelEn: "Female" },
+  { value: "other", label: "ሌላ", labelEn: "Other" },
+];
+
+// ─── Countries ──────────────────────────────────────────
+
+const COUNTRIES = [
+  { value: "ethiopia", label: "ኢትዮጵያ", labelEn: "Ethiopia" },
+  { value: "united_states", label: "ዩናይትድ ስቴትስ", labelEn: "United States" },
+  { value: "canada", label: "ካናዳ", labelEn: "Canada" },
+  { value: "united_kingdom", label: "ዩናይትድ ኪንግደም", labelEn: "United Kingdom" },
+  { value: "germany", label: "ጀርመን", labelEn: "Germany" },
+  { value: "france", label: "ፈረንሳይ", labelEn: "France" },
+  { value: "italy", label: "ጣሊያን", labelEn: "Italy" },
+  { value: "sweden", label: "ስዊድን", labelEn: "Sweden" },
+  { value: "norway", label: "ኖርዌይ", labelEn: "Norway" },
+  { value: "denmark", label: "ዴንማርክ", labelEn: "Denmark" },
+  { value: "finland", label: "ፊንላንድ", labelEn: "Finland" },
+  { value: "netherlands", label: "ኔዘርላንድስ", labelEn: "Netherlands" },
+  { value: "belgium", label: "ቤልጂየም", labelEn: "Belgium" },
+  { value: "switzerland", label: "ስዊዘርላንድ", labelEn: "Switzerland" },
+  { value: "austria", label: "ኦስትሪያ", labelEn: "Austria" },
+  { value: "spain", label: "ስፔን", labelEn: "Spain" },
+  { value: "portugal", label: "ፖርቱጋል", labelEn: "Portugal" },
+  { value: "ireland", label: "አየርላንድ", labelEn: "Ireland" },
+  { value: "australia", label: "አውስትራሊያ", labelEn: "Australia" },
+  { value: "new_zealand", label: "ኒው ዚላንድ", labelEn: "New Zealand" },
+  { value: "japan", label: "ጃፓን", labelEn: "Japan" },
+  { value: "south_korea", label: "ደቡብ ኮሪያ", labelEn: "South Korea" },
+  { value: "china", label: "ቻይና", labelEn: "China" },
+  { value: "india", label: "ህንድ", labelEn: "India" },
+  { value: "uae", label: "ተባበሩት ዓረብ ኤምሬትስ", labelEn: "United Arab Emirates" },
+  { value: "saudi_arabia", label: "ሳውዲ አረቢያ", labelEn: "Saudi Arabia" },
+  { value: "qatar", label: "ታተር", labelEn: "Qatar" },
+  { value: "kuwait", label: "ኩዌት", labelEn: "Kuwait" },
+  { value: "bahrain", label: "ባህሬን", labelEn: "Bahrain" },
+  { value: "oman", label: "ኦማን", labelEn: "Oman" },
+  { value: "egypt", label: "ግብፅ", labelEn: "Egypt" },
+  { value: "sudan", label: "ሱዳን", labelEn: "Sudan" },
+  { value: "kenya", label: "ኬንያ", labelEn: "Kenya" },
+  { value: "uganda", label: "ዩጋንዳ", labelEn: "Uganda" },
+  { value: "tanzania", label: "ታንዛኒያ", labelEn: "Tanzania" },
+  { value: "south_africa", label: "ደቡብ አፍሪካ", labelEn: "South Africa" },
+  { value: "nigeria", label: "ናይጄሪያ", labelEn: "Nigeria" },
+  { value: "ghana", label: "ጋና", labelEn: "Ghana" },
+  { value: "djibouti", label: "ጅቡቲ", labelEn: "Djibouti" },
+  { value: "somalia", label: "ሶማሊያ", labelEn: "Somalia" },
+  { value: "eritrea", label: "ኤርትራ", labelEn: "Eritrea" },
+  { value: "south_sudan", label: "ደቡብ ሱዳን", labelEn: "South Sudan" },
+  { value: "israel", label: "እስራኤል", labelEn: "Israel" },
+  { value: "turkey", label: "ቱርክ", labelEn: "Turkey" },
+  { value: "russia", label: "ሩሲያ", labelEn: "Russia" },
+  { value: "ukraine", label: "ዩክሬን", labelEn: "Ukraine" },
+  { value: "poland", label: "ፖላንድ", labelEn: "Poland" },
+  { value: "czech_republic", label: "ቼክ ሪፑብሊክ", labelEn: "Czech Republic" },
+  { value: "hungary", label: "ሀንጋሪ", labelEn: "Hungary" },
+  { value: "romania", label: "ሮማኒያ", labelEn: "Romania" },
+  { value: "greece", label: "ግሪክ", labelEn: "Greece" },
+  { value: "brazil", label: "ብራዚል", labelEn: "Brazil" },
+  { value: "mexico", label: "ሜክሲኮ", labelEn: "Mexico" },
+  { value: "argentina", label: "አርጀንቲና", labelEn: "Argentina" },
+  { value: "colombia", label: "ኮሎምቢያ", labelEn: "Colombia" },
+  { value: "thailand", label: "ታይላንድ", labelEn: "Thailand" },
+  { value: "malaysia", label: "ማሌዢያ", labelEn: "Malaysia" },
+  { value: "singapore", label: "ሲንጋፖር", labelEn: "Singapore" },
+  { value: "indonesia", label: "ኢንዶኔዢያ", labelEn: "Indonesia" },
+  { value: "philippines", label: "ፊሊፒንስ", labelEn: "Philippines" },
+  { value: "vietnam", label: "ቬትናም", labelEn: "Vietnam" },
   { value: "other", label: "ሌላ", labelEn: "Other" },
 ];
 
@@ -130,18 +183,6 @@ function ComingSoonOverlay({
           <motion.div
             className="absolute inset-0 bg-black/70 backdrop-blur-xl"
             onClick={onClose}
-          />
-
-          {/* Animated gradient orbs */}
-          <motion.div
-            className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full bg-[#ef4444]/10 blur-[120px] pointer-events-none"
-            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#dc2626]/8 blur-[150px] pointer-events-none"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           />
 
           {/* Panel */}
@@ -205,6 +246,7 @@ export default function ComingSoonForm({
     email: "",
     phoneNumber: "",
     gender: "",
+    country: "",
   });
 
   // Check localStorage for existing submission
@@ -224,7 +266,13 @@ export default function ComingSoonForm({
     setStep("location");
     setLocationType(null);
     setError("");
-    setForm({ fullName: "", email: "", phoneNumber: "", gender: "" });
+    setForm({
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      gender: "",
+      country: "",
+    });
   }, []);
 
   const closeOverlay = useCallback(() => {
@@ -232,7 +280,13 @@ export default function ComingSoonForm({
     setStep("idle");
     setLocationType(null);
     setError("");
-    setForm({ fullName: "", email: "", phoneNumber: "", gender: "" });
+    setForm({
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      gender: "",
+      country: "",
+    });
   }, []);
 
   const openOverlayFromSuccess = useCallback(() => {
@@ -272,6 +326,10 @@ export default function ComingSoonForm({
       setError("እባክዎ ኢሜይል ያስገቡ");
       return;
     }
+    if (locationType === "diaspora" && !form.country) {
+      setError("እባክዎ ሀገር ይምረጡ");
+      return;
+    }
     if (locationType === "local" && !form.phoneNumber.trim()) {
       setError("እባክዎ ስልክ ቁጥር ያስገቡ");
       return;
@@ -288,6 +346,7 @@ export default function ComingSoonForm({
           email: form.email.trim() || undefined,
           phoneNumber: form.phoneNumber.trim() || undefined,
           gender: form.gender,
+          country: form.country || undefined,
           locationType,
           source,
         }),
@@ -321,43 +380,20 @@ export default function ComingSoonForm({
   if (!overlayOpen && !hasSubmitted) {
     return (
       <div className="w-full max-w-md mx-auto">
-        <motion.button
+        <button
           onClick={openOverlay}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
           className={`
-            group relative w-full overflow-hidden rounded-xl
+            w-full rounded-xl
             bg-gradient-to-r ${RED_GRADIENT}
             text-white font-bold text-base sm:text-lg
             px-8 py-4
             shadow-lg shadow-[#dc2626]/30
             hover:shadow-xl hover:shadow-[#dc2626]/50
+            active:scale-[0.98]
             transition-all duration-300
           `}
         >
-          {/* Animated shine overlay */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-            animate={{ x: ["-200%", "200%"] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-          {/* Pulsing border glow */}
-          <motion.div
-            className="absolute inset-0 rounded-xl border-2 border-[#ef4444]/0"
-            animate={{
-              borderColor: [
-                "rgba(239,68,68,0)",
-                "rgba(239,68,68,0.3)",
-                "rgba(239,68,68,0)",
-              ],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          <span className="relative z-10 flex items-center justify-center gap-3">
+          <span className="flex items-center justify-center gap-3">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -386,7 +422,7 @@ export default function ComingSoonForm({
               />
             </svg>
           </span>
-        </motion.button>
+        </button>
       </div>
     );
   }
@@ -396,84 +432,18 @@ export default function ComingSoonForm({
   if (!overlayOpen && hasSubmitted) {
     return (
       <div className="w-full max-w-md mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative rounded-2xl overflow-hidden"
-        >
-          {/* Animated pulsing border */}
-          <motion.div
-            className="absolute inset-0 rounded-2xl"
-            animate={{
-              boxShadow: [
-                "0 0 0 0 rgba(239,68,68,0)",
-                "0 0 0 2px rgba(239,68,68,0.3)",
-                "0 0 0 0 rgba(239,68,68,0)",
-              ],
-            }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          />
-
+        <div className="relative rounded-2xl overflow-hidden">
           {/* Main card */}
           <div className="relative bg-gradient-to-br from-[#7f1d1d]/25 via-[#dc2626]/12 to-[#ef4444]/8 backdrop-blur-xl rounded-2xl border border-[#ef4444]/25 p-6 shadow-xl shadow-[#dc2626]/15 overflow-hidden">
-            {/* Red glow orbs */}
-            <motion.div
-              className="absolute -top-24 -right-24 w-48 h-48 bg-[#ef4444]/15 rounded-full blur-[100px] pointer-events-none"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-              className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#dc2626]/12 rounded-full blur-[100px] pointer-events-none"
-              animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-            />
-
-            {/* Decorative ring */}
-            <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border-2 border-dashed border-[#ef4444]/20"
-              animate={{ rotate: [0, 360], scale: [1, 1.05, 1] }}
-              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-            />
-
             <div className="relative z-10 text-center space-y-5">
-              {/* Animated icon with rings */}
+              {/* Success Icon */}
               <div className="relative flex justify-center mb-2">
-                {/* Outer glow */}
-                <motion.div
-                  className="absolute w-20 h-20 rounded-full bg-[#ef4444]/15 blur-xl"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                {/* Black ring next to icon */}
-                <motion.div
-                  className="absolute w-[76px] h-[76px] rounded-full border-[3px] border-black/60"
-                  animate={{ rotate: [0, 360] }}
-                  transition={{
-                    duration: 10,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                />
-                {/* Icon */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className="relative w-16 h-16 rounded-full bg-gradient-to-br from-[#7f1d1d]/40 to-[#dc2626]/20 border-2 border-[#ef4444]/40 flex items-center justify-center shadow-lg shadow-[#ef4444]/20"
-                >
-                  <motion.svg
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#7f1d1d]/40 to-[#dc2626]/20 border-2 border-[#ef4444]/40 flex items-center justify-center shadow-lg shadow-[#ef4444]/20">
+                  <svg
                     className="w-8 h-8 text-[#ef4444]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
                   >
                     <path
                       strokeLinecap="round"
@@ -481,65 +451,35 @@ export default function ComingSoonForm({
                       strokeWidth={2.5}
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
-                  </motion.svg>
-                </motion.div>
+                  </svg>
+                </div>
               </div>
 
               {/* Thank you */}
               <div>
-                <motion.h3
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-xl font-bold text-white mb-1"
-                >
+                <h3 className="text-xl font-bold text-white mb-1">
                   <span className="bg-gradient-to-r from-[#ef4444] to-[#dc2626] bg-clip-text text-transparent">
                     ተመዝግበዋል!
                   </span>{" "}
                   ✅
-                </motion.h3>
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-sm text-white/60 leading-relaxed"
-                >
+                </h3>
+                <p className="text-sm text-white/60 leading-relaxed">
                   ኮርሱ ሲጀመር እናሳውቅዎታለን።
-                </motion.p>
+                </p>
               </div>
 
-              {/* Red divider */}
-              <motion.div
-                className="w-16 h-0.5 bg-gradient-to-r from-[#ef4444]/50 via-[#dc2626]/30 to-transparent mx-auto rounded-full"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-              />
-
               {/* Countdown */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
+              <div>
                 <p className="text-xs text-[#ef4444]/70 font-bold mb-3 tracking-[0.15em] uppercase">
                   እስከሚጀመር ያለው ጊዜ
                 </p>
                 <ComingSoonCountdown targetDate={launchDate} variant="small" />
-              </motion.div>
+              </div>
 
-              {/* Bottom message with shine */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="relative"
-              >
-                <p className="text-xs text-white/40">እስከዚያ ድረስ ይጠብቁን! 🚀</p>
-              </motion.div>
+              <p className="text-xs text-white/40">እስከዚያ ድረስ ይጠብቁን! 🚀</p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -552,24 +492,12 @@ export default function ComingSoonForm({
         <AnimatePresence mode="wait">
           {/* ── LOCATION: Local vs Diaspora Choice ──────── */}
           {step === "location" && (
-            <motion.div
-              key="location"
-              variants={fadeSlideUp}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="space-y-5"
-            >
+            <div key="location" className="space-y-5">
               {/* Header */}
               <div className="text-center space-y-2">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7f1d1d]/40 to-[#dc2626]/20 border border-[#ef4444]/30 mb-2"
-                >
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7f1d1d]/40 to-[#dc2626]/20 border border-[#ef4444]/30 mb-2">
                   <span className="text-2xl">🚀</span>
-                </motion.div>
+                </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">
                   ቀደም ብለው ይመዝገቡ
                 </h2>
@@ -580,79 +508,64 @@ export default function ComingSoonForm({
 
               <div className="grid grid-cols-2 gap-3">
                 {/* Local */}
-                <motion.button
+                <button
                   onClick={() => handleLocationSelect("local")}
-                  whileHover={{ scale: 1.03, y: -3 }}
-                  whileTap={{ scale: 0.97 }}
                   className={`
-                    group relative flex flex-col items-center gap-3
+                    flex flex-col items-center gap-3
                     p-6 sm:p-7 rounded-xl
                     bg-white/[0.06] backdrop-blur-md
                     border border-white/10
                     hover:border-[#ef4444]/60
                     hover:bg-white/[0.1]
+                    active:scale-[0.97]
                     transition-all duration-300
-                    shadow-lg overflow-hidden
+                    shadow-lg
                   `}
                 >
-                  {/* Hover glow */}
-                  <motion.div className="absolute -inset-20 bg-[#ef4444]/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                  <span className="text-4xl relative z-10">📍</span>
-                  <div className="text-center relative z-10">
+                  <span className="text-4xl">📍</span>
+                  <div className="text-center">
                     <p className="text-white font-bold text-base">Local</p>
                     <p className="text-[#ef4444]/60 text-xs font-medium">
                       ኢትዮጵያ
                     </p>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ef4444]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
-                </motion.button>
+                </button>
 
                 {/* Diaspora */}
-                <motion.button
+                <button
                   onClick={() => handleLocationSelect("diaspora")}
-                  whileHover={{ scale: 1.03, y: -3 }}
-                  whileTap={{ scale: 0.97 }}
                   className={`
-                    group relative flex flex-col items-center gap-3
+                    flex flex-col items-center gap-3
                     p-6 sm:p-7 rounded-xl
                     bg-white/[0.06] backdrop-blur-md
                     border border-white/10
                     hover:border-[#ef4444]/60
                     hover:bg-white/[0.1]
+                    active:scale-[0.97]
                     transition-all duration-300
-                    shadow-lg overflow-hidden
+                    shadow-lg
                   `}
                 >
-                  <motion.div className="absolute -inset-20 bg-[#ef4444]/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                  <span className="text-4xl relative z-10">🌍</span>
-                  <div className="text-center relative z-10">
+                  <span className="text-4xl">🌍</span>
+                  <div className="text-center">
                     <p className="text-white font-bold text-base">Diaspora</p>
                     <p className="text-[#ef4444]/60 text-xs font-medium">
                       ውጭ ሀገር
                     </p>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ef4444]/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
-                </motion.button>
+                </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* ── FORM: Dynamic based on location ─────────── */}
           {["form", "submitting"].includes(step) && (
-            <motion.div
-              key="form"
-              variants={fadeSlideUp}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
+            <div key="form">
               {/* Step indicator */}
               <div className="flex items-center justify-center gap-2 mb-5">
-                <motion.button
+                <button
                   onClick={handleBack}
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors active:scale-95"
                 >
                   <svg
                     className="w-4 h-4"
@@ -667,7 +580,7 @@ export default function ComingSoonForm({
                       d="M15 19l-7-7 7-7"
                     />
                   </svg>
-                </motion.button>
+                </button>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#ef4444]/50" />
                   <span className="w-6 h-[2px] bg-gradient-to-r from-[#ef4444]/50 to-white/20" />
@@ -707,28 +620,68 @@ export default function ComingSoonForm({
 
                 {/* Dynamic field: Email for diaspora, Phone for local */}
                 {locationType === "diaspora" ? (
-                  <div>
-                    <label className="block text-xs font-medium text-white/60 mb-1.5">
-                      ኢሜይል / Email <span className={RED_TEXT}>*</span>
-                    </label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder="your@email.com"
-                      className={`
-                        w-full px-4 py-3 rounded-lg text-sm
-                        bg-white/5 backdrop-blur-md
-                        border border-white/10 text-white
-                        placeholder-white/25
-                        ${RED_RING}
-                        outline-none transition-all duration-200
-                        focus:bg-white/[0.07] focus:border-[#ef4444]/50
-                      `}
-                      required
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-xs font-medium text-white/60 mb-1.5">
+                        ኢሜይል / Email <span className={RED_TEXT}>*</span>
+                      </label>
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        placeholder="your@email.com"
+                        className={`
+                          w-full px-4 py-3 rounded-lg text-sm
+                          bg-white/5 backdrop-blur-md
+                          border border-white/10 text-white
+                          placeholder-white/25
+                          ${RED_RING}
+                          outline-none transition-all duration-200
+                          focus:bg-white/[0.07] focus:border-[#ef4444]/50
+                        `}
+                        required
+                      />
+                    </div>
+
+                    {/* Country — only for diaspora */}
+                    <div>
+                      <label className="block text-xs font-medium text-white/60 mb-1.5">
+                        ሀገር / Country <span className={RED_TEXT}>*</span>
+                      </label>
+                      <select
+                        name="country"
+                        value={form.country}
+                        onChange={handleChange}
+                        className={`
+                          w-full px-4 py-3 rounded-lg text-sm appearance-none
+                          bg-white/5 backdrop-blur-md
+                          border border-white/10 text-white
+                          ${RED_RING}
+                          outline-none transition-all duration-200
+                          focus:bg-white/[0.07] focus:border-[#ef4444]/50
+                        `}
+                        required
+                      >
+                        <option
+                          value=""
+                          disabled
+                          className="text-gray-400 bg-gray-900"
+                        >
+                          ሀገር ይምረጡ / Select Country
+                        </option>
+                        {COUNTRIES.map((c) => (
+                          <option
+                            key={c.value}
+                            value={c.value}
+                            className="text-white bg-gray-900"
+                          >
+                            {c.labelEn}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
                 ) : (
                   <div>
                     <label className="block text-xs font-medium text-white/60 mb-1.5">
@@ -794,27 +747,22 @@ export default function ComingSoonForm({
 
                 {/* Error */}
                 {error && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-[#ef4444] text-xs text-center bg-[#ef4444]/10 backdrop-blur-md px-3 py-2 rounded-lg border border-[#ef4444]/25"
-                  >
+                  <p className="text-[#ef4444] text-xs text-center bg-[#ef4444]/10 backdrop-blur-md px-3 py-2 rounded-lg border border-[#ef4444]/25">
                     {error}
-                  </motion.p>
+                  </p>
                 )}
 
                 {/* Submit */}
-                <motion.button
+                <button
                   type="submit"
                   disabled={step === "submitting"}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                   className={`
                     w-full py-3.5 rounded-lg font-bold text-sm
                     bg-gradient-to-r ${RED_GRADIENT}
                     text-white
                     shadow-lg shadow-[#dc2626]/30
                     hover:shadow-xl hover:shadow-[#dc2626]/50
+                    active:scale-[0.98]
                     disabled:opacity-60 disabled:cursor-not-allowed
                     transition-all duration-300
                     flex items-center justify-center gap-2
@@ -861,68 +809,22 @@ export default function ComingSoonForm({
                       ይመዝገቡ / Submit
                     </>
                   )}
-                </motion.button>
+                </button>
               </form>
-            </motion.div>
+            </div>
           )}
 
           {/* ── SUCCESS: Thank You + Countdown ──────────── */}
           {step === "success" && (
-            <motion.div
-              key="success"
-              variants={stagger}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="text-center"
-            >
-              {/* Animated decorative rings */}
-              <motion.div
-                variants={fadeSlideUp}
-                className="relative flex justify-center mb-6"
-              >
-                {/* Outer glow ring */}
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-[#ef4444]/10 blur-2xl"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                {/* Middle ring */}
-                <motion.div
-                  className="absolute w-24 h-24 rounded-full border border-[#ef4444]/20"
-                  animate={{ scale: [1, 1.15, 1], rotate: [0, 180, 360] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                />
-                {/* Inner ring */}
-                <motion.div
-                  className="absolute w-20 h-20 rounded-full border border-dashed border-[#ef4444]/15"
-                  animate={{ scale: [1, 1.1, 1], rotate: [360, 180, 0] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                />
-                {/* Success Icon */}
-                <motion.div
-                  className="relative w-20 h-20 rounded-full bg-black/60 backdrop-blur-xl border-2 border-[#ef4444]/40 flex items-center justify-center shadow-xl shadow-[#ef4444]/20"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 15,
-                    delay: 0.1,
-                  }}
-                >
-                  <motion.svg
+            <div key="success" className="text-center">
+              {/* Success Icon */}
+              <div className="relative flex justify-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-black/60 backdrop-blur-xl border-2 border-[#ef4444]/40 flex items-center justify-center shadow-xl shadow-[#ef4444]/20">
+                  <svg
                     className="w-10 h-10 text-[#ef4444]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
                   >
                     <path
                       strokeLinecap="round"
@@ -930,75 +832,42 @@ export default function ComingSoonForm({
                       strokeWidth={2.5}
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
-                  </motion.svg>
-                </motion.div>
-              </motion.div>
+                  </svg>
+                </div>
+              </div>
 
               {/* Success Card */}
-              <motion.div
-                variants={fadeSlideUp}
-                className="relative bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-[#ef4444]/20 p-6 shadow-lg shadow-[#ef4444]/10 overflow-hidden"
-              >
-                <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#ef4444]/5 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#dc2626]/5 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="relative z-10 space-y-3">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
+              <div className="bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-[#ef4444]/20 p-6 shadow-lg shadow-[#ef4444]/10">
+                <div className="space-y-3">
+                  <div>
                     <h3 className="text-xl font-bold text-white mb-1">
                       ተመዝግበዋል! ✅
                     </h3>
                     <p className="text-sm text-white/60 leading-relaxed">
                       ኮርሱ ሲጀመር እናሳውቅዎታለን።
                     </p>
-                  </motion.div>
+                  </div>
 
-                  <motion.div
-                    className="w-12 h-0.5 bg-gradient-to-r from-[#ef4444]/40 to-transparent mx-auto"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ delay: 0.6, duration: 0.5 }}
+                  <p className="text-xs text-[#ef4444]/60 font-medium mb-2 tracking-wide">
+                    እስከሚጀመር ያለው ጊዜ
+                  </p>
+                  <ComingSoonCountdown
+                    targetDate={launchDate}
+                    variant="small"
                   />
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <p className="text-xs text-[#ef4444]/60 font-medium mb-2 tracking-wide">
-                      እስከሚጀመር ያለው ጊዜ
-                    </p>
-                    <ComingSoonCountdown
-                      targetDate={launchDate}
-                      variant="small"
-                    />
-                  </motion.div>
-
-                  <motion.p
-                    className="text-xs text-white/40"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.9 }}
-                  >
-                    እስከዚያ ድረስ ይጠብቁን! 🚀
-                  </motion.p>
+                  <p className="text-xs text-white/40">እስከዚያ ድረስ ይጠብቁን! 🚀</p>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Close button inside success */}
-              <motion.button
+              <button
                 onClick={closeOverlay}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
                 className="mt-4 text-xs text-white/30 hover:text-white/60 transition-colors underline underline-offset-2"
               >
                 ዝጋ / Close
-              </motion.button>
-            </motion.div>
+              </button>
+            </div>
           )}
         </AnimatePresence>
       </ComingSoonOverlay>

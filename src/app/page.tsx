@@ -222,8 +222,8 @@ function VideoPlayer({
   //   doesn't dominate the hero section.
   // - The inner content fills this box with h-full / object-contain.
   const wrapperStyle: React.CSSProperties = {
-    aspectRatio: "9 / 16",
-    maxHeight: "50vh",
+    aspectRatio: "16 / 9",
+    maxHeight: "35vh",
     width: "100%",
     backgroundColor: "#000",
     display: "flex",
@@ -488,27 +488,18 @@ export default function Home() {
         </div>
 
         {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: scrolled ? 0 : 1 }}
-          transition={{ duration: 0.5 }}
+        <div
+          className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
+            scrolled ? "opacity-0" : "opacity-100"
+          }`}
         >
           <span className="text-xs text-white/40 tracking-widest uppercase">
             ወደ ታች ያስሱ
           </span>
-          <motion.div
-            className="w-5 h-8 border-2 border-white/20 rounded-full flex justify-center p-1"
-            animate={{ opacity: [0.3, 0.8, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <motion.div
-              className="w-1.5 h-1.5 bg-[#ef4444] rounded-full"
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            />
-          </motion.div>
-        </motion.div>
+          <div className="w-5 h-8 border-2 border-white/20 rounded-full flex justify-center p-1 animate-pulse">
+            <div className="w-1.5 h-1.5 bg-[#ef4444] rounded-full animate-bounce" />
+          </div>
+        </div>
       </section>
     </div>
   );

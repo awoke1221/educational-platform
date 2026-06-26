@@ -8,7 +8,15 @@ import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { fullName, email, phoneNumber, gender, locationType, source } = body;
+    const {
+      fullName,
+      email,
+      phoneNumber,
+      gender,
+      country,
+      locationType,
+      source,
+    } = body;
 
     // ── Validation ───────────────────────────────
     if (!fullName?.trim()) {
@@ -30,6 +38,16 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Email is required for diaspora registration",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (locationType === "diaspora" && !country?.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Country is required for diaspora registration",
         },
         { status: 400 },
       );
@@ -62,6 +80,7 @@ export async function POST(request: NextRequest) {
         email: email?.trim()?.toLowerCase() || null,
         phoneNumber: phoneNumber?.trim() || null,
         gender,
+        country: country?.trim() || null,
         locationType,
         source: source || "homepage",
       })

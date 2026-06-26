@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -53,22 +52,10 @@ const LABELS: Record<string, { am: string; en: string }> = {
 // ─── Animated Digit ──────────────────────────────────────
 
 function AnimatedDigit({ value, label }: { value: number; label: string }) {
-  const [flip, setFlip] = useState(false);
-
-  useEffect(() => {
-    setFlip(true);
-    const t = setTimeout(() => setFlip(false), 300);
-    return () => clearTimeout(t);
-  }, [value]);
-
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative overflow-hidden">
-        <motion.div
-          key={value}
-          initial={{ y: 20, opacity: 0, scale: 0.8 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        <div
           className={`
             font-bold tracking-wider tabular-nums text-center
             bg-black/60 backdrop-blur-md rounded-xl
@@ -83,9 +70,7 @@ function AnimatedDigit({ value, label }: { value: number; label: string }) {
           <span className="bg-gradient-to-b from-[#ef4444] to-[#dc2626] bg-clip-text text-transparent">
             {pad(value)}
           </span>
-        </motion.div>
-        {/* Red shine overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#ef4444]/10 to-transparent rounded-xl pointer-events-none" />
+        </div>
       </div>
       <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#ef4444]/70">
         {label}
@@ -162,17 +147,13 @@ export default function ComingSoonCountdown({
   // ── Expired state ──────────────────────────────────
   if (expired) {
     return (
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="text-center"
-      >
+      <div className="text-center">
         <span className="inline-flex items-center gap-2 text-2xl sm:text-3xl font-bold text-white bg-[#ef4444]/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-[#ef4444]/40 shadow-lg shadow-[#ef4444]/20">
           <span>🎉</span>
           <span>ተጀምሯል!</span>
           <span>🚀</span>
         </span>
-      </motion.div>
+      </div>
     );
   }
 
@@ -227,10 +208,7 @@ export default function ComingSoonCountdown({
 
   // ── Large variant (homepage) — full sporty look ────
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.2 }}
+    <div
       className={`flex items-center justify-center gap-1 sm:gap-3 ${className}`}
     >
       {(["days", "hours", "minutes", "seconds"] as const).map((key, i) => (
@@ -239,6 +217,6 @@ export default function ComingSoonCountdown({
           {i < 3 && <Separator />}
         </div>
       ))}
-    </motion.div>
+    </div>
   );
 }

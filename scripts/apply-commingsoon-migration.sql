@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS "commingsoon_users" (
     "phoneNumber" TEXT,                  -- Required for local
     "gender" TEXT NOT NULL,              -- Collected from both
     "locationType" TEXT NOT NULL,        -- 'local' | 'diaspora'
+    "country" TEXT,                      -- Country for diaspora registrations
     "source" TEXT NOT NULL DEFAULT 'homepage', -- 'homepage' | 'courses' | 'register'
     "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -27,6 +28,7 @@ CREATE INDEX IF NOT EXISTS "commingsoon_users_email_idx" ON "commingsoon_users"(
 CREATE INDEX IF NOT EXISTS "commingsoon_users_phone_idx" ON "commingsoon_users"("phoneNumber");
 CREATE INDEX IF NOT EXISTS "commingsoon_users_source_idx" ON "commingsoon_users"("source");
 CREATE INDEX IF NOT EXISTS "commingsoon_users_submittedAt_idx" ON "commingsoon_users"("submittedAt");
+CREATE INDEX IF NOT EXISTS "commingsoon_users_country_idx" ON "commingsoon_users"("country");
 
 -- Enable Row Level Security
 ALTER TABLE "commingsoon_users" ENABLE ROW LEVEL SECURITY;
