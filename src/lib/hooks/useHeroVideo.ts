@@ -49,8 +49,6 @@ export function useHeroVideo() {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
-    let cancelled = false;
-
     // Check cache first — skip network if valid
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
@@ -73,16 +71,14 @@ export function useHeroVideo() {
           const contentType = res.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
             const json = await res.json();
-            if (!cancelled) {
-              if (json.success && json.data) {
-                setHeroVideo(json.data);
-                // Store in sessionStorage with timestamp
-                const entry: CacheEntry = {
-                  data: json.data,
-                  timestamp: Date.now(),
-                };
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
-              }
+            if (json.success && json.data) {
+              setHeroVideo(json.data);
+              // Store in sessionStorage with timestamp
+              const entry: CacheEntry = {
+                data: json.data,
+                timestamp: Date.now(),
+              };
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
             }
           }
         } else {
@@ -94,13 +90,9 @@ export function useHeroVideo() {
           err instanceof Error ? err.message : err,
         );
       } finally {
-        if (!cancelled) setHeroLoading(false);
+        setHeroLoading(false);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   // Save playback position periodically and on unmount
