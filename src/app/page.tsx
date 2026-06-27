@@ -262,7 +262,7 @@ export default function Home() {
                     </h2>
 
                     <p className="text-white/60 text-sm max-w-md mx-auto">
-                      አሁን ይመዝገቡ እና 20% ቅናሽ ያግኙ!
+                      የመጀመሪያዎቹ 500 የሚመዘገቡ ሰዎች 20% ቅናሽ ያገኛሉ
                     </p>
                   </>
                 )}
