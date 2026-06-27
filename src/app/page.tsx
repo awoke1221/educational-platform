@@ -107,7 +107,7 @@ export default function Home() {
         }}
       >
         {/* Blur over the whole background image so text pops clearly */}
-        <div className="absolute inset-0 pointer-events-none backdrop-blur-[3px]" />
+        <div className="absolute inset-0 pointer-events-none backdrop-blur-[1.5px]" />
         {/* Dark tint over whole section so text & animations stand out */}
         <div className="absolute inset-0 bg-black/30 pointer-events-none" />
         {/* Top area — fades from darker at top to clear */}
