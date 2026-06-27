@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 // 🚀 All animations replaced with pure CSS — no Framer Motion overhead
-import { useHeroVideo } from "@/lib/hooks/useHeroVideo";
 
 // ⚡ Lazy-load below-the-fold components for faster initial render
 const ComingSoonForm = dynamic(() => import("@/components/ComingSoonForm"), {
@@ -72,143 +71,6 @@ function FloatingOrbs() {
 
 // 🚀 All Framer Motion variants removed — using pure CSS instead
 
-// ─── FIX #1, #5, #6: Dedicated VideoPlayer component ──────────────────────────
-// Extracted into its own component so React's reconciler keeps the same <video>
-// DOM node alive across renders — no more useMemo destroying/recreating the element.
-// The wrapper always reserves the 9:16 aspect ratio to prevent layout shift (CLS).
-function VideoPlayer({
-  videoLoaded,
-  videoUrl,
-  proxyUrl,
-  videoType,
-  videoPoster,
-  videoRef,
-}: {
-  videoLoaded: boolean;
-  videoUrl: string | null;
-  proxyUrl: string | null;
-  videoType: string;
-  videoPoster: string;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-}) {
-  // FIX #3: Track error state to show user-visible fallback UI
-  const [hasError, setHasError] = useState(false);
-
-  // FIX #3: Actionable error handler — updates UI state instead of silent console.warn
-  const handleVideoError = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    // Only flag error after all <source> elements have been tried (networkState === 3)
-    if (video.networkState === 3) {
-      console.error("[HeroVideo] All sources failed — showing fallback UI");
-      setHasError(true);
-    }
-  }, [videoRef]);
-
-  // Reset error state when a new video URL arrives
-  useEffect(() => {
-    setHasError(false);
-  }, [videoUrl]);
-
-  // ─── FIX #5 & #6: Stable aspect-ratio wrapper ────────────────────────────
-  // - aspectRatio: "9/16" reserves the correct portrait space on ALL states
-  //   (loading, loaded, error) — eliminates layout shift completely.
-  // - maxHeight: 50vh keeps the portrait video shorter on desktop so it
-  //   doesn't dominate the hero section.
-  // - The inner content fills this box with h-full / object-contain.
-  const wrapperStyle: React.CSSProperties = {
-    aspectRatio: "16 / 9",
-    maxHeight: "35vh",
-    width: "100%",
-    backgroundColor: "#000",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    position: "relative",
-    borderRadius: "1rem",
-  };
-
-  // ── Loading skeleton ────────────────────────────────────────────────────
-  if (!videoLoaded) {
-    return (
-      <div style={wrapperStyle}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-[3px] border-white/20 border-t-[#ef4444] rounded-full anim-spinner" />
-          <span className="text-white/40 text-xs animate-pulse">
-            Loading video...
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Error fallback UI (shown after all sources fail) ────────────────────
-  if (hasError || !videoUrl) {
-    return (
-      <div style={wrapperStyle}>
-        <div className="flex flex-col items-center justify-center gap-3 px-4 text-center">
-          <svg
-            className="w-12 h-12 opacity-40 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
-            />
-          </svg>
-          <p className="text-white/40 text-sm">Video unavailable</p>
-          {/* FIX #3: Give user a way to retry instead of silent failure */}
-          {hasError && (
-            <button
-              onClick={() => setHasError(false)}
-              className="mt-1 text-xs text-[#ef4444]/70 hover:text-[#ef4444] underline underline-offset-2 transition-colors"
-            >
-              Retry
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Video player ────────────────────────────────────────────────────────
-  return (
-    <div style={wrapperStyle}>
-      {/*
-        FIX #5: h-full + object-contain fills the stable wrapper exactly.
-        FIX #4: crossOrigin="anonymous" prevents CORS cache poisoning with CDNs.
-        FIX #2: preload="auto" starts buffering immediately so playback begins
-                without the stall caused by preload="metadata".
-        FIX #1: <video> lives here permanently — React reconciler never destroys
-                it because VideoPlayer stays mounted. No useMemo re-creation risk.
-      */}
-      <video
-        ref={videoRef}
-        className="w-full h-full object-contain"
-        controls
-        autoPlay
-        muted
-        playsInline
-        preload="auto" // FIX #2: was "metadata" — now pre-buffers for instant play
-        poster={videoPoster}
-        crossOrigin="anonymous" // FIX #4: required for Bunny CDN CORS correctness
-        onError={handleVideoError}
-      >
-        {/* Primary: Direct Bunny CDN */}
-        <source src={videoUrl} type={`video/${videoType}`} />
-        {/* Fallback: Proxy through server when CDN is blocked */}
-        {proxyUrl && <source src={proxyUrl} type={`video/${videoType}`} />}
-        Your browser does not support the video tag.
-      </video>
-    </div>
-  );
-}
-
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
@@ -226,29 +88,6 @@ export default function Home() {
     setHasRegistered(true);
   }, []);
 
-  // FIX #1: Keep a stable ref for the <video> element — passed directly to
-  // VideoPlayer instead of being threaded through useMemo + useCallback chains.
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const { heroVideo, heroLoading, videoRef: setHeroVideoRef } = useHeroVideo();
-
-  const videoUrl = heroVideo?.videoUrl ?? null;
-  const proxyUrl = heroVideo?.proxyUrl ?? null;
-  const videoType = heroVideo?.type ?? "mp4";
-  const videoPoster = heroVideo?.poster ?? "";
-  const videoLoaded = !heroLoading;
-
-  // FIX #1: combinedRef synchronises our stable ref with the hook's callback ref.
-  // useCallback keeps its identity stable so VideoPlayer never re-renders from this.
-  const combinedVideoRef = useCallback(
-    (el: HTMLVideoElement | null) => {
-      (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current =
-        el;
-      setHeroVideoRef(el);
-    },
-    [setHeroVideoRef],
-  );
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 100);
     window.addEventListener("scroll", onScroll);
@@ -258,7 +97,23 @@ export default function Home() {
   return (
     <div>
       {/* Hero - Video Section */}
-      <section className="relative bg-[#0a0a0a] text-white min-h-[calc(100vh-4rem)] flex items-center overflow-hidden">
+      <section
+        className="relative text-white min-h-dvh md:min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-[#0a0a0a]"
+        style={{
+          backgroundImage: "url('/background%20image%20.jpeg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {/* Blur over the whole background image so text pops clearly */}
+        <div className="absolute inset-0 pointer-events-none backdrop-blur-[3px]" />
+        {/* Dark tint over whole section so text & animations stand out */}
+        <div className="absolute inset-0 bg-black/30 pointer-events-none" />
+        {/* Top area — fades from darker at top to clear */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-transparent to-[55%] pointer-events-none" />
+        {/* Bottom area — dark gradient + blur to hide background text */}
+        <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-gradient-to-t from-black/95 via-black/80 to-transparent pointer-events-none backdrop-blur-[3px]" />
         {/* Particles & Orbs */}
         <ParticleField count={12} />
         <FloatingOrbs />
@@ -290,14 +145,15 @@ export default function Home() {
               >
                 <div className="w-10 sm:w-16 h-px bg-gradient-to-r from-transparent via-[#ef4444]/30 to-transparent" />
                 <span
-                  className="relative text-[10px] sm:text-xs md:text-sm tracking-[0.35em] uppercase text-white/50 italic"
+                  className="relative text-[11px] sm:text-xs md:text-sm tracking-[0.35em] uppercase text-white/90 italic"
                   style={{
                     fontFamily: "var(--font-cormorant), serif",
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    textShadow: "0 0 12px rgba(239,68,68,0.4)",
                   }}
                 >
                   Welcome to
-                  <span className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-[#ef4444]/40 to-transparent" />
+                  <span className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-[#ef4444]/60 to-transparent" />
                 </span>
                 <div className="w-10 sm:w-16 h-px bg-gradient-to-r from-transparent via-[#ef4444]/30 to-transparent" />
               </div>
@@ -315,27 +171,24 @@ export default function Home() {
                   style={{
                     color: "#fff",
                     textShadow: [
-                      // 3D extrusion layers
-                      "0 1px 0 #d4d4d4",
-                      "0 2px 0 #b0b0b0",
-                      "0 3px 0 #909090",
-                      "0 4px 0 #707070",
-                      "0 5px 0 #585858",
-                      "0 6px 0 #404040",
-                      "0 7px 0 #303030",
-                      "0 8px 2px rgba(0,0,0,.15)",
-                      // Red glow aura
-                      "0 0 12px rgba(239,68,68,.35)",
-                      "0 0 30px rgba(239,68,68,.12)",
-                      // Depth shadows
-                      "0 2px 4px rgba(0,0,0,.3)",
-                      "0 4px 10px rgba(0,0,0,.2)",
-                      "0 8px 25px rgba(0,0,0,.1)",
+                      // 3D extrusion layers — reduced on mobile
+                      "0 1px 0 #e8e8e8",
+                      "0 2px 0 #c8c8c8",
+                      "0 3px 0 #a8a8a8",
+                      "0 4px 0 #888888",
+                      "0 5px 0 #686868",
+                      "0 6px 0 #484848",
+                      "0 8px 3px rgba(0,0,0,.2)",
+                      // Red glow aura — stronger for mobile visibility
+                      "0 0 15px rgba(239,68,68,.5)",
+                      "0 0 35px rgba(239,68,68,.15)",
+                      // Depth
+                      "0 4px 12px rgba(0,0,0,.25)",
                     ].join(","),
                   }}
                 >
                   <span
-                    className="bg-gradient-to-r from-white via-white/90 to-[#ef4444] bg-clip-text text-transparent italic"
+                    className="bg-gradient-to-r from-white via-[#fcd34d] to-[#ef4444] bg-clip-text text-transparent italic"
                     style={{ fontFamily: "var(--font-playfair), serif" }}
                   >
                     Adonay TikTok Academy
@@ -389,23 +242,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/*
-              FIX #1 + #5 + #6: VideoPlayer is now a stable component, not a
-              memoized JSX blob. React keeps the same DOM node across renders.
-              The gradient-border wrapper only handles visual styling — sizing
-              is owned entirely by VideoPlayer's internal wrapperStyle.
-            */}
-            <div className="w-full max-w-[280px] sm:max-w-sm rounded-2xl overflow-hidden shadow-2xl gradient-border">
-              <VideoPlayer
-                videoLoaded={videoLoaded}
-                videoUrl={videoUrl}
-                proxyUrl={proxyUrl}
-                videoType={videoType}
-                videoPoster={videoPoster}
-                videoRef={videoRef}
-              />
-            </div>
-
             {/* ── Coming Soon Section ───────────────── */}
             <div className="w-full max-w-2xl mx-auto">
               <div className="text-center space-y-6">
@@ -429,12 +265,12 @@ export default function Home() {
                   <>
                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
                       <span className="bg-gradient-to-r from-white via-white to-[#ef4444] bg-clip-text text-transparent">
-                        ይመዝገቡ እና ቅናሽ ያግኙ
+                        20% ቅናሽ ያግኙ
                       </span>
                     </h2>
 
                     <p className="text-white/60 text-sm max-w-md mx-auto">
-                      አሁን ይመዝገቡ እና በ Adonay TikTok Academy ላይ ቅናሽ ያግኙ!
+                      አሁን ይመዝገቡ እና 20% ቅናሽ ያግኙ!
                     </p>
                   </>
                 )}
