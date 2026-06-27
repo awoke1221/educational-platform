@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+// 🚀 All animations replaced with pure CSS — no Framer Motion overhead
 import { useHeroVideo } from "@/lib/hooks/useHeroVideo";
 
 // ⚡ Lazy-load below-the-fold components for faster initial render
@@ -70,107 +70,7 @@ function FloatingOrbs() {
   );
 }
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" as const },
-  },
-};
-
-const videoVariants = {
-  hidden: { opacity: 0, scale: 0.92, y: 20 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: "easeOut" as const, delay: 0.3 },
-  },
-};
-
-// ─── Rotating Text Component (Typewriter Effect) ──────
-function RotatingText({ phrases }: { phrases: string[] }) {
-  const [index, setIndex] = useState(0);
-  const [text, setText] = useState("");
-  const [phase, setPhase] = useState<"typing" | "dots" | "waiting">("typing");
-  const [dots, setDots] = useState("");
-
-  // Typewriter effect
-  useEffect(() => {
-    const fullText = phrases[index];
-    let charIndex = 0;
-    setText("");
-    setPhase("typing");
-    setDots("");
-
-    const typingInterval = setInterval(
-      () => {
-        charIndex++;
-        if (charIndex <= fullText.length) {
-          setText(fullText.slice(0, charIndex));
-        } else {
-          clearInterval(typingInterval);
-          setPhase("dots");
-        }
-      },
-      100 + Math.random() * 80,
-    );
-
-    return () => clearInterval(typingInterval);
-  }, [index, phrases]);
-
-  // Blinking dots after typing
-  useEffect(() => {
-    if (phase !== "dots") {
-      setDots("");
-      return;
-    }
-
-    let dotCount = 0;
-    const dotInterval = setInterval(() => {
-      dotCount = (dotCount + 1) % 4;
-      setDots(".".repeat(dotCount));
-    }, 400);
-
-    const nextTimeout = setTimeout(() => {
-      clearInterval(dotInterval);
-      setPhase("waiting");
-      setTimeout(() => {
-        setIndex((prev) => (prev + 1) % phrases.length);
-      }, 300);
-    }, 1500);
-
-    return () => {
-      clearInterval(dotInterval);
-      clearTimeout(nextTimeout);
-    };
-  }, [phase]);
-
-  return (
-    <div className="h-14 sm:h-16 md:h-20 flex items-center justify-center overflow-hidden">
-      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight font-mono tracking-wide">
-        <span className="bg-gradient-to-r from-[#7f1d1d] via-[#dc2626] to-[#ef4444] bg-clip-text text-transparent">
-          {text}
-          <motion.span
-            animate={{ opacity: [1, 0] }}
-            transition={{
-              duration: 0.6,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-            className="inline-block w-[2px] h-[1em] bg-[#ef4444] ml-0.5 align-middle"
-          />
-        </span>
-      </h1>
-    </div>
-  );
-}
+// 🚀 All Framer Motion variants removed — using pure CSS instead
 
 // ─── FIX #1, #5, #6: Dedicated VideoPlayer component ──────────────────────────
 // Extracted into its own component so React's reconciler keeps the same <video>
@@ -374,37 +274,120 @@ export default function Home() {
         </div>
 
         <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
-          <motion.div
-            className="flex flex-col items-center gap-8 lg:gap-10"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Title & Rotating Text */}
-            <motion.div
-              className="text-center max-w-3xl"
-              variants={itemVariants}
+          <div className="flex flex-col items-center gap-8 lg:gap-10">
+            {/* ─── Premium Hero Title with 3D Tilt (pure CSS, zero JS) ─── */}
+            <div
+              className="text-center w-full max-w-full overflow-visible"
+              style={{ perspective: "800px" }}
             >
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="mb-4"
+              {/* ── "Welcome to" with decorative side lines ── */}
+              <div
+                className="flex items-center justify-center gap-3 sm:gap-5 mb-3 sm:mb-4"
+                style={{
+                  transform: "rotateX(6deg)",
+                  transformStyle: "preserve-3d",
+                }}
               >
-                <h1 className="text-sm sm:text-base md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-extrabold tracking-tight text-white leading-tight whitespace-nowrap">
-                  Welcome to Adonay TikTok Academy
-                </h1>
-              </motion.div>
+                <div className="w-10 sm:w-16 h-px bg-gradient-to-r from-transparent via-[#ef4444]/30 to-transparent" />
+                <span
+                  className="relative text-[10px] sm:text-xs md:text-sm tracking-[0.35em] uppercase text-white/50 italic"
+                  style={{
+                    fontFamily: "var(--font-cormorant), serif",
+                    fontWeight: 600,
+                  }}
+                >
+                  Welcome to
+                  <span className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-[#ef4444]/40 to-transparent" />
+                </span>
+                <div className="w-10 sm:w-16 h-px bg-gradient-to-r from-transparent via-[#ef4444]/30 to-transparent" />
+              </div>
 
-              <RotatingText
-                phrases={[
-                  "6M+ ተከታዮች",
-                  "2025 TikToker of the Year",
-                  "1.3B+ እይታዎች በሁለት ወራት",
-                  "1000+ የተሳካ ተማሪዎች",
-                ]}
-              />
-            </motion.div>
+              {/* ── Main 3D Title with decorative accents ── */}
+              <div
+                className="relative inline-block pb-5 max-w-full"
+                style={{
+                  transform: "rotateX(8deg)",
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                <h1
+                  className="relative text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black leading-none tracking-tight"
+                  style={{
+                    color: "#fff",
+                    textShadow: [
+                      // 3D extrusion layers
+                      "0 1px 0 #d4d4d4",
+                      "0 2px 0 #b0b0b0",
+                      "0 3px 0 #909090",
+                      "0 4px 0 #707070",
+                      "0 5px 0 #585858",
+                      "0 6px 0 #404040",
+                      "0 7px 0 #303030",
+                      "0 8px 2px rgba(0,0,0,.15)",
+                      // Red glow aura
+                      "0 0 12px rgba(239,68,68,.35)",
+                      "0 0 30px rgba(239,68,68,.12)",
+                      // Depth shadows
+                      "0 2px 4px rgba(0,0,0,.3)",
+                      "0 4px 10px rgba(0,0,0,.2)",
+                      "0 8px 25px rgba(0,0,0,.1)",
+                    ].join(","),
+                  }}
+                >
+                  <span
+                    className="bg-gradient-to-r from-white via-white/90 to-[#ef4444] bg-clip-text text-transparent italic"
+                    style={{ fontFamily: "var(--font-playfair), serif" }}
+                  >
+                    Adonay TikTok Academy
+                  </span>
+                </h1>
+
+                {/* Decorative gradient underlines — tilted to match */}
+                <div
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#ef4444]/50 to-transparent"
+                  style={{ transform: "rotateX(8deg)" }}
+                />
+                <div
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1/2 h-px rounded-full bg-gradient-to-r from-transparent via-[#fcd34d]/30 to-transparent"
+                  style={{ transform: "rotateX(8deg)" }}
+                />
+              </div>
+
+              {/* ── Premium Downward Arrow ── */}
+              <div className="mt-6 sm:mt-8 md:mt-10 flex flex-col items-center gap-2 animate-bounce">
+                {/* Glowing circle backdrop */}
+                <div className="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-b from-[#ef4444]/20 to-transparent blur-md" />
+                  <div className="absolute inset-[2px] rounded-full border border-[#ef4444]/30" />
+                  {/* Double chevron */}
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 22 22"
+                    fill="none"
+                    className="relative sm:w-6 sm:h-6"
+                  >
+                    <path
+                      d="M4 6l7 7 7-7"
+                      stroke="#ef4444"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M4 12l7 7 7-7"
+                      stroke="#f87171"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      opacity="0.6"
+                    />
+                  </svg>
+                </div>
+                {/* Pulse dot */}
+                <div className="w-1 h-1 rounded-full bg-[#ef4444] shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+              </div>
+            </div>
 
             {/*
               FIX #1 + #5 + #6: VideoPlayer is now a stable component, not a
@@ -412,10 +395,7 @@ export default function Home() {
               The gradient-border wrapper only handles visual styling — sizing
               is owned entirely by VideoPlayer's internal wrapperStyle.
             */}
-            <motion.div
-              className="w-full max-w-[280px] sm:max-w-sm rounded-2xl overflow-hidden shadow-2xl gradient-border"
-              variants={videoVariants}
-            >
+            <div className="w-full max-w-[280px] sm:max-w-sm rounded-2xl overflow-hidden shadow-2xl gradient-border">
               <VideoPlayer
                 videoLoaded={videoLoaded}
                 videoUrl={videoUrl}
@@ -424,78 +404,52 @@ export default function Home() {
                 videoPoster={videoPoster}
                 videoRef={videoRef}
               />
-            </motion.div>
+            </div>
 
             {/* ── Coming Soon Section ───────────────── */}
-            <motion.div
-              className="w-full max-w-2xl mx-auto"
-              variants={itemVariants}
-            >
+            <div className="w-full max-w-2xl mx-auto">
               <div className="text-center space-y-6">
                 {/* Badge */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.4, duration: 0.5 }}
-                >
+                <div>
                   <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-[#ef4444]/20 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-[#ef4444]/10">
                     <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
                     Adonay TikTok Academy
                   </span>
-                </motion.div>
+                </div>
 
                 {/* Conditional Heading — subtle badge when registered, CTA when not */}
                 {hasRegistered ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.5, duration: 0.5 }}
-                  >
+                  <div>
                     <span className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md border border-[#ef4444]/15 text-white/50 text-xs font-semibold px-4 py-1.5 rounded-full">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
                       ተመዝግበዋል
                     </span>
-                  </motion.div>
+                  </div>
                 ) : (
                   <>
-                    <motion.h2
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5, duration: 0.6 }}
-                      className="text-2xl sm:text-3xl md:text-4xl font-bold"
-                    >
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
                       <span className="bg-gradient-to-r from-white via-white to-[#ef4444] bg-clip-text text-transparent">
-                        ለመጀመር ዝግጁ ይሁኑ
+                        ይመዝገቡ እና ቅናሽ ያግኙ
                       </span>
-                    </motion.h2>
+                    </h2>
 
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.6, duration: 0.5 }}
-                      className="text-white/60 text-sm max-w-md mx-auto"
-                    >
-                      አዲሱ የ Adony TikTok Academy በቅርቡ ይጀምራል። ቀደም ብለው ይመዝገቡ እና ልዩ
-                      የሆኑ ጥቅሞችን ያግኙ!
-                    </motion.p>
+                    <p className="text-white/60 text-sm max-w-md mx-auto">
+                      አሁን ይመዝገቡ እና በ Adonay TikTok Academy ላይ ቅናሽ ያግኙ!
+                    </p>
                   </>
                 )}
 
                 {/* Coming Soon Registration Form */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9, duration: 0.6 }}
-                >
+                <div>
                   <ComingSoonForm
                     source="homepage"
                     launchDate={LAUNCH_DATE}
                     onSuccess={handleRegistrationSuccess}
                   />
-                </motion.div>
+                </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
 
         {/* Scroll indicator */}

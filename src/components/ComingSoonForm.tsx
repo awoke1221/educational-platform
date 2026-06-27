@@ -6,7 +6,7 @@ import ComingSoonCountdown from "./ComingSoonCountdown";
 
 // ─── Types ───────────────────────────────────────────────
 
-type Step = "idle" | "location" | "form" | "submitting" | "success";
+type Step = "idle" | "location" | "mode" | "form" | "submitting" | "success";
 
 interface Props {
   source?: "homepage" | "courses" | "register";
@@ -242,6 +242,9 @@ export default function ComingSoonForm({
   const [locationType, setLocationType] = useState<"local" | "diaspora" | null>(
     null,
   );
+  const [attendanceMode, setAttendanceMode] = useState<
+    "in-person" | "online" | null
+  >(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<FormState>({
     fullName: "",
@@ -267,6 +270,7 @@ export default function ComingSoonForm({
     // Reset to location step each time overlay opens
     setStep("location");
     setLocationType(null);
+    setAttendanceMode(null);
     setError("");
     setForm({
       fullName: "",
@@ -281,6 +285,7 @@ export default function ComingSoonForm({
     setOverlayOpen(false);
     setStep("idle");
     setLocationType(null);
+    setAttendanceMode(null);
     setError("");
     setForm({
       fullName: "",
@@ -300,6 +305,16 @@ export default function ComingSoonForm({
 
   const handleLocationSelect = (type: "local" | "diaspora") => {
     setLocationType(type);
+    if (type === "local") {
+      setStep("mode");
+    } else {
+      setStep("form");
+    }
+    setError("");
+  };
+
+  const handleModeSelect = (mode: "in-person" | "online") => {
+    setAttendanceMode(mode);
     setStep("form");
     setError("");
   };
@@ -332,6 +347,10 @@ export default function ComingSoonForm({
       setError("እባክዎ ሀገር ይምረጡ");
       return;
     }
+    if (locationType === "local" && !attendanceMode) {
+      setError("እባክዎ የመሳተፊያ ዘዴ ይምረጡ");
+      return;
+    }
     if (locationType === "local" && !form.phoneNumber.trim()) {
       setError("እባክዎ ስልክ ቁጥር ያስገቡ");
       return;
@@ -350,6 +369,7 @@ export default function ComingSoonForm({
           gender: form.gender,
           country: form.country || undefined,
           locationType,
+          attendanceMode: attendanceMode || undefined,
           source,
         }),
       });
@@ -374,7 +394,11 @@ export default function ComingSoonForm({
   };
 
   const handleBack = () => {
-    setStep("location");
+    if (locationType === "local" && attendanceMode) {
+      setStep("mode");
+    } else {
+      setStep("location");
+    }
     setError("");
   };
 
@@ -410,7 +434,7 @@ export default function ComingSoonForm({
                 d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
               />
             </svg>
-            ቀደም ብለው ይመዝገቡ
+            አሁን ይመዝገቡ
             <svg
               className="w-5 h-5"
               fill="none"
@@ -502,10 +526,10 @@ export default function ComingSoonForm({
                   <span className="text-2xl">🚀</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">
-                  ቀደም ብለው ይመዝገቡ
+                  አሁን ይመዝገቡ
                 </h2>
                 <p className="text-sm text-white/50 max-w-xs mx-auto">
-                  አዲሱን Adony TikTok Academy በቅርቡ ይጀምራል። የት ይኖራሉ?
+                  የት ይኖራሉ? መመዝገብ የሚፈልጉትን የሚመለከት ይምረጡ
                 </p>
               </div>
 
@@ -561,6 +585,110 @@ export default function ComingSoonForm({
             </div>
           )}
 
+          {/* ── MODE: In-Person vs Online (for Local) ──── */}
+          {step === "mode" && (
+            <div key="mode" className="space-y-5">
+              {/* Back button */}
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => {
+                    setStep("location");
+                    setLocationType(null);
+                    setError("");
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors active:scale-95"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-white/20" />
+                  <span className="w-6 h-[2px] bg-white/10" />
+                  <span className="w-2 h-2 rounded-full bg-[#ef4444]/50" />
+                  <span className="w-6 h-[2px] bg-gradient-to-r from-[#ef4444]/50 to-white/20" />
+                  <span className="w-2 h-2 rounded-full bg-white/20" />
+                </div>
+                <span className="text-xs font-medium text-[#ef4444]/60">
+                  📍 ኢትዮጵያ
+                </span>
+              </div>
+
+              {/* Header */}
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7f1d1d]/40 to-[#dc2626]/20 border border-[#ef4444]/30 mb-2">
+                  <span className="text-2xl">📚</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">
+                  እንዴት መማር ይፈልጋሉ?
+                </h2>
+                <p className="text-sm text-white/50 max-w-xs mx-auto">
+                  የመሳተፊያ ዘዴዎን ይምረጡ
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {/* In-Person */}
+                <button
+                  onClick={() => handleModeSelect("in-person")}
+                  className={`
+                    flex flex-col items-center gap-3
+                    p-6 sm:p-7 rounded-xl
+                    bg-white/[0.06] backdrop-blur-md
+                    border border-white/10
+                    hover:border-[#ef4444]/60
+                    hover:bg-white/[0.1]
+                    active:scale-[0.97]
+                    transition-all duration-300
+                    shadow-lg
+                  `}
+                >
+                  <span className="text-4xl">🏫</span>
+                  <div className="text-center">
+                    <p className="text-white font-bold text-base">In-Person</p>
+                    <p className="text-[#ef4444]/60 text-xs font-medium">
+                      በአካል መገኘት
+                    </p>
+                  </div>
+                </button>
+
+                {/* Online */}
+                <button
+                  onClick={() => handleModeSelect("online")}
+                  className={`
+                    flex flex-col items-center gap-3
+                    p-6 sm:p-7 rounded-xl
+                    bg-white/[0.06] backdrop-blur-md
+                    border border-white/10
+                    hover:border-[#ef4444]/60
+                    hover:bg-white/[0.1]
+                    active:scale-[0.97]
+                    transition-all duration-300
+                    shadow-lg
+                  `}
+                >
+                  <span className="text-4xl">💻</span>
+                  <div className="text-center">
+                    <p className="text-white font-bold text-base">Online</p>
+                    <p className="text-[#ef4444]/60 text-xs font-medium">
+                      በመስመር ላይ
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* ── FORM: Dynamic based on location ─────────── */}
           {["form", "submitting"].includes(step) && (
             <div key="form">
@@ -584,15 +712,27 @@ export default function ComingSoonForm({
                     />
                   </svg>
                 </button>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#ef4444]/50" />
-                  <span className="w-6 h-[2px] bg-gradient-to-r from-[#ef4444]/50 to-white/20" />
-                  <span className="w-2 h-2 rounded-full bg-white/20" />
-                  <span className="w-6 h-[2px] bg-white/10" />
-                  <span className="w-2 h-2 rounded-full bg-white/10" />
-                </div>
+                {locationType === "local" ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-white/20" />
+                    <span className="w-6 h-[2px] bg-white/10" />
+                    <span className="w-2 h-2 rounded-full bg-white/20" />
+                    <span className="w-6 h-[2px] bg-gradient-to-r from-white/20 to-[#ef4444]/50" />
+                    <span className="w-2 h-2 rounded-full bg-[#ef4444]/50" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#ef4444]/50" />
+                    <span className="w-6 h-[2px] bg-gradient-to-r from-[#ef4444]/50 to-white/20" />
+                    <span className="w-2 h-2 rounded-full bg-white/20" />
+                    <span className="w-6 h-[2px] bg-white/10" />
+                    <span className="w-2 h-2 rounded-full bg-white/10" />
+                  </div>
+                )}
                 <span className="text-xs font-medium text-[#ef4444]/60">
-                  {locationType === "local" ? "📍 ኢትዮጵያ" : "🌍 ውጭ ሀገር"}
+                  {locationType === "local"
+                    ? `📚 ${attendanceMode === "in-person" ? "በአካል" : "በመስመር ላይ"}`
+                    : "🌍 ውጭ ሀገር"}
                 </span>
               </div>
 
