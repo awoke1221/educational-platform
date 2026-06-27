@@ -406,7 +406,7 @@ export default function ComingSoonForm({
 
   if (!overlayOpen && !hasSubmitted) {
     return (
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-md mx-auto mt-6 sm:mt-0">
         <button
           onClick={openOverlay}
           className={`

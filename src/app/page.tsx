@@ -243,16 +243,8 @@ export default function Home() {
             </div>
 
             {/* ── Coming Soon Section ───────────────── */}
-            <div className="w-full max-w-2xl mx-auto">
+            <div className="w-full max-w-2xl mx-auto mt-8 md:mt-12">
               <div className="text-center space-y-6">
-                {/* Badge */}
-                <div>
-                  <span className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md border border-[#ef4444]/20 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-[#ef4444]/10">
-                    <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
-                    Adonay TikTok Academy
-                  </span>
-                </div>
-
                 {/* Conditional Heading — subtle badge when registered, CTA when not */}
                 {hasRegistered ? (
                   <div>
