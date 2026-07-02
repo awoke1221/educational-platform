@@ -13,7 +13,7 @@ Invoke-RestMethod -Uri "https://gsiqibgpimazfivfrtxz.supabase.co/rest/v1/Course?
 Write-Host "Done."
 
 Write-Host "Updating demo course covers..."
-$cover = "https://adonaytiktokacadamy.b-cdn.net/educational-platform/covers/d8621bc7-0ca3-4e7e-b458-ba338efc44a0/d8621bc7-0ca3-4e7e-b458-ba338efc44a0-1782129896358.png"
+$cover = "https://educational-platform-images.b-cdn.net/courses/TikTok-For-Personal/cover.jpg"
 $courses = @("bunny-demo-1", "bunny-demo-2", "bunny-demo-3")
 foreach ($id in $courses) {
     $body2 = "{`"coverImage`":`"$cover`",`"updatedAt`":`"$now`"}"

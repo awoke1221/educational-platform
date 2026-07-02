@@ -12,6 +12,8 @@ const VIDEO_URL_PATTERNS = [
   /\.b-cdn\.net\//i,
   /\.bunnycdn\.com\//i,
   /\/api\/bunny\/video-proxy\//i,
+  /iframe\.mediadelivery\.net\//i,
+  /playlist\.m3u8/i,
 ];
 
 // ============================================

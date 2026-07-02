@@ -318,12 +318,23 @@ export default function AdminPage() {
               </Link>
             </div>
 
-            {/* Bunny.net Management */}
+            {/* Bunny.net Management — Stream + Storage */}
             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
               <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <span>🐰</span> Bunny.net CDN & Storage
+                <span>🐰</span> Bunny.net Stream & Storage
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <a
+                  href="https://dash.bunny.net/stream"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 hover:border-orange-300 hover:shadow-sm transition-all group text-sm"
+                >
+                  <span>🎬</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-orange-600">
+                    Stream Library
+                  </span>
+                </a>
                 <a
                   href="https://dash.bunny.net/storage/1605341"
                   target="_blank"
@@ -333,17 +344,6 @@ export default function AdminPage() {
                   <span>🗄️</span>
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-orange-600">
                     Storage Zone
-                  </span>
-                </a>
-                <a
-                  href="https://dash.bunny.net/cdn/6042330"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 hover:border-orange-300 hover:shadow-sm transition-all group text-sm"
-                >
-                  <span>⚡</span>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300 group-hover:text-orange-600">
-                    Pull Zone
                   </span>
                 </a>
                 <Link

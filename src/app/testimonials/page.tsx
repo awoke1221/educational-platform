@@ -1,5 +1,6 @@
 ﻿"use client";
 import { useEffect, useState, useRef } from "react";
+import Hls from "hls.js";
 
 interface VideoTestimonial {
   id: string;
@@ -51,6 +52,7 @@ function VideoTestimonialsSection() {
     null,
   );
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
 
   useEffect(() => {
     const testimonials: VideoTestimonial[] = [];
@@ -58,10 +60,40 @@ function VideoTestimonialsSection() {
     setLoading(false);
   }, []);
 
+  // Initialize HLS.js when a video is selected for the modal
   useEffect(() => {
-    if (selectedVideo && videoRef.current) {
-      videoRef.current.play();
+    if (!selectedVideo || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const isHls =
+      selectedVideo.videoUrl.includes(".m3u8") ||
+      selectedVideo.videoUrl.includes("playlist.m3u8");
+
+    // Clean up previous HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
     }
+
+    if (isHls && Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(selectedVideo.videoUrl);
+      hls.attachMedia(video);
+      hlsRef.current = hls;
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+    } else {
+      video.src = selectedVideo.videoUrl;
+      video.play().catch(() => {});
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
   }, [selectedVideo]);
 
   if (loading) {

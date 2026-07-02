@@ -1,7 +1,7 @@
 # AD LMS — Deployment Readiness & 50K Student Scalability Report
 
 **Date:** 2026-06-21  
-**Platform:** Next.js 16 (App Router) + Supabase + Bunny.net CDN  
+**Platform:** Next.js 16 (App Router) + Supabase + Bunny.net Stream (HLS) + Bunny Storage (images)  
 **Target:** Production deployment handling **50,000+ concurrent students**
 
 ---
@@ -15,7 +15,7 @@
 | **Authentication** | ✅ 8/10 | Good JWT + device session system, rate-limiting now enforced                    |
 | **API Design**     | ⚠️ 6/10 | Paginated, but missing caching, queuing, and batch operations                   |
 | **Frontend**       | ✅ 7/10 | Good modern stack (RSC, Framer Motion), missing SSR/ISR optimization            |
-| **CDN/Media**      | ✅ 8/10 | Bunny.net + Cloudinary integrated, token auth enabled                           |
+| **CDN/Media**      | ✅ 8/10 | Bunny.net Stream (HLS) + Bunny Storage (images), token auth enabled             |
 | **Security**       | ⚠️ 6/10 | Helmet + CORS configured, but no WAF, no DDoS protection                        |
 | **Monitoring**     | ❌ 2/10 | Basic console.log, Sentry/DataDog stubs but not wired up                        |
 | **Deployment**     | ❌ 3/10 | No Dockerfile, no CI/CD, no staging/prod separation config                      |

@@ -1,20 +1,26 @@
 // ============================================
-// 🐰 Advanced Bunny.net Storage + CDN Service
+// 🐰 Bunny.net Services — Storage (images) + Stream (videos)
 // ============================================
 // Features:
-// - Full Storage API (upload, download, delete, list, info)
+// - Full Storage API (upload, download, delete, list, info) — IMAGES ONLY
 // - Pull Zone management (purge cache, statistics)
 // - Token-authenticated signed URLs
-// - Video thumbnail generation
+// - ✅ Bunny Stream API (video upload, transcoding, HLS playback)
 // - Direct upload URL generation (browser → Bunny)
 // - Bulk operations
+// ============================================
+//
+// Migration Note (July 2026):
+//   Videos now use Bunny Stream (HLS adaptive bitrate streaming).
+//   The old Bunny Storage + Pull Zone is kept for images only.
+//   See: https://docs.bunny.net/docs/stream-introduction
 // ============================================
 
 import { env } from "@/config/env";
 import crypto from "node:crypto";
 
 // ============================================
-// Types
+// Types — Bunny Storage (images)
 // ============================================
 
 export interface BunnyUploadOptions {
@@ -66,13 +72,48 @@ export interface BunnyStatistics {
   totalStorageUsed: number;
 }
 
-export interface BunnySignedUrlOptions {
-  /** Expiration in seconds from now (default: 3600) */
-  expiresIn?: number;
-  /** User IP for country-lock (optional) */
-  userIp?: string;
-  /** Whether to allow downloading */
-  allowDownload?: boolean;
+// ============================================
+// Types — Bunny Stream (videos)
+// ============================================
+
+/** Response from creating a video in Bunny Stream */
+export interface BunnyStreamCreateVideoResult {
+  guid: string;
+  uploadUrl: string | null;
+  title: string;
+  status: string;
+  libraryId: number;
+}
+
+/** Full video object from Bunny Stream API */
+export interface BunnyStreamVideo {
+  guid: string;
+  title: string;
+  dateUploaded: string;
+  views: number;
+  isPublic: boolean;
+  length: number;
+  status: number;
+  framerate: number;
+  width: number;
+  height: number;
+  availableResolutions: string;
+  thumbnailCount: number;
+  encodeProgress: number;
+  storageSize: number;
+  captions: any[];
+  moments: any[];
+  metaTags: any[];
+  chapters: any[];
+  videoLibraryId: number;
+}
+
+/** Upload options for Bunny Stream */
+export interface BunnyStreamUploadOptions {
+  title?: string;
+  collectionId?: string;
+  /** If true, creates video and returns upload URL without uploading */
+  directUploadUrl?: boolean;
 }
 
 // ============================================
@@ -466,53 +507,7 @@ export class BunnyService {
     return `${base}${encoded}`;
   }
 
-  /**
-   * Get the CDN URL for a video with optional query parameters
-   */
-  static getVideoUrl(
-    storagePath: string,
-    options?: {
-      autoplay?: boolean;
-      loop?: boolean;
-    },
-  ): string {
-    const url = this.getPublicUrl(storagePath);
-
-    const params = new URLSearchParams();
-    if (options?.autoplay) params.set("autoplay", "1");
-    if (options?.loop) params.set("loop", "1");
-
-    const queryString = params.toString();
-    return queryString ? `${url}?${queryString}` : url;
-  }
-
-  /**
-   * Generate a thumbnail URL for a video
-   */
-  static getVideoThumbnailUrl(
-    storagePath: string,
-    options?: {
-      width?: number;
-      height?: number;
-      time?: number;
-    },
-  ): string {
-    const base = this.getPublicUrl(storagePath);
-    const params = new URLSearchParams();
-
-    if (options?.width) params.set("width", options.width.toString());
-    if (options?.height) params.set("height", options.height.toString());
-    if (options?.time !== undefined)
-      params.set("time", options.time.toString());
-
-    if (!options?.width && !options?.height) {
-      params.set("width", env.bunny.thumbnailWidth.toString());
-      params.set("height", env.bunny.thumbnailHeight.toString());
-    }
-
-    const qs = params.toString();
-    return qs ? `${base}?${qs}` : base;
-  }
+  // (Video methods removed — videos now use BunnyStreamService instead)
 
   /**
    * Purge a single file from the CDN cache
@@ -600,119 +595,7 @@ export class BunnyService {
   }
 
   // ============================================
-  // 3. TOKEN / SIGNED URL AUTHENTICATION
-  // ============================================
-
-  /**
-   * Generate a token-authenticated (signed) URL for secure video delivery
-   */
-  static generateSignedUrl(
-    storagePath: string,
-    options: BunnySignedUrlOptions = {},
-  ): string {
-    const { expiresIn = env.bunny.tokenExpirationMinutes * 60, userIp } =
-      options;
-
-    const baseUrl = this.getPublicUrl(storagePath);
-    const securityKey = env.bunny.tokenAuthKey;
-
-    if (!securityKey) {
-      console.warn(
-        "[Bunny] Token auth key not configured. Returning public URL.",
-      );
-      return baseUrl;
-    }
-
-    const expires = Math.floor(Date.now() / 1000) + expiresIn;
-    const urlObj = new URL(baseUrl);
-    const path = urlObj.pathname;
-
-    let signString = `${securityKey}${expires}${path}`;
-    if (userIp) {
-      signString = `${securityKey}${userIp}${expires}${path}`;
-    }
-
-    const signature = crypto.createHash("md5").update(signString).digest("hex");
-
-    const params = new URLSearchParams();
-    params.set("token", `${expires}-${signature}`);
-    if (options.allowDownload === false) {
-      params.set("download", "0");
-    }
-
-    return `${baseUrl}?${params.toString()}`;
-  }
-
-  /**
-   * Generate signed URLs for all video formats
-   */
-  static getSignedStreamingUrls(
-    storagePath: string,
-    options: BunnySignedUrlOptions = {},
-  ): { mp4: string; thumbnail: string } {
-    const mp4Url = this.generateSignedUrl(storagePath, options);
-    const thumbnailUrl = this.getVideoThumbnailUrl(storagePath);
-
-    return {
-      mp4: mp4Url,
-      thumbnail: thumbnailUrl,
-    };
-  }
-
-  /**
-   * Check if token authentication is configured and enabled
-   */
-  static isTokenAuthEnabled(): boolean {
-    return env.bunny.tokenAuthEnabled && !!env.bunny.tokenAuthKey;
-  }
-
-  // ============================================
-  // 4. VIDEO STREAMING
-  // ============================================
-
-  /**
-   * Get the streaming URL for a video (with or without token)
-   */
-  static getStreamingUrl(storagePath: string, signed: boolean = true): string {
-    if (signed && this.isTokenAuthEnabled()) {
-      return this.generateSignedUrl(storagePath);
-    }
-    return this.getPublicUrl(storagePath);
-  }
-
-  /**
-   * Get the appropriate video source configuration object
-   */
-  static getVideoSource(storagePath: string): { type: string; src: string } {
-    const ext = storagePath.split(".").pop()?.toLowerCase();
-
-    switch (ext) {
-      case "m3u8":
-        return {
-          type: "application/x-mpegURL",
-          src: this.getStreamingUrl(storagePath),
-        };
-      case "webm":
-        return {
-          type: "video/webm",
-          src: this.getStreamingUrl(storagePath),
-        };
-      case "ogv":
-      case "ogg":
-        return {
-          type: "video/ogg",
-          src: this.getStreamingUrl(storagePath),
-        };
-      default:
-        return {
-          type: "video/mp4",
-          src: this.getStreamingUrl(storagePath),
-        };
-    }
-  }
-
-  // ============================================
-  // 5. DIRECT UPLOAD (Browser to Bunny)
+  // 3. DIRECT UPLOAD (Browser to Bunny Storage — images only)
   // ============================================
 
   /**
@@ -747,18 +630,6 @@ export class BunnyService {
   // ============================================
   // 6. UTILITY METHODS
   // ============================================
-
-  /**
-   * Build the storage path for a course video
-   */
-  static getCourseVideoPath(
-    courseId: string,
-    lectureId: string,
-    filename: string,
-  ): string {
-    const folder = env.bunny.defaultFolder || "educational-platform";
-    return `${folder}/courses/${courseId}/lectures/${lectureId}/${normalizePath(filename)}`;
-  }
 
   /**
    * Build the storage path for a course cover image
@@ -811,40 +682,24 @@ export class BunnyService {
   }
 
   /**
-   * Validate if a file can be uploaded based on type and size
+   * Validate if an image file can be uploaded to Bunny Storage
    */
-  static validateUpload(
-    file: { type: string; size: number },
-    uploadType: "video" | "image" | "document" = "video",
-  ): { valid: boolean; error?: string } {
-    if (uploadType === "video") {
-      if (!env.bunny.allowedVideoTypes.includes(file.type)) {
-        return {
-          valid: false,
-          error: `Invalid video format. Allowed: MP4, WebM, OGG, MOV, AVI, MKV`,
-        };
-      }
-      if (file.size > env.bunny.maxVideoSize) {
-        return {
-          valid: false,
-          error: `Video too large. Maximum size: ${this.formatFileSize(env.bunny.maxVideoSize)}`,
-        };
-      }
-    } else if (uploadType === "image") {
-      if (!env.bunny.allowedImageTypes.includes(file.type)) {
-        return {
-          valid: false,
-          error: `Invalid image format. Allowed: JPEG, PNG, WebP, GIF, AVIF`,
-        };
-      }
-      if (file.size > env.bunny.maxFileSize) {
-        return {
-          valid: false,
-          error: `Image too large. Maximum size: ${this.formatFileSize(env.bunny.maxFileSize)}`,
-        };
-      }
+  static validateImageUpload(file: { type: string; size: number }): {
+    valid: boolean;
+    error?: string;
+  } {
+    if (!env.bunny.allowedImageTypes.includes(file.type)) {
+      return {
+        valid: false,
+        error: `Invalid image format. Allowed: JPEG, PNG, WebP, GIF, AVIF`,
+      };
     }
-
+    if (file.size > env.bunny.maxFileSize) {
+      return {
+        valid: false,
+        error: `Image too large. Maximum size: ${this.formatFileSize(env.bunny.maxFileSize)}`,
+      };
+    }
     return { valid: true };
   }
 
@@ -886,6 +741,328 @@ export class BunnyService {
         message: `Bunny connection failed: ${error.message}`,
       };
     }
+  }
+}
+
+// ============================================
+// 🐰 Bunny Stream Service (for VIDEOS)
+// ============================================
+// Bunny Stream handles video ingestion, transcoding to
+// multiple qualities (HLS), thumbnails, and analytics.
+//
+// API Docs: https://docs.bunny.net/reference/bunny-stream-api
+// ============================================
+
+export class BunnyStreamService {
+  private static getApiBase(): string {
+    const hostname = env.bunnyStream.hostname || "video.bunnycdn.com";
+    const libraryId = env.bunnyStream.libraryId;
+    if (!libraryId)
+      throw new Error(
+        "Bunny Stream library ID is not configured. Set BUNNY_STREAM_LIBRARY_ID.",
+      );
+    return `https://${hostname}/library/${libraryId}`;
+  }
+
+  private static getApiKey(): string {
+    const key = env.bunnyStream.apiKey;
+    if (!key)
+      throw new Error(
+        "Bunny Stream API key is not configured. Set BUNNY_STREAM_API_KEY.",
+      );
+    return key;
+  }
+
+  private static getHeaders(): Record<string, string> {
+    return {
+      accept: "application/json",
+      "content-type": "application/json",
+      AccessKey: this.getApiKey(),
+    };
+  }
+
+  /**
+   * Get the embed URL for a Bunny Stream video
+   * e.g. https://iframe.mediadelivery.net/embed/{libraryId}/{videoId}
+   */
+  static getEmbedUrl(videoId: string): string {
+    const libraryId = env.bunnyStream.libraryId;
+    if (!libraryId || !videoId) return "";
+    return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}`;
+  }
+
+  /**
+   * Get the HLS playlist URL for a Bunny Stream video
+   * e.g. https://{cdn-host}.b-cdn.net/{videoId}/playlist.m3u8
+   */
+  static getHlsUrl(videoId: string): string {
+    if (!videoId) return "";
+    const cdnHost = env.bunnyStream.cdnHostname;
+    if (cdnHost) {
+      return `https://${cdnHost}.b-cdn.net/${videoId}/playlist.m3u8`;
+    }
+    // Default: use iframe.mediadelivery.net
+    const libraryId = env.bunnyStream.libraryId;
+    if (libraryId) {
+      return `https://iframe.mediadelivery.net/${libraryId}/${videoId}/playlist.m3u8`;
+    }
+    return "";
+  }
+
+  /**
+   * Get the thumbnail URL for a Bunny Stream video
+   */
+  static getThumbnailUrl(videoId: string): string {
+    if (!videoId) return "";
+    const cdnHost = env.bunnyStream.cdnHostname;
+    if (cdnHost) {
+      return `https://${cdnHost}.b-cdn.net/${videoId}/thumbnail.jpg`;
+    }
+    // Default fallback
+    const libraryId = env.bunnyStream.libraryId;
+    if (libraryId) {
+      return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}/thumbnail.jpg`;
+    }
+    return "";
+  }
+
+  /**
+   * Create a video in Bunny Stream and get an upload URL.
+   * This is the first step — after getting the uploadUrl, you PUT the file there.
+   *
+   * POST /library/{libraryId}/videos
+   */
+  static async createVideo(
+    options: BunnyStreamUploadOptions = {},
+  ): Promise<BunnyStreamCreateVideoResult> {
+    const endpoint = `${this.getApiBase()}/videos`;
+    const body: Record<string, any> = {
+      title: options.title || `Lecture-${Date.now()}`,
+    };
+    if (options.collectionId) body.collectionId = options.collectionId;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(
+        `Bunny Stream create video failed (${response.status}): ${text}`,
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Upload a video file to Bunny Stream using the upload URL
+   * obtained from createVideo().
+   *
+   * PUT {uploadUrl}
+   */
+  static async uploadVideoFile(
+    uploadUrl: string,
+    file: Buffer | ArrayBuffer | Blob,
+    mimeType: string = "video/mp4",
+  ): Promise<void> {
+    const headers: Record<string, string> = {
+      "Content-Type": mimeType,
+    };
+
+    const response = await fetch(uploadUrl, {
+      method: "PUT",
+      headers,
+      body: file instanceof Blob ? file : new Blob([file], { type: mimeType }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(
+        `Bunny Stream upload failed (${response.status}): ${text}`,
+      );
+    }
+  }
+
+  /**
+   * Full flow: Create video + upload file in one call.
+   * Returns the video GUID (bunnyStreamId) and URLs.
+   */
+  static async createAndUploadVideo(
+    file: Buffer | ArrayBuffer,
+    mimeType: string,
+    title?: string,
+  ): Promise<{
+    videoId: string;
+    embedUrl: string;
+    hlsUrl: string;
+    thumbnailUrl: string;
+  }> {
+    // Step 1: Create video entry
+    const created = await this.createVideo({ title });
+
+    if (!created.uploadUrl) {
+      throw new Error("Bunny Stream did not return an upload URL");
+    }
+
+    // Step 2: Upload the file to the provided upload URL
+    await this.uploadVideoFile(created.uploadUrl, file, mimeType);
+
+    return {
+      videoId: created.guid,
+      embedUrl: this.getEmbedUrl(created.guid),
+      hlsUrl: this.getHlsUrl(created.guid),
+      thumbnailUrl: this.getThumbnailUrl(created.guid),
+    };
+  }
+
+  /**
+   * Fetch video details from Bunny Stream
+   *
+   * GET /library/{libraryId}/videos/{videoId}
+   */
+  static async getVideo(videoId: string): Promise<BunnyStreamVideo> {
+    const endpoint = `${this.getApiBase()}/videos/${videoId}`;
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(
+        `Bunny Stream get video failed (${response.status}): ${text}`,
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * List videos in the library
+   *
+   * GET /library/{libraryId}/videos
+   */
+  static async listVideos(
+    page: number = 1,
+    perPage: number = 100,
+  ): Promise<{
+    items: BunnyStreamVideo[];
+    currentPage: number;
+    totalItems: number;
+    itemsPerPage: number;
+  }> {
+    const endpoint = `${this.getApiBase()}/videos?page=${page}&itemsPerPage=${perPage}`;
+    const response = await fetch(endpoint, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(
+        `Bunny Stream list videos failed (${response.status}): ${text}`,
+      );
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Delete a video from Bunny Stream
+   *
+   * DELETE /library/{libraryId}/videos/{videoId}
+   */
+  static async deleteVideo(videoId: string): Promise<boolean> {
+    const endpoint = `${this.getApiBase()}/videos/${videoId}`;
+    const response = await fetch(endpoint, {
+      method: "DELETE",
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      console.error(
+        `[BunnyStream] Delete failed (${response.status}): ${text}`,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Update video metadata (title, etc.)
+   *
+   * POST /library/{libraryId}/videos/{videoId}
+   */
+  static async updateVideo(
+    videoId: string,
+    updates: { title?: string; isPublic?: boolean },
+  ): Promise<boolean> {
+    const endpoint = `${this.getApiBase()}/videos/${videoId}`;
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      console.error(
+        `[BunnyStream] Update failed (${response.status}): ${text}`,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Fetch a signed HLS URL (if token auth is enabled on Stream)
+   * Bunny Stream supports token authentication per video.
+   */
+  static getSignedHlsUrl(
+    videoId: string,
+    expiresInSeconds: number = 86400,
+  ): string {
+    const hlsUrl = this.getHlsUrl(videoId);
+    if (!hlsUrl) return "";
+    const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
+    const token = crypto
+      .createHash("sha256")
+      .update(`${env.bunny.tokenAuthKey}${expires}${videoId}`)
+      .digest("hex");
+    return `${hlsUrl}?token=${token}&expires=${expires}`;
+  }
+
+  /**
+   * Validate if a file can be uploaded to Bunny Stream
+   */
+  static validateUpload(file: { type: string; size: number }): {
+    valid: boolean;
+    error?: string;
+  } {
+    if (!env.bunnyStream.allowedVideoTypes.includes(file.type)) {
+      return {
+        valid: false,
+        error: `Invalid video format. Allowed: MP4, WebM, OGG, MOV, AVI, MKV`,
+      };
+    }
+    if (file.size > env.bunnyStream.maxVideoSize) {
+      return {
+        valid: false,
+        error: `Video too large. Maximum size: 5GB`,
+      };
+    }
+    return { valid: true };
+  }
+
+  /**
+   * Check if Bunny Stream is configured
+   */
+  static isConfigured(): boolean {
+    return !!(env.bunnyStream.apiKey && env.bunnyStream.libraryId);
   }
 }
 

@@ -116,11 +116,13 @@ export default function AdminCourseDetailPage() {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Bunny Storage
+  // Bunny Storage & Stream
   const [bunnyFiles, setBunnyFiles] = useState<BunnyFileItem[]>([]);
   const [bunnyLoading, setBunnyLoading] = useState(false);
   const [bunnyStats, setBunnyStats] = useState<any>(null);
   const [showVideoPreview, setShowVideoPreview] = useState<string | null>(null);
+  const [streamVideos, setStreamVideos] = useState<any[]>([]);
+  const [streamLoading, setStreamLoading] = useState(false);
 
   // Course Editing
   const [editForm, setEditForm] = useState({
@@ -517,26 +519,37 @@ export default function AdminCourseDetailPage() {
   };
 
   // ============================================
-  // Fetch Bunny Storage for this course
+  // Fetch Bunny Storage & Stream for this course
   // ============================================
 
   const fetchBunnyStorage = useCallback(async () => {
     if (!token) return;
     setBunnyLoading(true);
     try {
+      // Fetch Storage files (images)
       const folder = `educational-platform/courses/${courseId}`;
-      const result = await authFetchJson(
-        `/api/bunny/storage?path=${encodeURIComponent(folder)}`,
-        {
-          method: "GET",
-        },
-      );
-      if (result.response.ok && result.data.success) {
-        setBunnyFiles(result.data.data.files || []);
+      const [storageResult, streamResult] = await Promise.allSettled([
+        authFetchJson(
+          `/api/bunny/storage?path=${encodeURIComponent(folder)}`,
+          { method: "GET" },
+        ),
+        // Also fetch Stream videos
+        authFetchJson(
+          `/api/bunny/storage?stream=true`,
+          { method: "GET" },
+        ),
+      ]);
+
+      if (storageResult.status === "fulfilled" && storageResult.value.response.ok && storageResult.value.data.success) {
+        setBunnyFiles(storageResult.value.data.data.files || []);
         setBunnyStats({
-          totalFiles: result.data.data.totalFiles,
-          totalSize: result.data.data.totalSizeFormatted,
+          totalFiles: storageResult.value.data.data.totalFiles,
+          totalSize: storageResult.value.data.data.totalSizeFormatted,
         });
+      }
+
+      if (streamResult.status === "fulfilled" && streamResult.value.response.ok && streamResult.value.data.success) {
+        setStreamVideos(streamResult.value.data.data.videos || []);
       }
     } catch (err) {
       console.error("[BUNNY STORAGE] Fetch error:", err);
@@ -769,7 +782,7 @@ export default function AdminCourseDetailPage() {
               : "border-transparent text-gray-500 hover:text-gray-700"
           }`}
         >
-          🐰 Storage
+          🐰 Stream & Storage
         </button>
       </div>
 
@@ -1190,18 +1203,81 @@ export default function AdminCourseDetailPage() {
       )}
 
       {/* ============================================ */}
-      {/* BUNNY STORAGE TAB */}
+      {/* BUNNY STREAM & STORAGE TAB */}
       {/* ============================================ */}
       {activeTab === "storage" && (
         <div>
+          {/* Bunny Stream Videos Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-gray-900">
-                  🐰 Bunny Storage
+                  🎬 Bunny Stream Videos
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Files stored for this course in Bunny CDN
+                  Videos uploaded to Bunny Stream (HLS adaptive bitrate)
+                </p>
+              </div>
+            </div>
+
+            {bunnyLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : streamVideos.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <svg className="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm">No Stream videos found</p>
+                <p className="text-xs mt-1">Upload videos from the Lectures tab</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {streamVideos.map((video: any, i: number) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+                    {/* Thumbnail */}
+                    <div className="w-16 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                      {video.thumbnailUrl ? (
+                        <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-700 truncate">{video.title}</p>
+                      <p className="text-xs text-gray-400">
+                        {video.guid?.substring(0, 8)}... • {video.length ? `${Math.round(video.length)}s` : "processing"} • {video.encodeProgress < 100 ? `Encoding ${video.encodeProgress}%` : "Ready"}
+                      </p>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                      <a href={video.hlsUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-lg transition-colors" title="HLS URL">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bunny Storage Files Section (images) */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-gray-900">
+                  🗄️ Bunny Storage (Images)
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Image files stored for this course
                 </p>
               </div>
               {bunnyStats && (
@@ -1217,144 +1293,66 @@ export default function AdminCourseDetailPage() {
               </div>
             ) : bunnyFiles.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
-                <svg
-                  className="w-12 h-12 mx-auto mb-3 opacity-50"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
+                <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p className="text-sm">No files uploaded yet for this course</p>
-                <p className="text-xs mt-1">
-                  Upload videos from the Lectures tab
-                </p>
+                <p className="text-sm">No image files stored yet</p>
               </div>
             ) : (
               <div className="space-y-1">
                 {bunnyFiles
                   .filter((f) => !f.isDirectory)
                   .map((file, i) => {
-                    const isVideo = file.contentType?.startsWith("video/");
                     const isImage = file.contentType?.startsWith("image/");
-                    const fileUrl =
-                      `https://${process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL?.replace(/^https?:\/\//, "").replace(/\/+$/, "") || "adonaytiktokacadamy.b-cdn.net"}/${file.path}`.replace(
-                        /\/+/g,
-                        "/",
-                      );
+                    const pullZone = process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL?.replace(/^https?:\/\//, "").replace(/\/+$/, "") || "";
+                    const fileUrl = pullZone
+                      ? `https://${pullZone}/${file.path}`.replace(/\/+/g, "/")
+                      : `https://educational-platform-images.b-cdn.net/${file.path}`.replace(/\/+/g, "/");
 
                     return (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
-                      >
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
                         {/* File Icon */}
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isVideo ? "bg-blue-100" : isImage ? "bg-green-100" : "bg-gray-100"}`}
-                        >
-                          {isVideo ? (
-                            <svg
-                              className="w-4 h-4 text-blue-500"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                              />
-                            </svg>
-                          ) : isImage ? (
-                            <svg
-                              className="w-4 h-4 text-green-500"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isImage ? "bg-green-100" : "bg-gray-100"}`}>
+                          {isImage ? (
+                            <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           ) : (
-                            <svg
-                              className="w-4 h-4 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                              />
+                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                           )}
                         </div>
-
                         {/* File Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate">
-                            {file.objectName}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {formatFileSize(file.length)} •{" "}
-                            {file.contentType || "unknown"}
-                          </p>
+                          <p className="text-sm font-medium text-gray-700 truncate">{file.objectName}</p>
+                          <p className="text-xs text-gray-400">{formatFileSize(file.length)} • {file.contentType || "unknown"}</p>
                         </div>
-
                         {/* Actions */}
                         <div className="flex items-center gap-1">
-                          {isVideo && (
-                            <button
-                              onClick={() =>
-                                setShowVideoPreview(
-                                  showVideoPreview === fileUrl ? null : fileUrl,
-                                )
-                              }
-                              className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Preview video"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
-                              </svg>
-                            </button>
-                          )}
-                          <a
-                            href={fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Open URL"
+                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-lg transition-colors" title="Open URL">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                          <button
+                            onClick={() => handleDeleteBunnyFile(file.path)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Delete"
                           >
-                            <svg
-                              className="w-4 h-4"
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"

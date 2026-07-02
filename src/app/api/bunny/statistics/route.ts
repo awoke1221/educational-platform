@@ -1,12 +1,12 @@
 // ============================================
-// 🐰 Bunny Statistics API
+// 🐰 Bunny Statistics API (Storage + Stream)
 // ============================================
-// GET /api/bunny/statistics - Get storage & CDN stats
+// GET /api/bunny/statistics - Get storage, stream & CDN stats
 // ============================================
 
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
-import BunnyService from "@/lib/bunny";
+import { BunnyService, BunnyStreamService } from "@/lib/bunny";
 import {
   successResponse,
   errorResponse,
@@ -21,11 +21,13 @@ export async function GET(request: NextRequest) {
       return errorResponse("Access denied", 403);
     }
 
-    const [storageStats, pullZoneStats, fileList] = await Promise.all([
-      BunnyService.getStorageStatistics().catch(() => null),
-      BunnyService.getPullZoneStatistics().catch(() => null),
-      BunnyService.listFiles("").catch(() => []),
-    ]);
+    const [storageStats, pullZoneStats, fileList, streamVideos] =
+      await Promise.all([
+        BunnyService.getStorageStatistics().catch(() => null),
+        BunnyService.getPullZoneStatistics().catch(() => null),
+        BunnyService.listFiles("").catch(() => []),
+        BunnyStreamService.listVideos(1, 10).catch(() => null),
+      ]);
 
     const totalFiles = fileList.reduce(
       (acc, f) => (f.isDirectory ? acc : acc + 1),
@@ -50,6 +52,13 @@ export async function GET(request: NextRequest) {
           cacheHitRate: 0,
           totalStorageUsed: 0,
         },
+        stream: streamVideos
+          ? {
+              totalVideos: streamVideos.totalItems || 0,
+              recentVideos: streamVideos.items?.length || 0,
+              configured: true,
+            }
+          : { configured: false },
         files: {
           total: totalFiles,
           totalSize,

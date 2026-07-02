@@ -73,7 +73,32 @@ export const env = {
   },
 
   // ============================================
-  // Bunny Storage + Pull Zone Configuration
+  // Bunny Stream Configuration (for videos)
+  // ============================================
+  bunnyStream: {
+    apiKey: process.env.BUNNY_STREAM_API_KEY?.trim() || "",
+    libraryId: process.env.BUNNY_STREAM_LIBRARY_ID?.trim() || "",
+    hostname: process.env.BUNNY_STREAM_HOSTNAME?.trim() || "video.bunnycdn.com",
+    cdnHostname: process.env.BUNNY_STREAM_CDN_HOSTNAME?.trim() || "",
+    // Upload limits
+    maxVideoSize: parseInt(
+      process.env.BUNNY_STREAM_MAX_VIDEO_SIZE || "5368709120",
+    ), // 5GB
+    allowedVideoTypes: [
+      "video/mp4",
+      "video/webm",
+      "video/ogg",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/x-matroska",
+    ],
+    // Fallback hero video ID (used when no hero video is configured)
+    fallbackHeroVideoId:
+      process.env.BUNNY_STREAM_FALLBACK_HERO_VIDEO_ID?.trim() || "",
+  },
+
+  // ============================================
+  // Bunny Storage Configuration (for images only)
   // ============================================
   bunny: {
     accessKey: process.env.BUNNY_ACCESS_KEY?.trim() || "",
@@ -87,34 +112,12 @@ export const env = {
       process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL || "",
     ),
     pullZoneId: process.env.BUNNY_PULL_ZONE_ID?.trim() || "",
-    pullZonePassword: process.env.BUNNY_PULL_ZONE_PASSWORD?.trim() || "",
     defaultFolder:
       process.env.NEXT_PUBLIC_BUNNY_DEFAULT_FOLDER?.trim() ||
       "educational-platform",
     apiUrl: process.env.BUNNY_API_URL?.trim() || "https://api.bunny.net",
-    // Token authentication configuration
-    tokenAuthEnabled: process.env.BUNNY_TOKEN_AUTH_ENABLED === "true",
-    tokenAuthKey:
-      process.env.BUNNY_TOKEN_AUTH_KEY?.trim() ||
-      process.env.BUNNY_ACCESS_KEY?.trim() ||
-      "",
-    tokenExpirationMinutes: parseInt(
-      process.env.BUNNY_TOKEN_EXPIRATION_MINUTES || "60",
-    ),
-    // Thumbnail configuration
-    thumbnailWidth: parseInt(process.env.BUNNY_THUMBNAIL_WIDTH || "640"),
-    thumbnailHeight: parseInt(process.env.BUNNY_THUMBNAIL_HEIGHT || "360"),
-    // Upload limits
-    maxVideoSize: parseInt(process.env.BUNNY_MAX_VIDEO_SIZE || "5368709120"), // 5GB
+    // Upload limits (images only)
     maxFileSize: parseInt(process.env.BUNNY_MAX_FILE_SIZE || "10485760"), // 10MB
-    allowedVideoTypes: [
-      "video/mp4",
-      "video/webm",
-      "video/ogg",
-      "video/quicktime",
-      "video/x-msvideo",
-      "video/x-matroska",
-    ],
     allowedImageTypes: [
       "image/jpeg",
       "image/png",
@@ -122,8 +125,6 @@ export const env = {
       "image/gif",
       "image/avif",
     ],
-    // Fallback hero video URL (used when no videos are found in storage)
-    fallbackHeroVideo: process.env.BUNNY_FALLBACK_HERO_VIDEO?.trim() || "",
   },
 
   // ============================================

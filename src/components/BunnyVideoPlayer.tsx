@@ -1,10 +1,10 @@
 "use client";
 
 // ============================================
-// 🐰 Bunny Video Player Component
+// 🐰 Bunny Video Player Component (Bunny Stream HLS)
 // ============================================
 // Premium video player with:
-// - HLS.js support for adaptive bitrate streaming
+// - HLS.js support for Bunny Stream adaptive bitrate streaming
 // - Custom controls (play/pause, volume, seek)
 // - Speed control (0.5x - 2x)
 // - Picture-in-Picture
@@ -15,6 +15,7 @@
 // ============================================
 
 import { useRef, useEffect, useState, useCallback } from "react";
+import Hls from "hls.js";
 
 // ============================================
 // Types
@@ -114,12 +115,47 @@ export default function BunnyVideoPlayer({
   const video = videoRef.current;
 
   // ============================================
-  // Setup video event listeners
+  // Setup HLS.js for Bunny Stream + video event listeners
   // ============================================
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
+
+    let hls: Hls | null = null;
+
+    // Detect if src is an HLS stream (m3u8) for Bunny Stream
+    const isHlsStream =
+      src?.includes(".m3u8") || src?.includes("playlist.m3u8");
+
+    if (isHlsStream && Hls.isSupported()) {
+      // Use HLS.js for Bunny Stream adaptive bitrate HLS playback
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backbufferLength: 30,
+        maxBufferLength: 30,
+      });
+      hls.loadSource(src);
+      hls.attachMedia(el);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setIsLoading(false);
+        onReady?.();
+        if (autoPlay) {
+          el.play().catch(() => {});
+        }
+      });
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          setHasError(true);
+          setIsLoading(false);
+          onError?.("HLS playback error: " + (data.type || "unknown"));
+        }
+      });
+    } else {
+      // Fallback: standard HTML5 video (for direct MP4 URLs)
+      el.src = src;
+    }
 
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
@@ -130,19 +166,23 @@ export default function BunnyVideoPlayer({
     const onDurationChange = () => setDuration(el.duration || 0);
     const onWaiting = () => setIsLoading(true);
     const onCanPlay = () => {
-      setIsLoading(false);
-      setHasError(false);
-      onReady?.();
+      if (!isHlsStream || !hls) {
+        setIsLoading(false);
+        setHasError(false);
+        onReady?.();
+      }
     };
     const onEndedHandler = () => {
       setIsPlaying(false);
       onEnded?.();
     };
     const onErrorHandler = () => {
-      const msg = el.error?.message || "Video playback error";
-      setHasError(true);
-      setIsLoading(false);
-      onError?.(msg);
+      if (!isHlsStream) {
+        const msg = el.error?.message || "Video playback error";
+        setHasError(true);
+        setIsLoading(false);
+        onError?.(msg);
+      }
     };
     const onProgressEvent = () => {
       if (el.buffered.length > 0) {
@@ -184,6 +224,10 @@ export default function BunnyVideoPlayer({
     }
 
     return () => {
+      // Destroy HLS.js instance
+      if (hls) {
+        hls.destroy();
+      }
       el.removeEventListener("play", onPlay);
       el.removeEventListener("pause", onPause);
       el.removeEventListener("timeupdate", onTimeUpdate);
@@ -200,6 +244,7 @@ export default function BunnyVideoPlayer({
     duration,
     persistProgress,
     progressKey,
+    autoPlay,
     onProgress,
     onEnded,
     onReady,

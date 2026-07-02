@@ -1,13 +1,13 @@
 // ============================================
-// 🎬 Public Video Upload API
+// 🎬 Public Video Upload API → Bunny Stream
 // ============================================
-// Handles video uploads that don't require authentication
-// (e.g., hero videos, landing page content managed by admins).
+// Handles video uploads to Bunny Stream (HLS adaptive bitrate).
+// Used by admins for hero videos, landing page content, etc.
 // ============================================
 
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
-import BunnyService from "@/lib/bunny";
+import { BunnyStreamService } from "@/lib/bunny";
 import {
   successResponse,
   errorResponse,
@@ -26,6 +26,13 @@ export async function POST(request: NextRequest) {
       return errorResponse("Only admins can upload public videos", 403);
     }
 
+    if (!BunnyStreamService.isConfigured()) {
+      return errorResponse(
+        "Bunny Stream is not configured. Set BUNNY_STREAM_API_KEY and BUNNY_STREAM_LIBRARY_ID.",
+        500,
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -33,10 +40,15 @@ export async function POST(request: NextRequest) {
       return errorResponse("No file provided", 400);
     }
 
-    const allowedVideoTypes = ["video/mp4", "video/webm", "video/ogg"];
+    const allowedVideoTypes = [
+      "video/mp4",
+      "video/webm",
+      "video/ogg",
+      "video/quicktime",
+    ];
     if (!allowedVideoTypes.includes(file.type)) {
       return errorResponse(
-        "Invalid video format. Allowed: MP4, WebM, OGG",
+        "Invalid video format. Allowed: MP4, WebM, OGG, MOV",
         400,
       );
     }
@@ -49,19 +61,25 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const result = await BunnyService.uploadFile(buffer, file.type, {
-      folder: "educational-platform/public-videos",
-      publicId: `public-${Date.now()}`,
-    });
+    // Upload to Bunny Stream (creates video, uploads file, returns HLS URLs)
+    const result = await BunnyStreamService.createAndUploadVideo(
+      buffer,
+      file.type,
+      file.name.replace(/\.[^.]+$/, ""),
+    );
 
     return successResponse(
       {
-        url: result.url,
-        bytes: result.bytes,
-        mimeType: result.mimeType,
-        filename: result.filename,
+        videoId: result.videoId,
+        url: result.hlsUrl,
+        hlsUrl: result.hlsUrl,
+        embedUrl: result.embedUrl,
+        thumbnailUrl: result.thumbnailUrl,
+        bytes: file.size,
+        mimeType: file.type,
+        filename: file.name,
       },
-      "Public video uploaded successfully",
+      "Public video uploaded to Bunny Stream successfully",
       201,
     );
   } catch (error) {

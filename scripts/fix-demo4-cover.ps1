@@ -5,7 +5,7 @@ $h = @{
     "Prefer" = "return=minimal"
 }
 $now = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
-$cover = "https://adonaytiktokacadamy.b-cdn.net/educational-platform/covers/d8621bc7-0ca3-4e7e-b458-ba338efc44a0/d8621bc7-0ca3-4e7e-b458-ba338efc44a0-1782129896358.png"
+$cover = "https://educational-platform-images.b-cdn.net/courses/TikTok-For-Personal/cover.jpg"
 $body = "{`"coverImage`":`"$cover`",`"updatedAt`":`"$now`"}"
 Invoke-RestMethod -Uri "https://gsiqibgpimazfivfrtxz.supabase.co/rest/v1/Course?id=eq.bunny-demo-4" -Headers $h -Method Patch -Body $body
 Write-Host "Updated cover for bunny-demo-4"

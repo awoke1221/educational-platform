@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
-import { BunnyService } from "@/lib/bunny";
+import { BunnyStreamService } from "@/lib/bunny";
 import { env } from "@/config/env";
 import {
   successResponse,
@@ -100,29 +100,38 @@ export async function GET(
       .maybeSingle();
 
     if (lecture && lecture.courseId === courseId) {
-      let streamingUrl = null;
-      let cdnVideoUrl = null;
-      let proxiedVideoUrl = null;
+      let hlsUrl = null;
+      let embedUrl = null;
+      let thumbnailUrl = null;
 
-      if (lecture.cloudinaryPublicId) {
-        // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
-        // No proxy through Vercel: lower latency, zero bandwidth cost,
-        // no serverless timeout limits. Token auth ensures secure access.
-        cdnVideoUrl = BunnyService.generateSignedUrl(
-          lecture.cloudinaryPublicId,
-          { expiresIn: 86400 },
-        );
-        streamingUrl = BunnyService.getStreamingUrl(lecture.cloudinaryPublicId);
+      // ============================================
+      // 🐰 Bunny Stream — HLS adaptive bitrate streaming
+      // All videos are served via Bunny Stream.
+      // cloudinaryPublicId stores the Bunny Stream video ID (UUID).
+      // ============================================
+      const streamVideoId =
+        lecture.cloudinaryPublicId || lecture.bunnyStreamId || null;
 
-        // Fallback: proxy through our server when CDN token key is misconfigured
-        const reqUrl = new URL(request.url);
-        const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`;
-        const encodedPath = encodeURIComponent(lecture.cloudinaryPublicId);
-        proxiedVideoUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedPath}`;
+      if (streamVideoId && BunnyStreamService.isConfigured()) {
+        hlsUrl = BunnyStreamService.getHlsUrl(streamVideoId);
+        embedUrl = BunnyStreamService.getEmbedUrl(streamVideoId);
+        thumbnailUrl = BunnyStreamService.getThumbnailUrl(streamVideoId);
+      } else if (streamVideoId) {
+        // Fallback: direct embed URL
+        const libraryId = env.bunnyStream.libraryId;
+        if (libraryId) {
+          hlsUrl = `https://iframe.mediadelivery.net/${libraryId}/${streamVideoId}/playlist.m3u8`;
+          embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${streamVideoId}`;
+        }
       }
 
       return successResponse(
-        { ...lecture, streamingUrl, cdnVideoUrl, proxiedVideoUrl },
+        {
+          ...lecture,
+          hlsUrl,
+          embedUrl,
+          thumbnailUrl,
+        },
         "Lecture retrieved",
       );
     }
@@ -166,19 +175,25 @@ export async function PUT(
 
     // Handle different update actions
     if (body.action === "video") {
-      // Update video URL from Cloudinary upload
+      // Update video from Bunny Stream upload
+      const updateData: Record<string, any> = {
+        videoUrl: body.videoUrl || body.hlsUrl,
+        cloudinaryPublicId: body.cloudinaryPublicId || body.videoId,
+        duration: body.duration || lecture.duration,
+        videoSize: body.videoSize ? String(body.videoSize) : lecture.videoSize,
+        isPublished: true,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Save Bunny Stream video ID if provided
+      if (body.videoId) {
+        updateData.bunnyStreamId = body.videoId;
+        updateData.cloudinaryPublicId = body.videoId;
+      }
+
       const { data: updated, error: videoUpdateErr } = await supabaseAdmin!
         .from("Lecture")
-        .update({
-          videoUrl: body.videoUrl,
-          cloudinaryPublicId: body.cloudinaryPublicId,
-          duration: body.duration || lecture.duration,
-          videoSize: body.videoSize
-            ? String(body.videoSize)
-            : lecture.videoSize,
-          isPublished: true,
-          updatedAt: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", lectureId)
         .select(
           "id, title, videoUrl, cloudinaryPublicId, duration, isPublished",

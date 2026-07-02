@@ -20,6 +20,7 @@ import {
   cacheVideoResponse,
   preloadVideo,
 } from "@/lib/utils/videoCache";
+import Hls from "hls.js";
 
 // ============================================
 // Types
@@ -33,11 +34,12 @@ interface LectureDetail {
   orderIndex: number;
   videoUrl: string;
   cloudinaryPublicId: string | null;
-  streamingUrl: string | null;
-  signedVideoUrl: string | null;
-  cdnVideoUrl: string | null;
-  /** @deprecated Use cdnVideoUrl instead — proxy removed in favor of direct CDN */
-  proxiedVideoUrl: string | null;
+  /** Bunny Stream HLS URL for adaptive bitrate streaming */
+  hlsUrl: string | null;
+  /** Bunny Stream embed URL */
+  embedUrl: string | null;
+  /** Bunny Stream thumbnail URL */
+  thumbnailUrl: string | null;
   isPublished: boolean;
   courseId: string;
   course: {
@@ -275,7 +277,7 @@ export default function LecturePlayerPage() {
 
   // ============================================
   // Preload next lecture video when current one is playing
-  // Uses direct Bunny CDN URL (served from nearest edge PoP)
+  // Uses Bunny Stream HLS URL (adaptive bitrate streaming)
   // ============================================
 
   useEffect(() => {
@@ -285,21 +287,21 @@ export default function LecturePlayerPage() {
     const next = lectures.lectures.find((l) => l.id === nextLecture.id);
     if (!next) return;
 
-    // Get the CDN URL for preloading
-    const storagePath = next.cloudinaryPublicId || next.videoUrl || "";
-    if (!storagePath) return;
+    // Get the video URL for preloading
+    const streamId = next.cloudinaryPublicId || next.videoUrl || "";
+    if (!streamId) return;
 
     // Wait until user is past 50% of the current video, then preload next
     if (!duration || currentTime / duration < 0.5) return;
 
-    // Use direct CDN URL — Bunny serves from nearest global edge PoP
-    const nextSrc = storagePath.startsWith("http")
-      ? storagePath
-      : `/api/bunny/video-proxy?path=${encodeURIComponent(storagePath)}`;
+    // Use Bunny Stream HLS URL
+    const nextSrc = streamId.startsWith("http")
+      ? streamId
+      : `https://iframe.mediadelivery.net/${streamId}/playlist.m3u8`;
     if (isCacheAvailable()) {
       preloadVideo(nextSrc);
     }
-  }, [currentTime, duration, nextLecture, lectures]);
+  }, [currentTime, duration, nextLecture, lectures, lecture]);
 
   // ============================================
   // Send progress update to API
@@ -434,22 +436,19 @@ export default function LecturePlayerPage() {
 
     // Cache the video in the background for future plays
     const video = videoRef.current;
-    // Priority: cdnVideoUrl (direct CDN edge) > streaming > raw
+    // Priority: hlsUrl (Bunny Stream HLS) > cdnVideoUrl > streaming > raw
     const src =
-      lecture?.cdnVideoUrl ||
-      lecture?.signedVideoUrl ||
-      lecture?.streamingUrl ||
+      lecture?.hlsUrl ||
+      lecture?.hlsUrl ||
       lecture?.videoUrl ||
       video?.src ||
       "";
     if (video && src && isCacheAvailable() && isVideoUrl(src)) {
       setTimeout(async () => {
         try {
-          // Fetch the first 2MB of the video and store in Cache API
-          const response = await fetch(src, {
-            headers: { Range: "bytes=0-2097152" },
-          });
-          if (response.ok || response.status === 206) {
+          // For HLS streams, pre-fetch the playlist manifest
+          const response = await fetch(src, {});
+          if (response.ok) {
             await cacheVideoResponse(src, response);
           }
         } catch {
@@ -791,16 +790,9 @@ export default function LecturePlayerPage() {
   // ============================================
 
   const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
-  // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
-  // No proxy through Vercel: lower latency, zero bandwidth cost, no timeout limits.
-  // Token-authenticated signed URLs ensure secure access.
-  const videoUrl =
-    lecture.cdnVideoUrl ||
-    lecture.signedVideoUrl ||
-    lecture.streamingUrl ||
-    lecture.proxiedVideoUrl ||
-    lecture.videoUrl ||
-    "";
+  // 🐰 Bunny Stream HLS URL — adaptive bitrate streaming
+  // HLS.js handles quality switching automatically.
+  const videoUrl = lecture.hlsUrl || lecture.videoUrl || "";
 
   // Determine video MIME type from URL extension
   const videoType = (() => {
@@ -815,6 +807,50 @@ export default function LecturePlayerPage() {
     };
     return mimeMap[ext || ""] || "video/mp4";
   })();
+
+  // Bunny Stream thumbnail URL for poster
+  const posterUrl = lecture.thumbnailUrl || "";
+
+  // ============================================
+  // HLS.js initialization for Bunny Stream HLS playback
+  // ============================================
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoUrl) return;
+
+    let hls: Hls | null = null;
+    const isHlsStream =
+      videoUrl.includes(".m3u8") || videoUrl.includes("playlist.m3u8");
+
+    if (isHlsStream && Hls.isSupported()) {
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backbufferLength: 60,
+        maxBufferLength: 60,
+      });
+      hls.loadSource(videoUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setIsBuffering(false);
+      });
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          console.error("[HLS] Fatal error:", data.type, data.details);
+          // Try to recover or fall back to source elements
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hls?.startLoad();
+          }
+        }
+      });
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [videoUrl]);
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -916,6 +952,7 @@ export default function LecturePlayerPage() {
             <video
               ref={videoRef}
               className="w-full h-full object-contain cursor-pointer relative z-10"
+              poster={posterUrl || undefined}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onPlay={handlePlay}
@@ -927,11 +964,11 @@ export default function LecturePlayerPage() {
               playsInline
               preload="metadata"
             >
-              {/* 🐰 Primary: Direct Bunny CDN (nearest edge PoP) */}
+              {/* 🐰 Primary: Bunny Stream HLS (adaptive bitrate) or legacy CDN */}
               <source src={videoUrl} type={videoType} />
-              {/* 🔄 Fallback: Proxy through server when CDN blocked by CORS/ORB */}
-              {lecture.proxiedVideoUrl && (
-                <source src={lecture.proxiedVideoUrl} type={videoType} />
+              {/* 🔄 Fallback: Proxy through server when Stream/CDN blocked */}
+              {lecture.videoUrl && lecture.videoUrl !== videoUrl && (
+                <source src={lecture.videoUrl} type="video/mp4" />
               )}
               Your browser does not support the video tag.
             </video>

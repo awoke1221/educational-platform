@@ -1,9 +1,9 @@
 // src/app/api/upload/route.ts
-// Cloudinary Upload API Endpoint
+// Upload API — Videos → Bunny Stream, Images → Bunny Storage
 
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
-import BunnyService from "@/lib/bunny";
+import { BunnyService, BunnyStreamService } from "@/lib/bunny";
 import {
   successResponse,
   errorResponse,
@@ -11,7 +11,9 @@ import {
 } from "@/lib/utils/api";
 
 // ============================================
-// POST /api/upload - Upload file to Bunny Storage
+// POST /api/upload - Upload file
+// Videos → Bunny Stream (HLS adaptive bitrate)
+// Images → Bunny Storage + Pull Zone CDN
 // ============================================
 
 export async function POST(request: NextRequest) {
@@ -39,53 +41,101 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const allowedVideoTypes = ["video/mp4", "video/webm", "video/ogg"];
-    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (type === "video") {
+      // ============================================
+      // VIDEOS → Bunny Stream HLS
+      // ============================================
+      const allowedVideoTypes = [
+        "video/mp4",
+        "video/webm",
+        "video/ogg",
+        "video/quicktime",
+        "video/x-msvideo",
+        "video/x-matroska",
+      ];
+      if (!allowedVideoTypes.includes(file.type)) {
+        return errorResponse(
+          "Invalid video format. Allowed: MP4, WebM, OGG, MOV, AVI, MKV",
+          400,
+        );
+      }
 
-    if (type === "video" && !allowedVideoTypes.includes(file.type)) {
-      return errorResponse(
-        "Invalid video format. Allowed: MP4, WebM, OGG",
-        400,
+      if (!BunnyStreamService.isConfigured()) {
+        return errorResponse(
+          "Bunny Stream is not configured. Set BUNNY_STREAM_API_KEY and BUNNY_STREAM_LIBRARY_ID.",
+          500,
+        );
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const result = await BunnyStreamService.createAndUploadVideo(
+        buffer,
+        file.type,
+        file.name.replace(/\.[^.]+$/, ""),
+      );
+
+      console.log(
+        `[AUDIT] Bunny Stream upload succeeded: ${result.videoId} by user ${auth.userId}`,
+      );
+
+      return successResponse(
+        {
+          publicId: result.videoId,
+          videoId: result.videoId,
+          url: result.hlsUrl,
+          embedUrl: result.embedUrl,
+          hlsUrl: result.hlsUrl,
+          thumbnailUrl: result.thumbnailUrl,
+          bytes: file.size,
+          mimeType: file.type,
+          filename: file.name,
+          streamingUrl: result.hlsUrl,
+        },
+        "Video uploaded to Bunny Stream successfully",
+        201,
+      );
+    } else {
+      // ============================================
+      // IMAGES → Bunny Storage + Pull Zone CDN
+      // ============================================
+      const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedImageTypes.includes(file.type)) {
+        return errorResponse(
+          "Invalid image format. Allowed: JPEG, PNG, WebP",
+          400,
+        );
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const folder = `educational-platform/covers/${auth.userId}`;
+
+      const result = await BunnyService.uploadFile(buffer, file.type, {
+        folder,
+        publicId: `${auth.userId}-${Date.now()}`,
+      });
+
+      console.log(
+        `[AUDIT] Bunny Storage upload succeeded: ${result.storagePath} by user ${auth.userId}`,
+      );
+
+      return successResponse(
+        {
+          publicId: result.storagePath,
+          url: result.url,
+          bytes: result.bytes,
+          mimeType: result.mimeType,
+          filename: result.filename,
+          streamingUrl: result.url,
+          thumbnail: result.url,
+        },
+        "Image uploaded successfully",
+        201,
       );
     }
-
-    if (type === "image" && !allowedImageTypes.includes(file.type)) {
-      return errorResponse(
-        "Invalid image format. Allowed: JPEG, PNG, WebP",
-        400,
-      );
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const folder =
-      type === "video"
-        ? `educational-platform/courses/${auth.userId}`
-        : `educational-platform/covers/${auth.userId}`;
-
-    const result = await BunnyService.uploadFile(buffer, file.type, {
-      folder,
-      publicId: `${auth.userId}-${Date.now()}`,
-    });
-
-    console.log(
-      `[AUDIT] Bunny upload succeeded: ${result.storagePath} by user ${auth.userId}`,
-    );
-
-    return successResponse(
-      {
-        publicId: result.storagePath,
-        url: result.url,
-        bytes: result.bytes,
-        mimeType: result.mimeType,
-        filename: result.filename,
-        streamingUrl: result.url,
-        thumbnail: result.url,
-      },
-      "File uploaded successfully",
-      201,
-    );
   } catch (error) {
     console.error("[UPLOAD ERROR]", error);
     return handleApiError(error);
@@ -104,8 +154,8 @@ export async function GET(request: NextRequest) {
     return successResponse(
       {
         uploadUrl: "/api/upload",
-        provider: "bunny",
-        pullZone: BunnyService.getPublicUrl(""),
+        provider: "bunny-stream",
+        streamConfigured: BunnyStreamService.isConfigured(),
       },
       "Upload endpoint available",
     );

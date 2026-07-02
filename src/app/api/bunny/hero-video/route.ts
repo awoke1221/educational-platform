@@ -1,177 +1,49 @@
 import { env } from "@/config/env";
-import BunnyService from "@/lib/bunny";
+import { BunnyStreamService } from "@/lib/bunny";
 import {
   successResponse,
   errorResponse,
   handleApiError,
 } from "@/lib/utils/api";
 
-const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "ogv", "mov", "avi", "mkv"];
-
-function isVideoFile(file: any) {
-  const name = file.objectName || file.ObjectName || "";
-  const isDir = file.isDirectory ?? file.IsDirectory ?? false;
-  const extension = name.split(".").pop()?.toLowerCase();
-  return !!extension && VIDEO_EXTENSIONS.includes(extension) && !isDir;
-}
-
-async function collectVideoFiles(rootPath: string) {
-  // Each entry: { fileInfo, storagePath (full path within zone) }
-  const results: { fileInfo: any; storagePath: string }[] = [];
-
-  async function recurse(currentPath: string, depth: number = 0) {
-    if (depth > 5) return; // safety limit
-    try {
-      const files = (await BunnyService.listFiles(currentPath)) as any[];
-      for (const file of files) {
-        const name = file.objectName || file.ObjectName || "";
-        const isDir = file.isDirectory ?? file.IsDirectory ?? false;
-
-        if (!isDir && isVideoFile(file)) {
-          // The correct storage path is the current recursion path + object name
-          const storagePath = currentPath ? `${currentPath}/${name}` : name;
-          results.push({ fileInfo: file, storagePath });
-        }
-      }
-
-      // Recurse into subfolders
-      const subfolders = files
-        .filter((f: any) => f.isDirectory ?? f.IsDirectory ?? false)
-        .map((f: any) => f.objectName || f.ObjectName || "");
-
-      for (const name of subfolders) {
-        if (!name) continue;
-        const nextPath = currentPath ? `${currentPath}/${name}` : name;
-        await recurse(nextPath, depth + 1);
-      }
-    } catch {
-      // skip inaccessible folders
-    }
-  }
-
-  await recurse(rootPath);
-  return results;
-}
-
 export async function GET(request: Request) {
   try {
-    // If a specific URL/path is provided, use it to build a signed URL
     const url = new URL(request.url);
-    const providedUrl = url.searchParams.get("url");
-    const providedPath = url.searchParams.get("path");
+    const providedVideoId = url.searchParams.get("videoId");
 
-    if (providedUrl || providedPath) {
-      let storagePath = providedPath || "";
-      if (providedUrl) {
-        try {
-          const parsed = new URL(providedUrl);
-          // If the URL is a pull zone URL, strip host and use the pathname as storage path
-          storagePath = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
-        } catch {
-          storagePath = providedUrl;
-        }
-      }
+    // ============================================
+    // 🐰 Bunny Stream — Hero video via Stream API
+    // ============================================
 
-      if (!storagePath) return errorResponse("Invalid path/url provided", 400);
+    // 1. Check for fallback hero video ID from env
+    const fallbackId = env.bunnyStream.fallbackHeroVideoId?.trim();
 
-      // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
-      // No proxy through Vercel: lower latency, zero bandwidth cost.
-      const cdnUrl = BunnyService.generateSignedUrl(storagePath, {
-        expiresIn: 86400,
-      });
+    // 2. Use provided videoId or fallback
+    const videoId = providedVideoId || fallbackId;
 
-      // Fallback proxy URL when CDN token auth key is misconfigured
-      const requestUrl = new URL(request.url);
-      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-      const encodedStoragePath = encodeURIComponent(storagePath);
-      const proxyUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedStoragePath}`;
-
-      const type = storagePath.split(".").pop()?.toLowerCase() || "mp4";
+    if (videoId && BunnyStreamService.isConfigured()) {
+      const hlsUrl = BunnyStreamService.getHlsUrl(videoId);
+      const embedUrl = BunnyStreamService.getEmbedUrl(videoId);
+      const thumbnailUrl = BunnyStreamService.getThumbnailUrl(videoId);
 
       return successResponse(
         {
-          videoUrl: cdnUrl,
-          proxyUrl,
-          poster: "",
-          filename: storagePath.split("/").pop(),
-          type,
-          storagePath,
+          videoUrl: hlsUrl,
+          hlsUrl,
+          embedUrl,
+          poster: thumbnailUrl,
+          thumbnailUrl,
+          filename: "hero-video",
+          type: "m3u8",
+          videoId,
+          storagePath: videoId,
         },
-        "Hero video retrieved successfully",
+        "Hero video retrieved successfully (Bunny Stream)",
       );
     }
 
-    // Search from the storage zone root to find hero videos
-    // Files are expected in a "Hero Video" folder at root level
-    const videoFiles = await collectVideoFiles("");
-
-    // If no videos found, provide a fallback video if configured
-    if (!videoFiles.length) {
-      const fallbackUrl = env.bunny.fallbackHeroVideo?.trim();
-      if (fallbackUrl) {
-        return successResponse(
-          {
-            videoUrl: fallbackUrl,
-            poster: "",
-            filename: "fallback-video",
-            type: "mp4",
-            storagePath: "fallback",
-          },
-          "Using fallback hero video",
-        );
-      }
-      // No fallback available, return null data
-      return successResponse(null, "No hero video available", 200);
-    }
-
-    // Sort by last modified time (newest first)
-    const selected = videoFiles.sort((a, b) => {
-      const aTime = new Date(
-        a.fileInfo.LastChanged ||
-          a.fileInfo.lastChanged ||
-          a.fileInfo.DateCreated ||
-          a.fileInfo.dateCreated ||
-          0,
-      ).getTime();
-      const bTime = new Date(
-        b.fileInfo.LastChanged ||
-          b.fileInfo.lastChanged ||
-          b.fileInfo.DateCreated ||
-          b.fileInfo.dateCreated ||
-          0,
-      ).getTime();
-      return bTime - aTime;
-    })[0];
-
-    const { storagePath } = selected;
-    const objectName =
-      selected.fileInfo.ObjectName || selected.fileInfo.objectName || "";
-
-    // 🐰 Direct Bunny CDN URL — served from nearest global edge PoP
-    // No proxy through Vercel: lower latency, zero bandwidth cost.
-    const cdnUrl = BunnyService.generateSignedUrl(storagePath, {
-      expiresIn: 86400,
-    });
-
-    // Fallback proxy URL when CDN token auth key is misconfigured
-    const requestUrl = new URL(request.url);
-    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-    const encodedStoragePath = encodeURIComponent(storagePath);
-    const proxyUrl = `${baseUrl}/api/bunny/video-proxy?path=${encodedStoragePath}`;
-
-    const type = objectName.split(".").pop()?.toLowerCase() || "mp4";
-
-    return successResponse(
-      {
-        videoUrl: cdnUrl,
-        proxyUrl,
-        poster: "",
-        filename: objectName,
-        type,
-        storagePath,
-      },
-      "Hero video retrieved successfully",
-    );
+    // 3. No hero video configured
+    return successResponse(null, "No hero video available", 200);
   } catch (error) {
     return handleApiError(error);
   }

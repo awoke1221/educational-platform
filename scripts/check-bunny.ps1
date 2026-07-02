@@ -1,5 +1,5 @@
 $headers = @{ "AccessKey" = "d82c5e2e-7bf6-4093-84b7b9de3d4c-8cf7-4fd2" }
-$baseUrl = "https://ny.storage.bunnycdn.com/adonaytiktokacadamy"
+$baseUrl = "https://storage.bunnycdn.com/educational-platform-images"
 
 function List-BunnyFolder {
     param($Path, $Depth = 0)

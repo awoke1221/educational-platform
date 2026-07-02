@@ -8,8 +8,8 @@ $h = @{
     "Prefer" = "return=representation"
 }
 $now = "2026-06-22T19:00:00.000Z"
-$cover = "https://adonaytiktokacadamy.b-cdn.net/educational-platform/covers/d8621bc7-0ca3-4e7e-b458-ba338efc44a0/d8621bc7-0ca3-4e7e-b458-ba338efc44a0-1782129896358.png"
-$cover2 = "https://adonaytiktokacadamy.b-cdn.net/educational-platform/covers/43a643c8-cba4-4cef-a344-c89b72e21b8a/43a643c8-cba4-4cef-a344-c89b72e21b8a-1782131092734.png"
+$cover = "https://educational-platform-images.b-cdn.net/courses/TikTok-For-Personal/cover.jpg"
+$cover2 = "https://educational-platform-images.b-cdn.net/courses/TikTok-For-Business/cover.jpg"
 
 $g = @{apikey = $h["apikey"]; Authorization = $h["Authorization"]}
 

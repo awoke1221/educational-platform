@@ -1,11 +1,9 @@
 // ============================================
-// 🐰 Bunny CDN Video Proxy (with HTTP Range support)
+// 🐰 Bunny Image Proxy (legacy — for images only)
 // ============================================
-// Proxies video files from Bunny Storage through the Next.js server
+// Proxies image files from Bunny Storage through the Next.js server
 // to avoid CORS/ORB blocking issues in the browser.
-// Supports HTTP Range (byte-serving) so the browser downloads small
-// chunks rather than the whole video — avoids Vercel serverless timeouts.
-// Uses Storage API directly (with access key) instead of CDN (requires token auth).
+// Videos now use Bunny Stream HLS (no proxy needed).
 // GET /api/bunny/video-proxy?path=... (storage path relative to zone root)
 // ============================================
 
@@ -20,7 +18,7 @@ const STORAGE_API_BASE = (() => {
     const u = new URL(raw);
     return `${u.protocol}//${u.hostname}`;
   } catch {
-    return "https://ny.storage.bunnycdn.com";
+    return "https://storage.bunnycdn.com";
   }
 })();
 

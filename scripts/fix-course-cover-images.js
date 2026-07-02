@@ -17,8 +17,8 @@ require("dotenv").config({
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUNNY_ACCESS_KEY = process.env.BUNNY_ACCESS_KEY;
-const BUNNY_STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE; // https://ny.storage.bunnycdn.com/adonaytiktokacadamy
-const PULL_ZONE_URL = process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL; // https://adonaytiktokacadamy.b-cdn.net/
+const BUNNY_STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE; // https://storage.bunnycdn.com/educational-platform-images
+const PULL_ZONE_URL = process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL; // https://educational-platform-images.b-cdn.net/
 
 // ─── Courses to fix ──────────────────────────────────
 // Maps course title -> local image file path (relative to project root)
@@ -52,7 +52,7 @@ function extractStorageApiBase(storageZoneUrl) {
     const url = new URL(storageZoneUrl);
     return `${url.protocol}//${url.hostname}`;
   } catch {
-    return "https://ny.storage.bunnycdn.com";
+    return "https://storage.bunnycdn.com";
   }
 }
 

@@ -34,6 +34,10 @@ export interface UploadFile {
     cdnUrl: string;
     bytes: number;
     filename: string;
+    /** Bunny Stream video ID (for videos) */
+    videoId?: string;
+    /** Bunny Stream HLS URL */
+    hlsUrl?: string;
   };
 }
 
@@ -234,11 +238,13 @@ export default function VideoUploader({
                 status: "success",
                 progress: 100,
                 result: {
-                  url: response.data.url,
-                  storagePath: response.data.publicId,
-                  cdnUrl: response.data.url,
+                  url: response.data.hlsUrl || response.data.url,
+                  storagePath: response.data.publicId || response.data.videoId,
+                  cdnUrl: response.data.hlsUrl || response.data.url,
                   bytes: response.data.bytes,
                   filename: response.data.filename,
+                  videoId: response.data.videoId,
+                  hlsUrl: response.data.hlsUrl,
                 },
               };
               resolve(result);
@@ -304,7 +310,14 @@ export default function VideoUploader({
           };
         }
 
-        const { uploadUrl, storagePath, headers: uploadHeaders } = data.data;
+        const {
+          uploadUrl,
+          storagePath,
+          headers: uploadHeaders,
+          videoId,
+          hlsUrl,
+          embedUrl,
+        } = data.data;
 
         // Step 2: Upload directly to Bunny from browser
         return new Promise((resolve) => {
@@ -330,17 +343,30 @@ export default function VideoUploader({
 
           xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-              const cdnUrl = `https://${new URL(uploadUrl).hostname.replace("storage.bunnycdn.com", "b-cdn.net")}/${storagePath}`;
+              // Bunny Stream returns videoId and URLs; Bunny Storage returns storagePath
+              let finalUrl = "";
+              let finalVideoId = videoId;
+
+              if (videoId && hlsUrl) {
+                // ✅ Bunny Stream upload
+                finalUrl = hlsUrl;
+              } else {
+                // Legacy Bunny Storage upload
+                finalUrl = `https://${new URL(uploadUrl).hostname.replace("storage.bunnycdn.com", "b-cdn.net")}/${storagePath}`;
+              }
+
               resolve({
                 ...uploadFile,
                 status: "success",
                 progress: 100,
                 result: {
-                  url: cdnUrl,
-                  storagePath,
-                  cdnUrl,
+                  url: finalUrl,
+                  storagePath: storagePath || videoId,
+                  cdnUrl: finalUrl,
                   bytes: uploadFile.size,
                   filename: uploadFile.name,
+                  videoId: finalVideoId,
+                  hlsUrl: finalVideoId ? hlsUrl : undefined,
                 },
               });
             } else {

@@ -1,17 +1,17 @@
 // ============================================
-// 🐰 Bunny CDN URL Helpers
+// 🐰 Bunny URL Helpers — CDN (images) + Stream (videos)
 // ============================================
-// Utilities for working with Bunny CDN URLs.
-// Videos and images are served directly from Bunny's global CDN edge,
-// NOT proxied through Vercel/Next.js. This ensures:
-//  - Lowest latency (served from nearest PoP)
-//  - Zero bandwidth cost on Vercel
-//  - No serverless timeout limits
-//  - Global edge caching via Bunny's 100+ PoPs
+// Utilities for working with Bunny URLs.
+// - Images are served via Bunny Storage + Pull Zone CDN
+//   (small files, proxied through Vercel to avoid token auth issues)
+// - Videos are served via Bunny Stream HLS
+//   (adaptive bitrate streaming, lowest latency)
 // ============================================
 
+import { BunnyStreamService } from "./index";
+
 /**
- * Check if a URL is a Bunny CDN URL
+ * Check if a URL is a Bunny CDN URL (for images)
  */
 export function isBunnyCdnUrl(url: string): boolean {
   if (!url) return false;
@@ -27,8 +27,25 @@ export function isBunnyCdnUrl(url: string): boolean {
 }
 
 /**
+ * Check if a URL is a Bunny Stream URL (for videos)
+ */
+export function isBunnyStreamUrl(url: string): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.hostname.includes("iframe.mediadelivery.net") ||
+      (parsed.hostname.includes(".b-cdn.net") &&
+        parsed.pathname.includes("/playlist.m3u8"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Extract the storage path from a Bunny CDN or Storage URL
- * e.g. "https://adonaytiktokacadamy.b-cdn.net/educational-platform/covers/.../image.png"
+ * e.g. "https://educational-platform-images.b-cdn.net/courses/.../image.jpg"
  *   → "educational-platform/covers/.../image.png"
  */
 export function extractBunnyStoragePath(url: string): string | null {
@@ -43,10 +60,29 @@ export function extractBunnyStoragePath(url: string): string | null {
 }
 
 /**
+ * Extract the Bunny Stream video ID from a Stream URL
+ */
+export function extractBunnyStreamId(url: string): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    // From embed URL: https://iframe.mediadelivery.net/embed/{libraryId}/{videoId}
+    const embedMatch = parsed.pathname.match(/\/embed\/[^/]+\/([^/]+)/);
+    if (embedMatch) return embedMatch[1];
+    // From HLS URL: https://{cdn}.b-cdn.net/{videoId}/playlist.m3u8
+    const hlsMatch = parsed.pathname.match(/\/([^/]+)\/playlist\.m3u8/);
+    if (hlsMatch) return hlsMatch[1];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Convert a Bunny CDN image URL to a local proxy URL.
  * Images are small (~150KB) and proxying them through Vercel avoids
  * Bunny Token Auth issues without significant cost or latency impact.
- * Videos use direct CDN URLs (with token auth) for bandwidth savings.
+ * Videos use Bunny Stream HLS for bandwidth savings.
  *
  * Returns the original URL if it's not a Bunny CDN URL.
  */
@@ -64,23 +100,19 @@ export function toImageProxyUrl(url: string, baseUrl?: string): string {
 }
 
 /**
- * Return the original Bunny CDN URL unchanged.
- * Videos are served DIRECTLY from Bunny CDN edge with signed tokens.
- * This ensures lowest latency and zero Vercel bandwidth cost for video.
- *
- * Previously this converted URLs to proxy format:
- *   /api/bunny/video-proxy?path=...
+ * Return the Bunny Stream HLS URL for a video.
+ * Videos are served via Bunny Stream HLS (adaptive bitrate streaming).
+ * This ensures lowest latency, auto-quality switching, and zero Vercel bandwidth cost.
  */
-export function toVideoProxyUrl(url: string, _baseUrl?: string): string {
-  // Videos use direct CDN URLs (with token auth generated server-side).
-  return url;
+export function toVideoStreamUrl(videoId: string): string {
+  return BunnyStreamService.getHlsUrl(videoId);
 }
 
 /**
  * Transform a course object's image URLs for delivery.
  * - Cover images & profile pictures → served via proxy (small files,
  *   avoids Token Auth issues without significant cost)
- * - Videos → passed through unchanged (use direct CDN with signed tokens)
+ * - Videos → passed through unchanged (use direct Stream HLS URLs)
  */
 export function proxifyCourse<
   T extends {

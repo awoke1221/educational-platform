@@ -53,10 +53,9 @@ export default function RootLayout({
   return (
     <html lang="am" className="h-full antialiased" suppressHydrationWarning>
       <head>
-        {/* Preconnect to Bunny CDN for faster video loading */}
-        <link rel="preconnect" href="https://AdonayTikTokAcadamy.b-cdn.net" />
-        <link rel="dns-prefetch" href="https://AdonayTikTokAcadamy.b-cdn.net" />
-        <link rel="preconnect" href="https://ny.storage.bunnycdn.com" />
+        {/* Preconnect to Bunny Stream CDN for faster video loading */}
+        <link rel="preconnect" href="https://iframe.mediadelivery.net" />
+        <link rel="dns-prefetch" href="https://iframe.mediadelivery.net" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} min-h-full flex flex-col pb-20 md:pb-0`}
