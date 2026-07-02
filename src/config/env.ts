@@ -112,6 +112,8 @@ export const env = {
       process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL || "",
     ),
     pullZoneId: process.env.BUNNY_PULL_ZONE_ID?.trim() || "",
+    tokenAuthKey: process.env.BUNNY_TOKEN_AUTH_KEY?.trim() || "",
+    tokenAuthEnabled: process.env.BUNNY_TOKEN_AUTH_ENABLED === "true",
     defaultFolder:
       process.env.NEXT_PUBLIC_BUNNY_DEFAULT_FOLDER?.trim() ||
       "educational-platform",

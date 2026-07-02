@@ -529,18 +529,18 @@ export default function AdminCourseDetailPage() {
       // Fetch Storage files (images)
       const folder = `educational-platform/courses/${courseId}`;
       const [storageResult, streamResult] = await Promise.allSettled([
-        authFetchJson(
-          `/api/bunny/storage?path=${encodeURIComponent(folder)}`,
-          { method: "GET" },
-        ),
+        authFetchJson(`/api/bunny/storage?path=${encodeURIComponent(folder)}`, {
+          method: "GET",
+        }),
         // Also fetch Stream videos
-        authFetchJson(
-          `/api/bunny/storage?stream=true`,
-          { method: "GET" },
-        ),
+        authFetchJson(`/api/bunny/storage?stream=true`, { method: "GET" }),
       ]);
 
-      if (storageResult.status === "fulfilled" && storageResult.value.response.ok && storageResult.value.data.success) {
+      if (
+        storageResult.status === "fulfilled" &&
+        storageResult.value.response.ok &&
+        storageResult.value.data.success
+      ) {
         setBunnyFiles(storageResult.value.data.data.files || []);
         setBunnyStats({
           totalFiles: storageResult.value.data.data.totalFiles,
@@ -548,7 +548,11 @@ export default function AdminCourseDetailPage() {
         });
       }
 
-      if (streamResult.status === "fulfilled" && streamResult.value.response.ok && streamResult.value.data.success) {
+      if (
+        streamResult.status === "fulfilled" &&
+        streamResult.value.response.ok &&
+        streamResult.value.data.success
+      ) {
         setStreamVideos(streamResult.value.data.data.videos || []);
       }
     } catch (err) {
@@ -748,7 +752,6 @@ export default function AdminCourseDetailPage() {
           </Link>
         </div>
       </div>
-
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         <button
@@ -785,7 +788,6 @@ export default function AdminCourseDetailPage() {
           🐰 Stream & Storage
         </button>
       </div>
-
       {/* ============================================ */}
       {/* LECTURES TAB */}
       {/* ============================================ */}
@@ -1201,7 +1203,6 @@ export default function AdminCourseDetailPage() {
           </div>
         </div>
       )}
-
       {/* ============================================ */}
       {/* BUNNY STREAM & STORAGE TAB */}
       {/* ============================================ */}
@@ -1226,40 +1227,94 @@ export default function AdminCourseDetailPage() {
               </div>
             ) : streamVideos.length === 0 ? (
               <div className="text-center py-8 text-gray-400">
-                <svg className="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <svg
+                  className="w-10 h-10 mx-auto mb-2 opacity-50"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
                 </svg>
                 <p className="text-sm">No Stream videos found</p>
-                <p className="text-xs mt-1">Upload videos from the Lectures tab</p>
+                <p className="text-xs mt-1">
+                  Upload videos from the Lectures tab
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
                 {streamVideos.map((video: any, i: number) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                  >
                     {/* Thumbnail */}
                     <div className="w-16 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                       {video.thumbnailUrl ? (
-                        <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
                           </svg>
                         </div>
                       )}
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-700 truncate">{video.title}</p>
+                      <p className="text-sm font-medium text-gray-700 truncate">
+                        {video.title}
+                      </p>
                       <p className="text-xs text-gray-400">
-                        {video.guid?.substring(0, 8)}... • {video.length ? `${Math.round(video.length)}s` : "processing"} • {video.encodeProgress < 100 ? `Encoding ${video.encodeProgress}%` : "Ready"}
+                        {video.guid?.substring(0, 8)}... •{" "}
+                        {video.length
+                          ? `${Math.round(video.length)}s`
+                          : "processing"}{" "}
+                        •{" "}
+                        {video.encodeProgress < 100
+                          ? `Encoding ${video.encodeProgress}%`
+                          : "Ready"}
                       </p>
                     </div>
                     {/* Actions */}
                     <div className="flex items-center gap-1">
-                      <a href={video.hlsUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-lg transition-colors" title="HLS URL">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      <a
+                        href={video.hlsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="HLS URL"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                          />
                         </svg>
                       </a>
                     </div>
@@ -1293,8 +1348,18 @@ export default function AdminCourseDetailPage() {
               </div>
             ) : bunnyFiles.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
-                <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="w-12 h-12 mx-auto mb-3 opacity-50"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
                 <p className="text-sm">No image files stored yet</p>
               </div>
@@ -1304,55 +1369,78 @@ export default function AdminCourseDetailPage() {
                   .filter((f) => !f.isDirectory)
                   .map((file, i) => {
                     const isImage = file.contentType?.startsWith("image/");
-                    const pullZone = process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL?.replace(/^https?:\/\//, "").replace(/\/+$/, "") || "";
+                    const pullZone =
+                      process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_URL?.replace(
+                        /^https?:\/\//,
+                        "",
+                      ).replace(/\/+$/, "") || "";
                     const fileUrl = pullZone
                       ? `https://${pullZone}/${file.path}`.replace(/\/+/g, "/")
-                      : `https://educational-platform-images.b-cdn.net/${file.path}`.replace(/\/+/g, "/");
+                      : `https://educational-platform-images.b-cdn.net/${file.path}`.replace(
+                          /\/+/g,
+                          "/",
+                        );
 
                     return (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100">
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                      >
                         {/* File Icon */}
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isImage ? "bg-green-100" : "bg-gray-100"}`}>
+                        <div
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isImage ? "bg-green-100" : "bg-gray-100"}`}
+                        >
                           {isImage ? (
-                            <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <svg
+                              className="w-4 h-4 text-green-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
                             </svg>
                           ) : (
-                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            <svg
+                              className="w-4 h-4 text-gray-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                              />
                             </svg>
                           )}
                         </div>
                         {/* File Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate">{file.objectName}</p>
-                          <p className="text-xs text-gray-400">{formatFileSize(file.length)} • {file.contentType || "unknown"}</p>
+                          <p className="text-sm font-medium text-gray-700 truncate">
+                            {file.objectName}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {formatFileSize(file.length)} •{" "}
+                            {file.contentType || "unknown"}
+                          </p>
                         </div>
                         {/* Actions */}
                         <div className="flex items-center gap-1">
-                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-lg transition-colors" title="Open URL">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                          <button
-                            onClick={() => handleDeleteBunnyFile(file.path)}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Delete"
+                          <a
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Open URL"
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                            <svg
+                              className="w-4 h-4"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -1367,7 +1455,7 @@ export default function AdminCourseDetailPage() {
                           </a>
                           <button
                             onClick={() => handleDeleteBunnyFile(file.path)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Delete"
                           >
                             <svg
@@ -1390,101 +1478,37 @@ export default function AdminCourseDetailPage() {
                   })}
               </div>
             )}
-
-            {/* Video Preview Modal */}
-            {showVideoPreview && (
-              <div
-                className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-                onClick={() => setShowVideoPreview(null)}
-              >
-                <div
-                  className="relative w-full max-w-4xl bg-black rounded-xl overflow-hidden"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    onClick={() => setShowVideoPreview(null)}
-                    className="absolute top-3 right-3 z-10 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                  <video
-                    src={showVideoPreview}
-                    controls
-                    autoPlay
-                    className="w-full aspect-video"
-                    style={{ maxHeight: "80vh" }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Upload More */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h4 className="font-semibold text-gray-900 mb-3">
-              Upload New File
-            </h4>
-            <p className="text-xs text-gray-500 mb-4">
-              Upload directly to Bunny Storage for this course. Use the Lectures
-              tab to attach videos to specific lectures.
-            </p>
-            <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-[#a30000]/20 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
-              Select & Upload
-              <input
-                type="file"
-                accept="video/mp4,video/webm,video/ogg,video/quicktime,image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !token) return;
-                  const formData = new FormData();
-                  formData.append("file", file);
-                  formData.append(
-                    "type",
-                    file.type.startsWith("video/") ? "video" : "image",
-                  );
-                  try {
-                    await authFetchJson("/api/upload", {
-                      method: "POST",
-                      body: formData,
-                    });
-                    fetchBunnyStorage();
-                  } catch (err) {
-                    console.error("[BUNNY UPLOAD] Error:", err);
-                  }
-                }}
-              />
-            </label>
           </div>
         </div>
       )}
-
-      {/* ============================================ */}
+      {/* Upload More */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <input
+          type="file"
+          accept="video/mp4,video/webm,video/ogg,video/quicktime,image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file || !token) return;
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append(
+              "type",
+              file.type.startsWith("video/") ? "video" : "image",
+            );
+            try {
+              await authFetchJson("/api/upload", {
+                method: "POST",
+                body: formData,
+              });
+              fetchBunnyStorage();
+            } catch (err) {
+              console.error("[BUNNY UPLOAD] Error:", err);
+            }
+          }}
+        />
+      </div>
+      ){/* ============================================ */}
       {/* SETTINGS TAB — EDITABLE FORM */}
       {/* ============================================ */}
       {activeTab === "settings" && (

@@ -826,7 +826,7 @@ export default function LecturePlayerPage() {
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        backbufferLength: 60,
+        backBufferLength: 60,
         maxBufferLength: 60,
       });
       hls.loadSource(videoUrl);

@@ -133,7 +133,7 @@ export default function BunnyVideoPlayer({
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        backbufferLength: 30,
+        backBufferLength: 30,
         maxBufferLength: 30,
       });
       hls.loadSource(src);

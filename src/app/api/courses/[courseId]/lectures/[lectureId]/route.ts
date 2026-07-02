@@ -283,7 +283,7 @@ export async function DELETE(
 
     // Delete video from Bunny if exists
     if (lecture.cloudinaryPublicId) {
-      await BunnyService.deleteFile(lecture.cloudinaryPublicId);
+      await BunnyStreamService.deleteVideo(lecture.cloudinaryPublicId);
     }
 
     await supabaseAdmin!.from("Lecture").delete().eq("id", lectureId);

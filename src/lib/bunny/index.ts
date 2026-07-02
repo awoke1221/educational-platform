@@ -875,7 +875,10 @@ export class BunnyStreamService {
     const response = await fetch(uploadUrl, {
       method: "PUT",
       headers,
-      body: file instanceof Blob ? file : new Blob([file], { type: mimeType }),
+      body:
+        file instanceof Blob
+          ? file
+          : new Blob([new Uint8Array(file)], { type: mimeType }),
     });
 
     if (!response.ok) {
