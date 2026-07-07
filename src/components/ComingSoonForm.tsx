@@ -6,7 +6,14 @@ import ComingSoonCountdown from "./ComingSoonCountdown";
 
 // ─── Types ───────────────────────────────────────────────
 
-type Step = "idle" | "location" | "mode" | "form" | "submitting" | "success";
+type Step =
+  | "idle"
+  | "location"
+  | "mode"
+  | "diasporaMode"
+  | "form"
+  | "submitting"
+  | "success";
 
 interface Props {
   source?: "homepage" | "courses" | "register";
@@ -22,6 +29,8 @@ interface FormState {
   phoneNumber: string;
   gender: string;
   country: string;
+  tiktokUsername: string;
+  tiktokPurpose: string;
 }
 
 // ─── Animation Variants ──────────────────────────────────
@@ -245,6 +254,9 @@ export default function ComingSoonForm({
   const [attendanceMode, setAttendanceMode] = useState<
     "in-person" | "online" | null
   >(null);
+  const [diasporaCoachingMode, setDiasporaCoachingMode] = useState<
+    "online" | "one-on-one" | null
+  >(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState<FormState>({
     fullName: "",
@@ -252,6 +264,8 @@ export default function ComingSoonForm({
     phoneNumber: "",
     gender: "",
     country: "",
+    tiktokUsername: "",
+    tiktokPurpose: "",
   });
 
   // Check localStorage for existing submission
@@ -271,6 +285,7 @@ export default function ComingSoonForm({
     setStep("location");
     setLocationType(null);
     setAttendanceMode(null);
+    setDiasporaCoachingMode(null);
     setError("");
     setForm({
       fullName: "",
@@ -278,6 +293,8 @@ export default function ComingSoonForm({
       phoneNumber: "",
       gender: "",
       country: "",
+      tiktokUsername: "",
+      tiktokPurpose: "",
     });
   }, []);
 
@@ -286,6 +303,7 @@ export default function ComingSoonForm({
     setStep("idle");
     setLocationType(null);
     setAttendanceMode(null);
+    setDiasporaCoachingMode(null);
     setError("");
     setForm({
       fullName: "",
@@ -293,6 +311,8 @@ export default function ComingSoonForm({
       phoneNumber: "",
       gender: "",
       country: "",
+      tiktokUsername: "",
+      tiktokPurpose: "",
     });
   }, []);
 
@@ -307,8 +327,11 @@ export default function ComingSoonForm({
     setLocationType(type);
     if (type === "local") {
       setStep("mode");
+      setDiasporaCoachingMode(null);
     } else {
-      setStep("form");
+      setStep("diasporaMode");
+      setAttendanceMode(null);
+      setDiasporaCoachingMode(null);
     }
     setError("");
   };
@@ -319,8 +342,16 @@ export default function ComingSoonForm({
     setError("");
   };
 
+  const handleDiasporaCoachingSelect = (mode: "online" | "one-on-one") => {
+    setDiasporaCoachingMode(mode);
+    setStep("form");
+    setError("");
+  };
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError("");
@@ -347,6 +378,20 @@ export default function ComingSoonForm({
       setError("እባክዎ ሀገር ይምረጡ");
       return;
     }
+    if (locationType === "diaspora" && diasporaCoachingMode === "one-on-one") {
+      if (!form.phoneNumber.trim()) {
+        setError("እባክዎ ስልክ ቁጥር ያስገቡ");
+        return;
+      }
+      if (!form.tiktokUsername.trim()) {
+        setError("እባክዎ ቲክቶክ ዩሰርነም ያስገቡ");
+        return;
+      }
+      if (!form.tiktokPurpose) {
+        setError("እባክዎ ቲክቶክ ለበጎ ወይም ለንግድ መሆኑን ይምረጡ");
+        return;
+      }
+    }
     if (locationType === "local" && !attendanceMode) {
       setError("እባክዎ የመሳተፊያ ዘዴ ይምረጡ");
       return;
@@ -370,6 +415,9 @@ export default function ComingSoonForm({
           country: form.country || undefined,
           locationType,
           attendanceMode: attendanceMode || undefined,
+          diasporaCoachingMode: diasporaCoachingMode || undefined,
+          tiktokUsername: form.tiktokUsername.trim() || undefined,
+          tiktokPurpose: form.tiktokPurpose || undefined,
           source,
         }),
       });
@@ -394,8 +442,18 @@ export default function ComingSoonForm({
   };
 
   const handleBack = () => {
-    if (locationType === "local" && attendanceMode) {
-      setStep("mode");
+    if (locationType === "local") {
+      if (attendanceMode) {
+        setStep("mode");
+      } else {
+        setStep("location");
+      }
+    } else if (locationType === "diaspora") {
+      if (diasporaCoachingMode) {
+        setStep("diasporaMode");
+      } else {
+        setStep("location");
+      }
     } else {
       setStep("location");
     }
@@ -585,6 +643,94 @@ export default function ComingSoonForm({
             </div>
           )}
 
+          {/* ── DIASPORA MODE: Coaching vs Online ──── */}
+          {step === "diasporaMode" && (
+            <div key="diasporaMode" className="space-y-5">
+              {/* Back button */}
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => {
+                    setStep("location");
+                    setLocationType(null);
+                    setDiasporaCoachingMode(null);
+                    setError("");
+                  }}
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors active:scale-95"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#ef4444]/50" />
+                  <span className="w-6 h-[2px] bg-gradient-to-r from-[#ef4444]/50 to-white/20" />
+                  <span className="w-2 h-2 rounded-full bg-white/20" />
+                  <span className="w-6 h-[2px] bg-white/10" />
+                  <span className="w-2 h-2 rounded-full bg-white/20" />
+                </div>
+                <span className="text-xs font-medium text-[#ef4444]/60">
+                  🌍 ውጭ ሀገር
+                </span>
+              </div>
+
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7f1d1d]/40 to-[#dc2626]/20 border border-[#ef4444]/30 mb-2">
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">
+                  እንዴት መማር ይፈልጋሉ?
+                </h2>
+                <p className="text-sm text-white/50 max-w-xs mx-auto">
+                  ለዲያስፖራ ተማሪዎች የሚመረጥ የአገልግሎት አይነት ይምረጡ
+                </p>
+              </div>
+
+              <div className="grid gap-3">
+                <button
+                  onClick={() => handleDiasporaCoachingSelect("one-on-one")}
+                  className="flex flex-col items-start gap-2 p-5 rounded-xl bg-white/[0.06] backdrop-blur-md border border-white/10 hover:border-[#ef4444]/60 hover:bg-white/[0.1] active:scale-[0.97] transition-all duration-300 shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🤝</span>
+                    <div>
+                      <p className="text-white font-bold text-base">
+                        One-on-One Coaching
+                      </p>
+                      <p className="text-[#ef4444]/60 text-xs font-medium">
+                        የግል ድጋፍ እና ብቁ መመሪያ
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleDiasporaCoachingSelect("online")}
+                  className="flex flex-col items-start gap-2 p-5 rounded-xl bg-white/[0.06] backdrop-blur-md border border-white/10 hover:border-[#ef4444]/60 hover:bg-white/[0.1] active:scale-[0.97] transition-all duration-300 shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💻</span>
+                    <div>
+                      <p className="text-white font-bold text-base">Online</p>
+                      <p className="text-[#ef4444]/60 text-xs font-medium">
+                        በመስመር ላይ የሚተላለፍ ኮርስ
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* ── MODE: In-Person vs Online (for Local) ──── */}
           {step === "mode" && (
             <div key="mode" className="space-y-5">
@@ -732,7 +878,11 @@ export default function ComingSoonForm({
                 <span className="text-xs font-medium text-[#ef4444]/60">
                   {locationType === "local"
                     ? `📚 ${attendanceMode === "in-person" ? "በአካል" : "በመስመር ላይ"}`
-                    : "🌍 ውጭ ሀገር"}
+                    : diasporaCoachingMode === "one-on-one"
+                      ? "🤝 One-on-One"
+                      : diasporaCoachingMode === "online"
+                        ? "💻 Online"
+                        : "🌍 ውጭ ሀገር"}
                 </span>
               </div>
 
@@ -763,68 +913,181 @@ export default function ComingSoonForm({
 
                 {/* Dynamic field: Email for diaspora, Phone for local */}
                 {locationType === "diaspora" ? (
-                  <>
-                    <div>
-                      <label className="block text-xs font-medium text-white/60 mb-1.5">
-                        ኢሜይል / Email <span className={RED_TEXT}>*</span>
-                      </label>
-                      <input
-                        name="email"
-                        type="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        placeholder="your@email.com"
-                        className={`
-                          w-full px-4 py-3 rounded-lg text-sm
-                          bg-white/5 backdrop-blur-md
-                          border border-white/10 text-white
-                          placeholder-white/25
-                          ${RED_RING}
-                          outline-none transition-all duration-200
-                          focus:bg-white/[0.07] focus:border-[#ef4444]/50
-                        `}
-                        required
-                      />
-                    </div>
-
-                    {/* Country — only for diaspora */}
-                    <div>
-                      <label className="block text-xs font-medium text-white/60 mb-1.5">
-                        ሀገር / Country <span className={RED_TEXT}>*</span>
-                      </label>
-                      <select
-                        name="country"
-                        value={form.country}
-                        onChange={handleChange}
-                        className={`
-                          w-full px-4 py-3 rounded-lg text-sm appearance-none
-                          bg-white/5 backdrop-blur-md
-                          border border-white/10 text-white
-                          ${RED_RING}
-                          outline-none transition-all duration-200
-                          focus:bg-white/[0.07] focus:border-[#ef4444]/50
-                        `}
-                        required
-                      >
-                        <option
-                          value=""
-                          disabled
-                          className="text-gray-400 bg-gray-900"
+                  diasporaCoachingMode === "one-on-one" ? (
+                    <>
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1.5">
+                          ቲክቶክ ዩሰርነም / TikTok Username{" "}
+                          <span className={RED_TEXT}>*</span>
+                        </label>
+                        <input
+                          name="tiktokUsername"
+                          type="text"
+                          value={form.tiktokUsername}
+                          onChange={handleChange}
+                          placeholder="@yourusername"
+                          className={`w-full px-4 py-3 rounded-lg text-sm bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder-white/25 ${RED_RING} outline-none transition-all duration-200 focus:bg-white/[0.07] focus:border-[#ef4444]/50`}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1.5">
+                          ስልክ ቁጥር / Phone Number{" "}
+                          <span className={RED_TEXT}>*</span>
+                        </label>
+                        <input
+                          name="phoneNumber"
+                          type="tel"
+                          value={form.phoneNumber}
+                          onChange={handleChange}
+                          placeholder="+251 91 111 1111"
+                          className={`w-full px-4 py-3 rounded-lg text-sm bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder-white/25 ${RED_RING} outline-none transition-all duration-200 focus:bg-white/[0.07] focus:border-[#ef4444]/50`}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1.5">
+                          ኢሜይል / Email <span className={RED_TEXT}>*</span>
+                        </label>
+                        <input
+                          name="email"
+                          type="email"
+                          value={form.email}
+                          onChange={handleChange}
+                          placeholder="your@email.com"
+                          className={`w-full px-4 py-3 rounded-lg text-sm bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder-white/25 ${RED_RING} outline-none transition-all duration-200 focus:bg-white/[0.07] focus:border-[#ef4444]/50`}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1.5">
+                          What do you need TikTok for?{" "}
+                          <span className={RED_TEXT}>*</span>
+                        </label>
+                        <select
+                          name="tiktokPurpose"
+                          value={form.tiktokPurpose}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-3 rounded-lg text-sm appearance-none bg-white/5 backdrop-blur-md border border-white/10 text-white ${RED_RING} outline-none transition-all duration-200 focus:bg-white/[0.07] focus:border-[#ef4444]/50`}
+                          required
                         >
-                          ሀገር ይምረጡ / Select Country
-                        </option>
-                        {COUNTRIES.map((c) => (
                           <option
-                            key={c.value}
-                            value={c.value}
+                            value=""
+                            disabled
+                            className="text-gray-400 bg-gray-900"
+                          >
+                            ይምረጡ / Select
+                          </option>
+                          <option
+                            value="personal"
                             className="text-white bg-gray-900"
                           >
-                            {c.labelEn}
+                            ለግል አገልግሎት / For personal use
                           </option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
+                          <option
+                            value="business"
+                            className="text-white bg-gray-900"
+                          >
+                            ለንግድ አገልግሎት / For business use
+                          </option>
+                        </select>
+                      </div>
+
+                      {/* Country — required for all diaspora */}
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1.5">
+                          ሀገር / Country <span className={RED_TEXT}>*</span>
+                        </label>
+                        <select
+                          name="country"
+                          value={form.country}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-3 rounded-lg text-sm appearance-none bg-white/5 backdrop-blur-md border border-white/10 text-white ${RED_RING} outline-none transition-all duration-200 focus:bg-white/[0.07] focus:border-[#ef4444]/50`}
+                          required
+                        >
+                          <option
+                            value=""
+                            disabled
+                            className="text-gray-400 bg-gray-900"
+                          >
+                            ሀገር ይምረጡ / Select Country
+                          </option>
+                          {COUNTRIES.map((c) => (
+                            <option
+                              key={c.value}
+                              value={c.value}
+                              className="text-white bg-gray-900"
+                            >
+                              {c.labelEn}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1.5">
+                          ኢሜይል / Email <span className={RED_TEXT}>*</span>
+                        </label>
+                        <input
+                          name="email"
+                          type="email"
+                          value={form.email}
+                          onChange={handleChange}
+                          placeholder="your@email.com"
+                          className={`
+                            w-full px-4 py-3 rounded-lg text-sm
+                            bg-white/5 backdrop-blur-md
+                            border border-white/10 text-white
+                            placeholder-white/25
+                            ${RED_RING}
+                            outline-none transition-all duration-200
+                            focus:bg-white/[0.07] focus:border-[#ef4444]/50
+                          `}
+                          required
+                        />
+                      </div>
+
+                      {/* Country — only for diaspora */}
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1.5">
+                          ሀገር / Country <span className={RED_TEXT}>*</span>
+                        </label>
+                        <select
+                          name="country"
+                          value={form.country}
+                          onChange={handleChange}
+                          className={`
+                            w-full px-4 py-3 rounded-lg text-sm appearance-none
+                            bg-white/5 backdrop-blur-md
+                            border border-white/10 text-white
+                            ${RED_RING}
+                            outline-none transition-all duration-200
+                            focus:bg-white/[0.07] focus:border-[#ef4444]/50
+                          `}
+                          required
+                        >
+                          <option
+                            value=""
+                            disabled
+                            className="text-gray-400 bg-gray-900"
+                          >
+                            ሀገር ይምረጡ / Select Country
+                          </option>
+                          {COUNTRIES.map((c) => (
+                            <option
+                              key={c.value}
+                              value={c.value}
+                              className="text-white bg-gray-900"
+                            >
+                              {c.labelEn}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )
                 ) : (
                   <div>
                     <label className="block text-xs font-medium text-white/60 mb-1.5">

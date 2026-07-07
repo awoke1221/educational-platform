@@ -1,7 +1,13 @@
+import os
+import sys
 import psycopg2
 from urllib.parse import urlparse, unquote
 
-DATABASE_URL = 'postgresql://postgres.gsiqibgpimazfivfrtxz:AdoniLMS12%24%24@aws-0-us-east-1.pooler.supabase.com:6543/postgres'
+DATABASE_URL = os.getenv(
+    'DATABASE_URL',
+    'postgresql://postgres.gsiqibgpimazfivfrtxz:AdoniLMS12%24%24@aws-0-us-east-1.pooler.supabase.com:6543/postgres',
+)
+MIGRATION_FILE = sys.argv[1] if len(sys.argv) > 1 else 'supabase/migrations/20260707000001_add_diaspora_coaching_fields.sql'
 
 parsed = urlparse(DATABASE_URL)
 password = unquote(parsed.password)
@@ -22,7 +28,7 @@ conn = psycopg2.connect(
 )
 conn.autocommit = True
 
-with open('supabase/migrations/20260627000003_add_attendance_mode.sql', 'r', encoding='utf-8') as f:
+with open(MIGRATION_FILE, 'r', encoding='utf-8') as f:
     sql = f.read()
 
 cur = conn.cursor()

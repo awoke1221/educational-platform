@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ── Allow 127.0.0.1 for local dev (HMR WebSocket) ─────────────────
+  allowedDevOrigins: ["127.0.0.1"],
+
   // ── Remove X-Powered-By header ─────────────────────────────────
   poweredByHeader: false,
 

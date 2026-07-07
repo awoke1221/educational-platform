@@ -74,6 +74,9 @@ export async function POST(request: NextRequest) {
       country,
       locationType,
       attendanceMode,
+      diasporaCoachingMode,
+      tiktokUsername,
+      tiktokPurpose,
       source,
     } = body;
 
@@ -132,14 +135,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── 5. Insert via stored procedure ───────────────────
-    // 🚀 fast_register_commingsoon is a pre-compiled Postgres function:
-    //   - Single round trip (no separate .select() call)
-    //   - Atomic ON CONFLICT detection at DB level
-    //   - No need to catch error code 23505
+    if (
+      locationType === "diaspora" &&
+      diasporaCoachingMode === "one-on-one" &&
+      (!phoneNumber?.trim() || !tiktokUsername?.trim() || !tiktokPurpose)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "One-on-one diaspora registrations need phone number, TikTok username, and purpose",
+        },
+        { status: 400 },
+      );
+    }
+
+    // ── 5. Build diaspora metadata (stored in source field until migration is applied) ──
+    const effectiveSource =
+      locationType === "diaspora" && diasporaCoachingMode
+        ? JSON.stringify({
+            diasporaCoachingMode,
+            tiktokUsername: tiktokUsername?.trim() || null,
+            tiktokPurpose: tiktokPurpose || null,
+            source: source || "homepage",
+          })
+        : source || "homepage";
+
+    // ── 6. Insert via stored procedure with direct fallback ─────
     const supabase = getSupabaseAdmin();
 
-    const { data, error } = await supabase.rpc("fast_register_commingsoon", {
+    // Try the stored procedure first (only with supported parameters)
+    const rpcPayload: Record<string, any> = {
       p_fullname: fullName.trim(),
       p_email: email?.trim()?.toLowerCase() || null,
       p_phonenumber: phoneNumber?.trim() || null,
@@ -147,14 +173,51 @@ export async function POST(request: NextRequest) {
       p_country: country?.trim() || null,
       p_locationtype: locationType,
       p_attendancemode: attendanceMode || null,
-      p_source: source || "homepage",
-    });
+      p_source: effectiveSource,
+    };
+
+    const { data, error } = await supabase.rpc(
+      "fast_register_commingsoon",
+      rpcPayload,
+    );
 
     if (error) {
-      console.error("[COMMINGSOON] RPC error:", error);
+      console.warn(
+        "[COMMINGSOON] RPC failed, falling back to direct insert:",
+        error,
+      );
+
+      const { data: insertData, error: insertError } = await supabase
+        .from("commingsoon_users")
+        .insert({
+          fullName: fullName.trim(),
+          email: email?.trim()?.toLowerCase() || null,
+          phoneNumber: phoneNumber?.trim() || null,
+          gender,
+          country: country?.trim() || null,
+          locationType,
+          attendanceMode: attendanceMode || null,
+          source: effectiveSource,
+        })
+        .select("id")
+        .single();
+
+      if (insertError || !insertData?.id) {
+        console.error("[COMMINGSOON] Direct insert error:", insertError);
+        return NextResponse.json(
+          { success: false, error: "Registration failed. Please try again." },
+          { status: 500 },
+        );
+      }
+
       return NextResponse.json(
-        { success: false, error: "Registration failed. Please try again." },
-        { status: 500 },
+        {
+          success: true,
+          id: insertData.id,
+          message:
+            "Thank you for registering! We'll notify you when the course launches.",
+        },
+        { status: 201 },
       );
     }
 
