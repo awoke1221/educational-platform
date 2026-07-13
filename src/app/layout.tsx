@@ -12,6 +12,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import { ThemeProvider } from "@/lib/ThemeProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import SessionKeepalive from "@/components/SessionKeepalive";
+import AdoniAIChat from "@/components/AdoniAIChat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
           <SessionKeepalive />
           <Navbar />
           <main className="flex-1">{children}</main>
+          <AdoniAIChat />
           <footer className="bg-gradient-to-r from-[#0a0a0a] via-[#111111] to-[#1a1a1a] border-t border-[#a30000]/20 py-8 sm:py-10 mt-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <p className="text-xs sm:text-sm bg-gradient-to-r from-[#a30000] to-[#d40000] bg-clip-text text-transparent font-semibold tracking-wide">

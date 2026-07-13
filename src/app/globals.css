@@ -63,6 +63,25 @@ body {
     color 0.3s ease;
 }
 
+.prose p {
+  margin: 0.35rem 0;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0.4rem 0 0.4rem 1rem;
+  padding-left: 1rem;
+}
+
+.prose strong {
+  font-weight: 700;
+}
+
+.prose a {
+  color: #a30000;
+  text-decoration: underline;
+}
+
 /* ─── Custom Scrollbar ────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 8px;
