@@ -79,9 +79,7 @@ function StarRating({
         >
           <svg
             className={`${starSize} ${
-              star <= (hovered || rating)
-                ? "text-yellow-400"
-                : "text-gray-300 dark:text-gray-600"
+              star <= (hovered || rating) ? "text-yellow-400" : "text-[#2b2018]"
             }`}
             fill="currentColor"
             viewBox="0 0 20 20"
@@ -195,7 +193,7 @@ export default function CourseReviews({
                 {stats.averageRating}
               </span>
               <StarRating rating={Math.round(stats.averageRating)} size="md" />
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[#f5e7c4]/60">
                 {stats.total} review{stats.total !== 1 ? "s" : ""}
               </span>
             </div>
@@ -268,7 +266,7 @@ export default function CourseReviews({
               className="w-full resize-none rounded-lg border border-[#c9952a]/20 bg-[#140d0b] px-3 py-2 text-sm text-[#f5e7c4] outline-none placeholder:text-[#f5e7c4]/40 focus:border-[#f5c96b] focus:ring-2 focus:ring-[#c9952a]/20"
             />
             <div className="flex items-center justify-between mt-3">
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[#f5e7c4]/60">
                 {newComment.length}/1000
               </span>
               {submitError && (
