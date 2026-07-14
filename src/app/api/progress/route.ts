@@ -6,6 +6,7 @@
 
 import { NextRequest } from "next/server";
 import { verifyAuth, requireAuth } from "@/lib/auth/middleware";
+import { resolveUserIdForAuth } from "@/lib/auth/userLookup";
 import { updateProgressSchema } from "@/lib/validators/schemas";
 import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { getUserClientFromRequest } from "@/lib/db/supabaseUserClient";
@@ -62,9 +63,13 @@ export async function POST(request: NextRequest) {
     // ============================================
     // STEP 2: Find active enrollment (user-scoped client — RLS filters to own)
     // ============================================
+    const resolvedUserId = await resolveUserIdForAuth(auth.userId, auth.email);
+    const lookupUserId = resolvedUserId || auth.userId;
+
     const { data: enrollment, error: enrollErr } = await supabase
       .from("Enrollment")
       .select("*")
+      .eq("userId", lookupUserId)
       .eq("courseId", lecture.courseId)
       .maybeSingle();
 
@@ -101,7 +106,7 @@ export async function POST(request: NextRequest) {
     const progressData = {
       enrollmentId: enrollment.id,
       lectureId,
-      userId: auth.userId,
+      userId: lookupUserId,
       isCompleted: shouldMarkComplete,
       completedAt: shouldMarkComplete
         ? existingProgress?.completedAt || new Date().toISOString()
@@ -151,7 +156,7 @@ export async function POST(request: NextRequest) {
       .from("LectureView")
       .insert({
         lectureId,
-        userId: auth.userId,
+        userId: lookupUserId,
         viewedAt: new Date().toISOString(),
       })
       .select("id")
@@ -258,10 +263,13 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify enrollment
+    const resolvedUserId = await resolveUserIdForAuth(auth.userId, auth.email);
+    const lookupUserId = resolvedUserId || auth.userId;
+
     const { data: enrollment, error: enrollErr } = await getSupabaseAdmin()!
       .from("Enrollment")
       .select("*")
-      .eq("userId", auth.userId)
+      .eq("userId", lookupUserId)
       .eq("courseId", courseId)
       .maybeSingle();
 
@@ -278,7 +286,7 @@ export async function PATCH(request: NextRequest) {
         const progressData = {
           enrollmentId: enrollment.id,
           lectureId: lecture.lectureId,
-          userId: auth.userId,
+          userId: lookupUserId,
           isCompleted: shouldComplete,
           completedAt: shouldComplete ? new Date().toISOString() : null,
           watchDuration: lecture.watchDuration || 0,

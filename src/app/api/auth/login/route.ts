@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let body: any;
+    let body: unknown;
     try {
       body = await request.json();
     } catch {
@@ -162,19 +162,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check approval status from UserRegistration (moved from User table)
-    const { data: registration } = await supabaseAdmin!
-      .from("UserRegistration")
-      .select("isApproved")
-      .eq("userId", authData.user.id)
-      .maybeSingle();
-
-    if (registration && registration.isApproved === false) {
-      return NextResponse.json(
-        { error: "Account awaiting admin approval" },
-        { status: 403 },
-      );
-    }
+    // Account creation is allowed for both email/password and Google users.
+    // Course access for paid courses remains controlled by payment review and
+    // admin approval through the enrollment/payment workflow.
 
     // ============================================
     // STEP 3: Update last login

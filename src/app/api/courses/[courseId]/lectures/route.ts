@@ -4,6 +4,7 @@
 import crypto from "node:crypto";
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
+import { resolveUserIdForAuth } from "@/lib/auth/userLookup";
 import { createLectureSchema } from "@/lib/validators/schemas";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import {
@@ -77,10 +78,16 @@ export async function GET(
 
     // Non-owner/non-instructor users must have active enrollment
     if (!isOwner) {
+      const resolvedUserId = await resolveUserIdForAuth(
+        auth.userId,
+        auth.email,
+      );
+      const lookupUserId = resolvedUserId || auth.userId;
+
       const { data: enrollment } = await supabaseAdmin!
         .from("Enrollment")
         .select("status")
-        .eq("userId", auth.userId)
+        .eq("userId", lookupUserId)
         .eq("courseId", courseId)
         .maybeSingle();
 
@@ -125,10 +132,16 @@ export async function GET(
     // Get course progress if user is enrolled
     let progress: Record<string, any> = {};
     if (auth && !isOwner) {
+      const resolvedUserId = await resolveUserIdForAuth(
+        auth.userId,
+        auth.email,
+      );
+      const lookupUserId = resolvedUserId || auth.userId;
+
       const { data: enrollment } = await supabaseAdmin!
         .from("Enrollment")
         .select("*")
-        .eq("userId", auth.userId)
+        .eq("userId", lookupUserId)
         .eq("courseId", courseId)
         .maybeSingle();
 
@@ -136,7 +149,7 @@ export async function GET(
         const { data: userProgress } = await supabaseAdmin!
           .from("UserProgress")
           .select("lectureId, isCompleted, watchPercentage")
-          .eq("userId", auth.userId);
+          .eq("userId", lookupUserId);
 
         // Filter to lectures in this course (simplified - UserProgress is filtered by enrollment)
         if (userProgress) {

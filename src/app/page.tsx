@@ -1,16 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 // 🚀 All animations replaced with pure CSS — no Framer Motion overhead
-
-// ⚡ Lazy-load below-the-fold components for faster initial render
-const ComingSoonForm = dynamic(() => import("@/components/ComingSoonForm"), {
-  ssr: false,
-});
-
-const LAUNCH_DATE =
-  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00";
 
 // 🚀 All Framer Motion variants removed — using pure CSS instead
 
@@ -67,19 +58,6 @@ function TrailerVideoPlayer() {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
-  const [hasRegistered, setHasRegistered] = useState(false);
-
-  // Check localStorage for existing registration
-  useEffect(() => {
-    const submitted = localStorage.getItem("commingsoon_submitted");
-    if (submitted === "true") {
-      setHasRegistered(true);
-    }
-  }, []);
-
-  const handleRegistrationSuccess = useCallback(() => {
-    setHasRegistered(true);
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 100);
@@ -229,44 +207,6 @@ export default function Home() {
           </span>
           <div className="w-5 h-8 border-2 border-white/20 rounded-full flex justify-center p-1 animate-pulse">
             <div className="w-1.5 h-1.5 bg-[#ef4444] rounded-full animate-bounce" />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Coming Soon Section (bottom of page) ───────────────── */}
-      <section className="relative bg-[#0a0a0a] py-16 sm:py-20 md:py-24">
-        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="text-center space-y-8">
-            {/* Conditional Heading — subtle badge when registered, CTA when not */}
-            {hasRegistered ? (
-              <div>
-                <span className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md border border-[#ef4444]/15 text-white/50 text-xs font-semibold px-4 py-1.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-                  ተመዝግበዋል
-                </span>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-                  <span className="bg-gradient-to-r from-white via-white to-[#ef4444] bg-clip-text text-transparent">
-                    20% ቅናሽ ያግኙ
-                  </span>
-                </h2>
-
-                <p className="text-white/60 text-sm max-w-md mx-auto">
-                  የመጀመሪያዎቹ 500 የሚመዘገቡ ሰዎች 20% ቅናሽ ያገኛሉ
-                </p>
-              </>
-            )}
-
-            {/* Coming Soon Registration Form */}
-            <div className="pt-4">
-              <ComingSoonForm
-                source="homepage"
-                launchDate={LAUNCH_DATE}
-                onSuccess={handleRegistrationSuccess}
-              />
-            </div>
           </div>
         </div>
       </section>

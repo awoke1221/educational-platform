@@ -48,7 +48,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error("[REGISTER] Invalid JSON body", parseError);
+      return NextResponse.json(
+        { error: "Invalid JSON payload. Please try again." },
+        { status: 400 },
+      );
+    }
 
     // ============================================
     // STEP 1: Validate Input with Zod
@@ -69,6 +78,11 @@ export async function POST(request: NextRequest) {
       validation.data;
 
     const normalizedPhone = phoneNumber.trim();
+    console.log("[REGISTER] Parsed payload", {
+      email,
+      phone: normalizedPhone,
+      fullName,
+    });
     const sanitizedBaseUsername = (username?.trim().toLowerCase() || "")
       .replace(/[^a-z0-9_-]/g, "")
       .slice(0, 50);
@@ -116,6 +130,12 @@ export async function POST(request: NextRequest) {
     // email confirmation, rate limiting).
     const supabase = getSupabaseAnon();
 
+    console.log("[REGISTER] Creating auth user with Supabase", {
+      hasUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      email: finalEmail,
+    });
+
     const { data: authData, error: signUpError } = await supabase.auth.signUp(
       password
         ? {
@@ -143,11 +163,28 @@ export async function POST(request: NextRequest) {
 
     if (signUpError) {
       console.error("[REGISTER SUPABASE SIGNUP ERROR]", signUpError);
+      console.error("[REGISTER SUPABASE SIGNUP ERROR DETAILS]", {
+        message: signUpError.message,
+        status: signUpError.status,
+        name: signUpError.name,
+      });
 
-      if (signUpError.message?.toLowerCase().includes("already")) {
+      const message = signUpError.message?.toLowerCase() || "";
+
+      if (message.includes("already")) {
         return NextResponse.json(
           { error: "An account with this email already exists" },
           { status: 409 },
+        );
+      }
+
+      if (message.includes("rate limit") || message.includes("too many")) {
+        return NextResponse.json(
+          {
+            error:
+              "Too many signup attempts. Please wait a moment and try again.",
+          },
+          { status: 429 },
         );
       }
 
@@ -204,8 +241,8 @@ export async function POST(request: NextRequest) {
       .insert({
         id: crypto.randomUUID(),
         userId: authData.user.id,
-        isApproved: false,
-        paymentStatus: "pending",
+        isApproved: true,
+        paymentStatus: "none",
       })
       .select("id")
       .maybeSingle();
@@ -237,7 +274,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message:
-          "Pre-registration created. Please complete payment to submit for review.",
+          "Account created successfully. You can log in now. Paid course access will be enabled after payment review and admin approval.",
         session,
         user: newUser || {
           id: authData.user.id,
@@ -261,49 +298,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
-
-// ============================================
-// Helper: Extract Device Information from Request
-// ============================================
-function getDeviceInfo(request: NextRequest): {
-  deviceId: string;
-  deviceName: string;
-  deviceType: string;
-  userAgent: string;
-  ipAddress: string;
-} {
-  const userAgent = request.headers.get("User-Agent") || "Unknown";
-  const ipAddress =
-    request.headers.get("X-Forwarded-For") ||
-    request.headers.get("X-Client-IP") ||
-    "Unknown";
-
-  let deviceType = "desktop";
-  if (/mobile/i.test(userAgent)) {
-    deviceType = "mobile";
-  } else if (/tablet|ipad/i.test(userAgent)) {
-    deviceType = "tablet";
-  }
-
-  const deviceId = crypto
-    .createHash("sha256")
-    .update(userAgent + ipAddress)
-    .digest("hex");
-
-  let deviceName = "Unknown Device";
-  if (/iPhone/i.test(userAgent)) deviceName = "iPhone";
-  else if (/iPad/i.test(userAgent)) deviceName = "iPad";
-  else if (/Android/i.test(userAgent)) deviceName = "Android Device";
-  else if (/Windows/i.test(userAgent)) deviceName = "Windows PC";
-  else if (/Mac/i.test(userAgent)) deviceName = "Mac";
-  else if (/Linux/i.test(userAgent)) deviceName = "Linux Device";
-
-  return {
-    deviceId,
-    deviceName,
-    deviceType,
-    userAgent,
-    ipAddress,
-  };
 }

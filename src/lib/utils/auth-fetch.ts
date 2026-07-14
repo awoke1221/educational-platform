@@ -218,6 +218,16 @@ export async function authFetchJson<T = any>(
   retry = true,
 ): Promise<{ response: Response; data: T }> {
   const response = await authFetch(input, init, retry);
-  const data = await response.json().catch(() => ({}) as T);
+  const text = await response.text();
+  let data: T = {} as T;
+
+  if (text) {
+    try {
+      data = JSON.parse(text) as T;
+    } catch {
+      data = { error: text } as T;
+    }
+  }
+
   return { response, data };
 }

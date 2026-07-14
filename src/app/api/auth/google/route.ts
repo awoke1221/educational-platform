@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { getSupabaseAnon } from "@/lib/db/supabaseAnonClient";
+import { getAppBaseUrl } from "@/lib/utils/app-url";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const redirectTo =
       request.nextUrl.searchParams.get("redirectTo") ||
-      `${new URL(request.url).origin}/api/auth/callback`;
+      `${getAppBaseUrl()}/auth/google/callback`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",

@@ -4,11 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
-const LAUNCH_DATE =
-  typeof process !== "undefined"
-    ? process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00"
-    : "2026-07-26T00:00:00";
-
 interface UserInfo {
   profileImage?: string;
 }
@@ -18,16 +13,6 @@ export default function MobileBottomNav() {
   const [token, setToken] = useState<string>("");
   const [user, setUser] = useState<UserInfo | null>(null);
   const [userImageFailed, setUserImageFailed] = useState(false);
-
-  const [comingSoon, setComingSoon] = useState(true);
-
-  useEffect(() => {
-    if (LAUNCH_DATE) {
-      setComingSoon(new Date(LAUNCH_DATE).getTime() > Date.now());
-    } else {
-      setComingSoon(false);
-    }
-  }, []);
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -63,6 +48,8 @@ export default function MobileBottomNav() {
     if (path !== "/" && pathname.startsWith(path)) return true;
     return false;
   };
+
+  const profilePath = token ? "/dashboard" : "/auth/login";
 
   const navItems = [
     {
@@ -142,8 +129,8 @@ export default function MobileBottomNav() {
       ),
     },
     {
-      path: comingSoon ? "" : "/dashboard",
-      label: comingSoon ? "Coming Soon" : token ? "Profile" : "Sign In",
+      path: profilePath,
+      label: token ? "Profile" : "Sign In",
       icon: (active: boolean) => {
         if (user?.profileImage && !userImageFailed) {
           return (
@@ -180,17 +167,7 @@ export default function MobileBottomNav() {
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const active = isActive(item.path);
-          return comingSoon && item.path === "" ? (
-            <span
-              key={item.label}
-              className="flex-1 flex flex-col items-center justify-center py-3 px-2 opacity-40 cursor-not-allowed"
-            >
-              {item.icon(false)}
-              <span className="text-xs mt-1 text-center text-gray-400">
-                {item.label}
-              </span>
-            </span>
-          ) : (
+          return (
             <Link
               key={item.path}
               href={item.path}

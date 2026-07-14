@@ -38,6 +38,43 @@ interface DashboardStats {
   };
 }
 
+interface UserProfile {
+  id?: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  profileImage?: string;
+  role?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  lastLogin?: string;
+  paymentStatus?: string;
+}
+
+function getInitials(name?: string) {
+  if (!name) return "U";
+
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "U";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+
+  try {
+    return new Date(value).toLocaleDateString("en", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+}
+
 const statIcons = [
   (active: boolean) => (
     <svg
@@ -125,6 +162,7 @@ const statIcons = [
 export default function DashboardPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
 
@@ -138,7 +176,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const t = localStorage.getItem("token");
     if (!t) return;
+
+    const storedUser = localStorage.getItem("user");
+    const fallbackProfile = storedUser ? JSON.parse(storedUser) : null;
+
     setToken(t);
+    setProfile(fallbackProfile);
+
     Promise.all([
       cachedAuthFetchJson("/api/enrollments", { method: "GET" }, 15_000).then(
         (result) => result.data,
@@ -148,10 +192,24 @@ export default function DashboardPage() {
         { method: "GET" },
         15_000,
       ).then((result) => result.data),
+      authFetchJson("/api/user/profile", { method: "GET" }).then(
+        (result) => result.data,
+      ),
     ])
-      .then(([enr, st]) => {
+      .then(([enr, st, profileResult]) => {
         setEnrollments(enr.data?.data || []);
         setStats(st.data);
+
+        const userData =
+          profileResult?.data || profileResult || fallbackProfile;
+        if (userData) {
+          setProfile(userData);
+        }
+      })
+      .catch(() => {
+        if (fallbackProfile) {
+          setProfile(fallbackProfile);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -181,13 +239,13 @@ export default function DashboardPage() {
             </svg>
           </div>
           <p className="text-gray-500 dark:text-gray-400 mb-6 text-lg">
-            እባክዎ ይግቡ
+            Please sign in
           </p>
           <Link
             href="/auth/login"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
           >
-            ግባ
+            Sign In
             <svg
               className="w-4 h-4"
               fill="none"
@@ -216,40 +274,41 @@ export default function DashboardPage() {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <p className="text-gray-500 dark:text-gray-400">በመጫን ላይ...</p>
+          <p className="text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
 
   const statsData = [
     {
-      label: "የተመዘገቡ",
+      label: "Enrolled",
       value: stats?.overview?.totalEnrollments || 0,
       icon: statIcons[0],
     },
     {
-      label: "ንቁ ኮርሶች",
+      label: "Active Courses",
       value: stats?.overview?.activeCourses || 0,
       icon: statIcons[1],
     },
     {
-      label: "የተጠናቀቁ",
+      label: "Completed",
       value: stats?.overview?.completedCourses || 0,
       icon: statIcons[2],
     },
     {
-      label: "የምስክር ወረቀት",
+      label: "Certificates",
       value: stats?.overview?.certificatesCount || 0,
       icon: statIcons[3],
     },
-    { label: "የተላከ ክፍያ", value: pendingCount, icon: statIcons[4] },
+    { label: "Pending Payments", value: pendingCount, icon: statIcons[4] },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0604] dark:bg-gray-900">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(195,115,15,0.16),_transparent_45%),linear-gradient(135deg,_#080403_0%,_#0f0a08_45%,_#140d0b_100%)] text-white">
       {/* Header */}
-      <div className="bg-[#0a0604] text-white relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#a30000]/8 rounded-full blur-[80px] pointer-events-none" />
+      <div className="text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(195,115,15,0.12),_transparent_55%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[320px] bg-[#a30000]/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10">
           <motion.h1
             className="text-2xl sm:text-3xl font-bold"
@@ -257,7 +316,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            የእኔ ትምህርት
+            My Learning Dashboard
           </motion.h1>
           <motion.p
             className="text-white/70 text-sm mt-1"
@@ -265,25 +324,96 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
           >
-            የእርስዎን እድገት ይከታተሉ
+            Track your progress and stay on top of your learning
           </motion.p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
+        <motion.div
+          className="mb-8 rounded-[28px] border border-[#c9952a]/20 bg-gradient-to-br from-[#140d0b] via-[#1a110c] to-[#2a160d] p-6 shadow-[0_25px_70px_rgba(0,0,0,0.3)]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#ef4444]/25 to-[#c9952a]/25 ring-1 ring-[#c9952a]/30">
+                {profile?.profileImage ? (
+                  <img
+                    src={profile.profileImage}
+                    alt={profile.fullName || "User avatar"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-lg font-semibold text-[#f5c96b]">
+                    {getInitials(profile?.fullName || profile?.email)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#c9952a]">
+                  Profile Overview
+                </p>
+                <h2 className="mt-1 text-xl font-semibold text-white">
+                  {profile?.fullName || "User Name"}
+                </h2>
+                <p className="text-sm text-[#f5e7c4]/70">
+                  {profile?.email || "No email available"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[11px] uppercase tracking-[0.25em] text-[#c9952a]">
+                  Role
+                </p>
+                <p className="mt-1 text-sm font-medium text-white">
+                  {profile?.role || "Learner"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[11px] uppercase tracking-[0.25em] text-[#c9952a]">
+                  Phone
+                </p>
+                <p className="mt-1 text-sm font-medium text-white">
+                  {profile?.phoneNumber || "—"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[11px] uppercase tracking-[0.25em] text-[#c9952a]">
+                  Joined
+                </p>
+                <p className="mt-1 text-sm font-medium text-white">
+                  {formatDate(profile?.createdAt)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <p className="text-[11px] uppercase tracking-[0.25em] text-[#c9952a]">
+                  Status
+                </p>
+                <p className="mt-1 text-sm font-medium text-white">
+                  {profile?.isActive === false ? "Inactive" : "Active"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Stats Cards */}
         {stats && (
           <StaggerContainer className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
             {statsData.map((s, i) => (
               <StaggerItem key={i}>
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-border-light dark:border-gray-700 hover:shadow-md transition-all group card-hover">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-3 mx-auto group-hover:scale-110 transition-transform duration-300">
+                <div className="rounded-[24px] border border-[#c9952a]/20 bg-[#140d0b]/90 p-5 shadow-[0_14px_45px_rgba(0,0,0,0.22)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#ef4444]/20 to-[#c9952a]/20 mb-3 mx-auto">
                     {s.icon(true)}
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-primary dark:text-gray-100 text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-[#f5c96b] text-center">
                     <AnimatedCounter to={s.value} duration={2000} />
                   </div>
-                  <div className="text-xs text-text-muted dark:text-gray-400 text-center mt-1">
+                  <div className="text-xs text-[#f5e7c4]/70 text-center mt-1">
                     {s.label}
                   </div>
                 </div>
@@ -294,15 +424,15 @@ export default function DashboardPage() {
 
         {/* Enrolled Courses */}
         <AnimatedSection direction="up">
-          <h2 className="font-semibold text-lg mb-4 text-primary dark:text-gray-100 flex items-center gap-2">
-            <span className="w-1.5 h-5 bg-gradient-to-b from-primary to-secondary rounded-full inline-block" />
-            የተመዘገብኩባቸው ኮርሶች
+          <h2 className="font-semibold text-lg mb-4 text-[#f5c96b] flex items-center gap-2">
+            <span className="w-1.5 h-5 bg-gradient-to-b from-[#ef4444] to-[#c9952a] rounded-full inline-block" />
+            My Enrolled Courses
           </h2>
         </AnimatedSection>
 
         {enrollments.length === 0 ? (
           <motion.div
-            className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-border-light dark:border-gray-700"
+            className="text-center py-16 rounded-[24px] border border-[#c9952a]/20 bg-[#140d0b]/85 shadow-[0_16px_50px_rgba(0,0,0,0.24)]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
@@ -323,13 +453,13 @@ export default function DashboardPage() {
               </svg>
             </div>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
-              እስካሁን ኮርስ አልተመዘገቡም
+              You haven’t enrolled in any course yet.
             </p>
             <Link
               href="/courses"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
             >
-              ኮርሶችን ይመልከቱ
+              Browse Courses
             </Link>
           </motion.div>
         ) : (
@@ -339,18 +469,18 @@ export default function DashboardPage() {
                 enr.completionPercentage || enr.progressPercentage || 0;
               return (
                 <StaggerItem key={enr.id}>
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all duration-300 border border-border-light dark:border-gray-700 card-hover group">
+                  <div className="rounded-[24px] border border-[#c9952a]/20 bg-[#140d0b]/90 p-5 shadow-[0_16px_48px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_55px_rgba(0,0,0,0.28)] group">
                     <Link
                       href={`/courses/${enr.course?.id || enr.courseId}`}
                       className="block"
                     >
-                      <div className="h-36 bg-gradient-to-br from-primary via-primary-light to-secondary rounded-xl flex items-center justify-center mb-4 relative overflow-hidden">
+                      <div className="h-36 rounded-[20px] bg-gradient-to-br from-[#8a0000] via-[#a30000] to-[#c9952a] flex items-center justify-center mb-4 relative overflow-hidden">
                         <span className="text-white text-3xl font-bold relative z-10">
                           {enr.course?.title?.charAt(0) || "?"}
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                       </div>
-                      <h3 className="font-semibold text-sm mb-3 text-primary dark:text-gray-100 group-hover:text-secondary transition-colors line-clamp-1">
+                      <h3 className="font-semibold text-sm mb-3 text-[#f5e7c4] group-hover:text-[#f5c96b] transition-colors line-clamp-1">
                         {enr.course?.title}
                       </h3>
                     </Link>
@@ -361,19 +491,19 @@ export default function DashboardPage() {
                         size={48}
                         strokeWidth={4}
                       >
-                        <span className="text-[10px] font-bold text-primary dark:text-gray-200">
+                        <span className="text-[10px] font-bold text-[#f5c96b]">
                           {Math.round(progress)}%
                         </span>
                       </ProgressRing>
                       <div className="flex-1 min-w-0">
-                        <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+                        <div className="w-full bg-[#2b2018] rounded-full h-1.5">
                           <div
                             className="bg-gradient-to-r from-secondary to-accent h-1.5 rounded-full transition-all duration-700"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <p className="text-[11px] text-text-muted dark:text-gray-400 mt-1">
-                          {Math.round(progress)}% ተጠናቋል
+                        <p className="text-[11px] text-[#f5e7c4]/70 mt-1">
+                          {Math.round(progress)}% completed
                         </p>
                       </div>
                     </div>
@@ -396,9 +526,9 @@ export default function DashboardPage() {
                     {enr.status === "active" && (
                       <Link
                         href={`/courses/${enr.course?.id || enr.courseId}`}
-                        className="block w-full text-center bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white text-sm py-2.5 rounded-xl font-medium hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
+                        className="block w-full text-center bg-gradient-to-r from-[#a30000] to-[#c9952a] text-white text-sm py-2.5 rounded-xl font-medium hover:shadow-lg hover:shadow-[#c9952a]/25 hover:-translate-y-0.5 transition-all duration-300"
                       >
-                        ቪዲዮ ይመልከቱ →
+                        Watch Video →
                       </Link>
                     )}
                   </div>

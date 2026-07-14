@@ -105,7 +105,11 @@ export default function GoogleCallbackPage() {
         const MAX_WAIT = 10000; // 10 seconds
         const pollInterval = 200; // check every 200ms
         let waited = 0;
-        let session: any = null;
+        let session:
+          | Awaited<
+              ReturnType<typeof supabase.auth.getSession>
+            >["data"]["session"]
+          | null = null;
 
         while (waited < MAX_WAIT) {
           const { data, error } = await supabase.auth.getSession();
@@ -156,7 +160,9 @@ export default function GoogleCallbackPage() {
         const profileImage = metadata.avatar_url || metadata.picture || "";
         const userPhone =
           (user as { phone?: string }).phone || metadata.phone || "";
-        const identities = (user as any).identities as Array<any> | undefined;
+        const identities = (
+          user as { identities?: Array<{ id?: string; identity_id?: string }> }
+        ).identities;
         const mainIdentity = identities?.[0];
         const providerUserId =
           mainIdentity?.identity_id || mainIdentity?.id || null;

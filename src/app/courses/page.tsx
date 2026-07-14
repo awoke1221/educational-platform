@@ -4,11 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch } from "@/lib/utils/cache";
-import ComingSoonForm from "@/components/ComingSoonForm";
 import ExpandableDescription from "@/components/ExpandableDescription";
-
-const LAUNCH_DATE =
-  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00";
 
 const staggerContainer = {
   hidden: {},
@@ -335,47 +331,6 @@ export default function CoursesPage() {
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
       </section>
 
-      {/* ── Coming Soon Banner ──────────────────────── */}
-      <section className="relative overflow-hidden bg-black">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#7f1d1d] via-[#dc2626] to-[#ef4444] opacity-[0.08]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.06)_0%,transparent_70%)]" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-          <div className="text-center space-y-4">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className="inline-flex items-center gap-2 bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-[#dc2626]/30">
-                <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]" />
-                Adonay TikTok Academy — በቅርቡ ይጀምራል!
-              </span>
-            </motion.div>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-sm text-white/60 max-w-lg mx-auto"
-            >
-              አዲሱ የ Adonay TikTok Academy በቅርቡ ይጀምራል። ቀደም ብለው ይመዝገቡ እና ልዩ የሆኑ
-              ጥቅሞችን ያግኙ!
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <ComingSoonForm source="courses" launchDate={LAUNCH_DATE} />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* ── All Courses Grid ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="flex items-center justify-between mb-8">
@@ -483,7 +438,7 @@ export default function CoursesPage() {
                   እስካሁን ኮርሶች የሉም
                 </h3>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
-                  በቅርቡ አዳዲስ ኮርሶች ይጨመራሉ። ይጠብቁን
+                  አሁንም ለመመዝገብ ዝግጁ ያሉ ኮርሶች አሉ። ይመርምሩ እና ይጀምሩ።
                 </p>
               </>
             )}
@@ -577,7 +532,7 @@ export default function CoursesPage() {
                     maxLines={2}
                     className="mb-4"
                   />
-                  <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                  <div className="flex items-center justify-between pt-3 border-t border-white/10 gap-3">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7f1d1d] to-[#dc2626] flex items-center justify-center text-[11px] text-white font-bold shrink-0 shadow-sm">
                         {course.instructor?.fullName?.charAt(0) || "A"}
@@ -586,7 +541,10 @@ export default function CoursesPage() {
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/25 px-3 py-1.5 rounded-lg text-xs font-bold">
+                    <Link
+                      href={`/courses/${course.id}`}
+                      className="inline-flex items-center gap-1.5 text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/25 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#ef4444]/20 transition-colors"
+                    >
                       <svg
                         className="w-3.5 h-3.5"
                         fill="none"
@@ -600,8 +558,8 @@ export default function CoursesPage() {
                           d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
                         />
                       </svg>
-                      በቅርቡ ይጀምራል
-                    </span>
+                      አሁን ይመዝገቡ
+                    </Link>
                   </div>
                 </div>
               </motion.div>

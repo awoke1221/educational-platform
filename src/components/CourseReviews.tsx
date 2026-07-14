@@ -167,31 +167,31 @@ export default function CourseReviews({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="rounded-[24px] border border-[#c9952a]/20 bg-[#140d0b]/90 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.24)]">
         <div className="animate-pulse space-y-3">
-          <div className="h-5 w-32 rounded bg-gray-200 dark:bg-gray-700" />
-          <div className="h-4 w-full rounded bg-gray-100 dark:bg-gray-700" />
+          <div className="h-5 w-32 rounded bg-[#2b2018]" />
+          <div className="h-4 w-full rounded bg-[#22170f]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="rounded-[24px] border border-[#c9952a]/20 bg-[#140d0b]/90 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.24)]">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h3 className="font-semibold text-primary dark:text-gray-100 flex items-center gap-2">
+          <h3 className="flex items-center gap-2 font-semibold text-[#f5c96b]">
             ⭐ Reviews
             {stats && (
-              <span className="text-xs font-normal text-gray-400">
+              <span className="text-xs font-normal text-[#f5e7c4]/70">
                 ({stats.total})
               </span>
             )}
           </h3>
           {stats && stats.total > 0 && (
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+              <span className="text-2xl font-bold text-[#f5e7c4]">
                 {stats.averageRating}
               </span>
               <StarRating rating={Math.round(stats.averageRating)} size="md" />
@@ -207,8 +207,8 @@ export default function CourseReviews({
             onClick={() => setShowForm(!showForm)}
             className={`text-sm px-4 py-2 rounded-lg font-medium transition-all ${
               showForm
-                ? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                : "bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white hover:shadow-lg hover:shadow-[#a30000]/20 hover:-translate-y-0.5 transition-all duration-300"
+                ? "bg-[#2b2018] text-[#f5e7c4]"
+                : "bg-gradient-to-r from-[#a30000] to-[#c9952a] text-white hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#c9952a]/25 transition-all duration-300"
             }`}
           >
             {showForm ? "Cancel" : "Write Review"}
@@ -221,10 +221,8 @@ export default function CourseReviews({
         <div className="mb-6 space-y-1.5">
           {[5, 4, 3, 2, 1].map((star) => (
             <div key={star} className="flex items-center gap-2 text-xs">
-              <span className="w-8 text-right text-gray-500 dark:text-gray-400">
-                {star}★
-              </span>
-              <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <span className="w-8 text-right text-[#f5e7c4]/70">{star}★</span>
+              <div className="flex-1 h-2 bg-[#2b2018] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-yellow-400 rounded-full transition-all"
                   style={{
@@ -232,7 +230,7 @@ export default function CourseReviews({
                   }}
                 />
               </div>
-              <span className="w-6 text-gray-400 dark:text-gray-500">
+              <span className="w-6 text-[#f5e7c4]/60">
                 {stats.distribution[star - 1]}
               </span>
             </div>
@@ -248,9 +246,9 @@ export default function CourseReviews({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             onSubmit={handleSubmit}
-            className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden"
+            className="mb-6 overflow-hidden rounded-[20px] border border-[#c9952a]/20 bg-[#1a120d] p-4"
           >
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <p className="mb-2 text-sm font-medium text-[#f5e7c4]">
               Your Rating
             </p>
             <div className="mb-3">
@@ -267,7 +265,7 @@ export default function CourseReviews({
               placeholder="Share your experience with this course..."
               rows={3}
               maxLength={1000}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none dark:text-gray-200 dark:placeholder-gray-400"
+              className="w-full resize-none rounded-lg border border-[#c9952a]/20 bg-[#140d0b] px-3 py-2 text-sm text-[#f5e7c4] outline-none placeholder:text-[#f5e7c4]/40 focus:border-[#f5c96b] focus:ring-2 focus:ring-[#c9952a]/20"
             />
             <div className="flex items-center justify-between mt-3">
               <span className="text-xs text-gray-400">
@@ -279,7 +277,7 @@ export default function CourseReviews({
               <button
                 type="submit"
                 disabled={submitting || newRating === 0}
-                className="px-4 py-2 bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white text-sm font-medium rounded-lg hover:shadow-lg hover:shadow-[#a30000]/20 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-lg bg-gradient-to-r from-[#a30000] to-[#c9952a] px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#c9952a]/25 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting ? "Submitting..." : "Submit Review"}
               </button>
@@ -290,17 +288,17 @@ export default function CourseReviews({
 
       {/* Success Message */}
       {submitSuccess && (
-        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-300">
           ✅ Review submitted! It will appear after admin approval.
         </div>
       )}
 
       {/* Reviews List */}
       {reviews.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 dark:text-gray-500">
+        <div className="py-8 text-center text-[#f5e7c4]/70">
           <p className="text-sm">No reviews yet</p>
           {isEnrolled && !showForm && (
-            <p className="text-xs mt-1">Be the first to review this course!</p>
+            <p className="mt-1 text-xs">Be the first to review this course!</p>
           )}
         </div>
       ) : (
@@ -311,25 +309,25 @@ export default function CourseReviews({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}
-              className="pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0 last:pb-0"
+              className="border-b border-[#c9952a]/15 pb-4 last:border-0 last:pb-0"
             >
               <div className="flex items-start gap-3">
                 {/* Avatar */}
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#a30000] to-[#c9952a] text-xs font-bold text-white">
                   {review.user.fullName?.charAt(0) || "?"}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    <span className="text-sm font-medium text-[#f5e7c4]">
                       {review.user.fullName}
                     </span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-[#f5e7c4]/60">
                       {formatDate(review.createdAt)}
                     </span>
                   </div>
                   <StarRating rating={review.rating} />
                   {review.comment && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1.5 leading-relaxed">
+                    <p className="mt-1.5 text-sm leading-relaxed text-[#f5e7c4]/80">
                       {review.comment}
                     </p>
                   )}

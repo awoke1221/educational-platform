@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
+import { resolveUserIdForAuth } from "@/lib/auth/userLookup";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { BunnyStreamService } from "@/lib/bunny";
 import { env } from "@/config/env";
@@ -78,10 +79,16 @@ export async function GET(
     }
 
     if (!isAdminOrInstructor) {
+      const resolvedUserId = await resolveUserIdForAuth(
+        auth.userId,
+        auth.email,
+      );
+      const lookupUserId = resolvedUserId || auth.userId;
+
       const { data: enrollment } = await supabaseAdmin!
         .from("Enrollment")
         .select("status")
-        .eq("userId", auth.userId)
+        .eq("userId", lookupUserId)
         .eq("courseId", courseId)
         .maybeSingle();
 

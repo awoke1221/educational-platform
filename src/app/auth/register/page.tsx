@@ -1,14 +1,11 @@
 "use client";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/db/supabase";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
-import ComingSoonForm from "@/components/ComingSoonForm";
-
-const LAUNCH_DATE =
-  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00";
+import { getGoogleCallbackUrl } from "@/lib/utils/app-url";
 
 function RegisterForm() {
   const router = useRouter();
@@ -17,16 +14,6 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showEmailForm, setShowEmailForm] = useState(false);
-  const [comingSoon, setComingSoon] = useState(true);
-
-  useEffect(() => {
-    const launch = LAUNCH_DATE;
-    if (launch) {
-      setComingSoon(new Date(launch).getTime() > Date.now());
-    } else {
-      setComingSoon(false);
-    }
-  }, []);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -48,7 +35,7 @@ function RegisterForm() {
     // Store the redirect target in sessionStorage for the callback page to use
     sessionStorage.setItem("oauth_redirect_target", redirectTo);
 
-    const redirectUrl = `${window.location.origin}/auth/google/callback`;
+    const redirectUrl = getGoogleCallbackUrl();
 
     const { error: googleError } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -96,7 +83,10 @@ function RegisterForm() {
       });
 
       if (response.ok && data.success) {
-        alert(data.message || "Registration successful! You can now login.");
+        alert(
+          data.message ||
+            "Registration successful! You can now login. Paid course access requires payment review and admin approval.",
+        );
         router.push("/auth/login");
       } else {
         const errMsg = data.errors
@@ -104,8 +94,12 @@ function RegisterForm() {
           : data.error || "Registration failed";
         setError(errMsg);
       }
-    } catch (err: any) {
-      setError(err?.message || "Registration failed. Please try again.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -113,29 +107,16 @@ function RegisterForm() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-[#0a0604]">
-      <div className="w-full max-w-md bg-surface rounded-2xl shadow-lg p-8 border-t-4 border-secondary">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent text-center mb-2">
+      <div className="w-full max-w-md rounded-[24px] border border-[#c9952a]/20 bg-[#0f0b09]/95 p-8 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-sm">
+        <h1 className="mb-2 text-center text-2xl font-bold bg-gradient-to-r from-[#ef4444] via-[#c9952a] to-[#f5c96b] bg-clip-text text-transparent">
           ይመዝገቡ
         </h1>
-        <p className="text-primary text-center text-sm mb-6 font-medium">
+        <p className="mb-6 text-center text-sm font-medium text-[#f5e7c4]/85">
           {showEmailForm ? "በኢሜል ይመዝገቡ" : "Google በመጠቀም ይመዝገቡ"}
         </p>
 
-        {/* Coming Soon Banner */}
-        <div className="mb-5 p-4 rounded-xl bg-black/40 border border-[#ef4444]/20 shadow-lg shadow-[#ef4444]/5">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
-            <span className="text-xs font-semibold text-[#ef4444]/90">
-              🚀 Adony TikTok Academy — በቅርቡ ይጀምራል!
-            </span>
-          </div>
-          <div className="mt-3">
-            <ComingSoonForm source="register" launchDate={LAUNCH_DATE} />
-          </div>
-        </div>
-
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 border border-red-200">
+          <div className="mb-4 rounded-lg border border-[#fda4af] bg-[#fff1f2] p-3 text-sm text-[#b91c1c]">
             {error}
           </div>
         )}
@@ -143,7 +124,7 @@ function RegisterForm() {
         {showEmailForm ? (
           <form onSubmit={handleEmailRegister} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-[#f5c96b]">
                 Full Name *
               </label>
               <input
@@ -152,12 +133,12 @@ function RegisterForm() {
                 value={form.fullName}
                 onChange={handleChange}
                 placeholder="Your full name"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                className="w-full rounded-lg border border-[#c9952a]/40 bg-[#140d0b] px-3 py-2.5 text-sm text-[#fff8eb] placeholder:text-[#8a7a5e] outline-none transition focus:border-[#ef4444] focus:ring-2 focus:ring-[#ef4444]/25"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-[#f5c96b]">
                 Email *
               </label>
               <input
@@ -166,12 +147,12 @@ function RegisterForm() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="your@email.com"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                className="w-full rounded-lg border border-[#c9952a]/40 bg-[#140d0b] px-3 py-2.5 text-sm text-[#fff8eb] placeholder:text-[#8a7a5e] outline-none transition focus:border-[#ef4444] focus:ring-2 focus:ring-[#ef4444]/25"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-[#f5c96b]">
                 Phone Number *
               </label>
               <input
@@ -180,12 +161,12 @@ function RegisterForm() {
                 value={form.phoneNumber}
                 onChange={handleChange}
                 placeholder="+251911111111"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                className="w-full rounded-lg border border-[#c9952a]/40 bg-[#140d0b] px-3 py-2.5 text-sm text-[#fff8eb] placeholder:text-[#8a7a5e] outline-none transition focus:border-[#ef4444] focus:ring-2 focus:ring-[#ef4444]/25"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-[#f5c96b]">
                 Password *
               </label>
               <input
@@ -194,12 +175,12 @@ function RegisterForm() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Min 8 characters"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                className="w-full rounded-lg border border-[#c9952a]/40 bg-[#140d0b] px-3 py-2.5 text-sm text-[#fff8eb] placeholder:text-[#8a7a5e] outline-none transition focus:border-[#ef4444] focus:ring-2 focus:ring-[#ef4444]/25"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-[#f5c96b]">
                 Confirm Password *
               </label>
               <input
@@ -208,16 +189,16 @@ function RegisterForm() {
                 value={form.confirmPassword}
                 onChange={handleChange}
                 placeholder="Repeat password"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                className="w-full rounded-lg border border-[#c9952a]/40 bg-[#140d0b] px-3 py-2.5 text-sm text-[#fff8eb] placeholder:text-[#8a7a5e] outline-none transition focus:border-[#ef4444] focus:ring-2 focus:ring-[#ef4444]/25"
                 required
               />
             </div>
             <button
               type="submit"
-              disabled={loading || comingSoon}
-              className="w-full bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white py-2.5 rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50"
+              disabled={loading}
+              className="w-full rounded-lg bg-gradient-to-r from-[#ef4444] via-[#a30000] to-[#c9952a] py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#ef4444]/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[#c9952a]/30 disabled:opacity-50"
             >
-              {loading ? "በመመዝገብ ላይ..." : comingSoon ? "በቅርቡ ይጀምራል" : "ይመዝገቡ"}
+              {loading ? "በመመዝገብ ላይ..." : "ይመዝገቡ"}
             </button>
             <button
               type="button"
@@ -225,7 +206,7 @@ function RegisterForm() {
                 setShowEmailForm(false);
                 setError("");
               }}
-              className="w-full text-center text-sm text-gray-500 hover:text-primary transition-colors"
+              className="w-full text-center text-sm text-[#f5c96b]/80 transition-colors hover:text-[#ef4444]"
             >
               ← Back to Google sign up
             </button>
@@ -234,11 +215,11 @@ function RegisterForm() {
           <>
             <button
               type="button"
-              disabled={loading || comingSoon}
+              disabled={loading}
               onClick={handleGoogleSignIn}
-              className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-white/20 bg-white/5 py-3 text-sm font-semibold text-white/80 shadow-sm hover:bg-white/10 transition disabled:opacity-50 backdrop-blur-md"
+              className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-[#c9952a]/30 bg-[#1a120f] py-3 text-sm font-semibold text-[#fff7eb] shadow-sm transition hover:bg-[#231714] disabled:opacity-50"
             >
-              <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10 p-1">
+              <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/90 p-1 shadow-sm">
                 <Image
                   src="/google-logo.svg"
                   alt="Google"
@@ -247,28 +228,25 @@ function RegisterForm() {
                   className="object-contain"
                 />
               </span>
-              {comingSoon ? "🚀 በቅርቡ ይጀምራል" : "Continue with Google"}
+              Continue with Google
             </button>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-[#c9952a]/30" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-surface px-3 text-white/40">or</span>
+                <span className="bg-[#0f0b09] px-3 text-[#f5c96b]/70">or</span>
               </div>
             </div>
 
             <button
               type="button"
-              disabled={comingSoon}
-              onClick={() => {
-                if (!comingSoon) setShowEmailForm(true);
-              }}
-              className="w-full inline-flex items-center justify-center gap-2 border border-white/20 rounded-lg py-2.5 text-sm font-medium text-white/60 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-md"
+              onClick={() => setShowEmailForm(true)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#c9952a]/30 bg-[#1a120f] py-2.5 text-sm font-medium text-[#fff8eb] transition hover:bg-[#231714]"
             >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -280,16 +258,16 @@ function RegisterForm() {
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                 />
               </svg>
-              {comingSoon ? "🚀 በቅርቡ ይጀምራል" : "Sign up with Email"}
+              Sign up with Email
             </button>
           </>
         )}
 
-        <p className="text-center text-sm text-primary mt-6">
+        <p className="mt-6 text-center text-sm text-[#f5e7c4]/85">
           መለያ አለዎት?{" "}
           <Link
             href="/auth/login"
-            className="text-secondary hover:underline font-medium"
+            className="font-medium text-[#f5c96b] hover:text-[#ef4444] hover:underline"
           >
             ይግቡ
           </Link>

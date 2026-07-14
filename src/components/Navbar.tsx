@@ -15,16 +15,12 @@ interface UserInfo {
   role: string;
 }
 
-const LAUNCH_DATE =
-  process.env.NEXT_PUBLIC_COURSE_LAUNCH_DATE || "2026-07-26T00:00:00";
-
 export default function Navbar() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   // theme/toggleTheme used by ThemeSwitch child component
   const [user, setUser] = useState<UserInfo | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [comingSoon, setComingSoon] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -52,12 +48,6 @@ export default function Navbar() {
       }
     }
     setInitialized(true);
-
-    if (LAUNCH_DATE) {
-      setComingSoon(new Date(LAUNCH_DATE).getTime() > Date.now());
-    } else {
-      setComingSoon(false);
-    }
   }, []);
 
   // Keep nav in sync when user logs in/out (cross-tab)
@@ -418,18 +408,12 @@ export default function Navbar() {
               ) : (
                 /* ── Logged Out: Get Started (Desktop) ── */
                 <div className="hidden md:flex items-center gap-3 sm:gap-6">
-                  {comingSoon ? (
-                    <span className="text-xs sm:text-sm bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-semibold whitespace-nowrap opacity-70 cursor-not-allowed">
-                      🚀 በቅርቡ
-                    </span>
-                  ) : (
-                    <Link
-                      href="/auth/register"
-                      className="text-xs sm:text-sm bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg hover:shadow-lg hover:shadow-[#dc2626]/30 hover:brightness-110 transition-all font-semibold whitespace-nowrap"
-                    >
-                      Get Started
-                    </Link>
-                  )}
+                  <Link
+                    href="/auth/register"
+                    className="text-xs sm:text-sm bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg hover:shadow-lg hover:shadow-[#dc2626]/30 hover:brightness-110 transition-all font-semibold whitespace-nowrap"
+                  >
+                    Get Started
+                  </Link>
                 </div>
               )}
             </div>
@@ -661,60 +645,47 @@ export default function Navbar() {
                 ) : (
                   /* ── Mobile: Logged Out Menu ─────────── */
                   <>
-                    {comingSoon ? (
-                      <>
-                        <div className="px-4 py-3 text-center">
-                          <span className="inline-flex items-center gap-2 text-xs font-semibold text-[#ef4444] bg-black/40 px-3 py-1.5 rounded-full border border-[#ef4444]/20">
-                            <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
-                            🚀 Adony TikTok Academy በቅርቡ ይጀምራል
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <MobileMenuItem
-                          href="/auth/login"
-                          icon={
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                              />
-                            </svg>
-                          }
-                          label="Sign In"
-                          onClick={() => setMobileMenuOpen(false)}
-                        />
-                        <MobileMenuItem
-                          href="/auth/register"
-                          icon={
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                              />
-                            </svg>
-                          }
-                          label="Create Account"
-                          highlight
-                          onClick={() => setMobileMenuOpen(false)}
-                        />
-                      </>
-                    )}
+                    <MobileMenuItem
+                      href="/auth/login"
+                      icon={
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                          />
+                        </svg>
+                      }
+                      label="Sign In"
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                    <MobileMenuItem
+                      href="/auth/register"
+                      icon={
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                          />
+                        </svg>
+                      }
+                      label="Create Account"
+                      highlight
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
                   </>
                 )}
               </div>
