@@ -553,25 +553,63 @@ export default function CoursesPage() {
                         {course.instructor?.fullName || "AD LMS"}
                       </span>
                     </div>
-                    <Link
-                      href={`/courses/${course.id}`}
-                      className="inline-flex items-center gap-1.5 text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/25 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#ef4444]/20 transition-colors"
-                    >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                    {isAdmin || enrolledIds.has(course.id) ? (
+                      <Link
+                        href={`/courses/${course.id}`}
+                        className="inline-flex items-center gap-1.5 text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-400/20 transition-colors"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
-                        />
-                      </svg>
-                      አሁን ይመዝገቡ
-                    </Link>
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                        </svg>
+                        Active
+                      </Link>
+                    ) : pendingCourseIds.has(course.id) ? (
+                      <span className="inline-flex items-center gap-1.5 text-amber-400 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-lg text-xs font-bold">
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
+                        Pending
+                      </span>
+                    ) : rejectedCourseIds.has(course.id) ? (
+                      <span className="inline-flex items-center gap-1.5 text-red-400 bg-red-400/10 border border-red-400/25 px-3 py-1.5 rounded-lg text-xs font-bold">
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
+                        Rejected
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/courses/${course.id}`}
+                        className="inline-flex items-center gap-1.5 text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/25 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#ef4444]/20 transition-colors"
+                      >
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                          />
+                        </svg>
+                        አሁን ይመዝገቡ
+                      </Link>
+                    )}
                   </div>
                 </div>
               </motion.div>
