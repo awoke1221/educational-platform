@@ -742,6 +742,46 @@ export default function LecturePlayerPage() {
   }
 
   // ============================================
+  // Not Enrolled
+  // ============================================
+
+  if (isEnrolled === false) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh] bg-gray-950">
+        <motion.div
+          className="text-center max-w-md mx-auto p-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="w-16 h-16 bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4 ring-1 ring-amber-500/20">
+            <svg
+              className="w-8 h-8 text-amber-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-100 mb-2">ኮርሱ አልተመዘገቡም</h2>
+          <p className="text-gray-400 mb-6">ይህን ቪዲዮ ለማየት በመጀመሪያ ለኮርሱ ይመዝገቡ።</p>
+          <Link
+            href={`/courses/${courseId}`}
+            className="bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
+          >
+            ወደ ኮርሱ ተመለስ
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ============================================
   // Error / Not Authenticated
   // ============================================
 
@@ -801,46 +841,6 @@ export default function LecturePlayerPage() {
               </Link>
             )}
           </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ============================================
-  // Not Enrolled
-  // ============================================
-
-  if (isEnrolled === false) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh] bg-gray-950">
-        <motion.div
-          className="text-center max-w-md mx-auto p-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="w-16 h-16 bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4 ring-1 ring-amber-500/20">
-            <svg
-              className="w-8 h-8 text-amber-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-gray-100 mb-2">ኮርሱ አልተመዘገቡም</h2>
-          <p className="text-gray-400 mb-6">ይህን ቪዲዮ ለማየት በመጀመሪያ ለኮርሱ ይመዝገቡ።</p>
-          <Link
-            href={`/courses/${courseId}`}
-            className="bg-gradient-to-r from-[#5c0000] to-[#a30000] text-white px-6 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#a30000]/25 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            ወደ ኮርሱ ተመለስ
-          </Link>
         </motion.div>
       </div>
     );
