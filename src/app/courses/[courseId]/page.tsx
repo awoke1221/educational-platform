@@ -14,6 +14,7 @@ interface CourseDetail {
   title: string;
   description: string;
   price: number;
+  currency?: string;
   level: string;
   category: string;
   duration: number;
