@@ -218,6 +218,9 @@ export default function CourseDetailPage() {
               <span>{course.videoCount} videos</span>
               <span>{formatDuration(course.duration)}</span>
               <span>{course.enrollmentCount} learners</span>
+              <span className="font-bold text-[#f5c96b]">
+                {course.price.toLocaleString()} {course.currency || "ETB"}
+              </span>
             </div>
             <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex flex-col gap-1">
@@ -299,8 +302,8 @@ export default function CourseDetailPage() {
                     : isAdmin
                       ? "View course"
                       : isLoggedIn
-                        ? "Pay and start learning"
-                        : "Register and pay to take course"}
+                        ? "Enroll Now"
+                        : "Register & Enroll Now"}
                 </button>
               </div>
             )}
@@ -329,18 +332,8 @@ export default function CourseDetailPage() {
             {!isEnrolled && !isAdmin ? (
               <div className="rounded-[20px] border border-dashed border-[#c9952a]/25 bg-[#140d0b]/70 py-10 text-center">
                 <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#2b2018]">
-                  <svg
-                    className="w-7 h-7 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
+                  <svg className="w-7 h-7 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/>
                   </svg>
                 </div>
                 <h3 className="mb-1 text-base font-semibold text-[#f5e7c4]">
