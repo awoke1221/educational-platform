@@ -292,7 +292,7 @@ export default function CoursesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              የእኛ{" "}
+              ያሉን{" "}
               <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                 ኮርሶች
               </span>
