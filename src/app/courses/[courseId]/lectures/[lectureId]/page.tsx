@@ -661,8 +661,7 @@ export default function LecturePlayerPage() {
   // Video source helpers (computed before early returns to keep hooks stable)
   // ============================================
 
-  const progress =
-    currentTime && duration ? (currentTime / duration) * 100 : 0;
+  const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
   const videoUrl = lecture?.hlsUrl || lecture?.videoUrl || "";
   const videoType = (() => {
     const ext = videoUrl.split(".").pop()?.split("?")[0]?.toLowerCase();

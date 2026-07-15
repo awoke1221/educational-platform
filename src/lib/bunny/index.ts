@@ -799,7 +799,8 @@ export class BunnyStreamService {
     if (!videoId) return "";
     const cdnHost = env.bunnyStream.cdnHostname;
     if (cdnHost) {
-      return `https://${cdnHost}.b-cdn.net/${videoId}/playlist.m3u8`;
+      // cdnHost is a full hostname like "vz-f7c04ae7-b2e.b-cdn.net"
+      return `https://${cdnHost}/${videoId}/playlist.m3u8`;
     }
     // Default: use iframe.mediadelivery.net
     const libraryId = env.bunnyStream.libraryId;
@@ -816,7 +817,7 @@ export class BunnyStreamService {
     if (!videoId) return "";
     const cdnHost = env.bunnyStream.cdnHostname;
     if (cdnHost) {
-      return `https://${cdnHost}.b-cdn.net/${videoId}/thumbnail.jpg`;
+      return `https://${cdnHost}/${videoId}/thumbnail.jpg`;
     }
     // Default fallback
     const libraryId = env.bunnyStream.libraryId;
