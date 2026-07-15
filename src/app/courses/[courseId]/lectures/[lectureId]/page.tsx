@@ -704,8 +704,16 @@ export default function LecturePlayerPage() {
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
           console.error("[HLS] Fatal error:", data.type, data.details);
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            hls?.startLoad();
+          // Fallback: destroy HLS and use direct video source
+          if (hls) {
+            hls.destroy();
+            hls = null;
+          }
+          // If there's a direct mp4 fallback URL, use it
+          const fallbackUrl = lecture?.videoUrl;
+          if (fallbackUrl && fallbackUrl !== videoUrl) {
+            video.src = fallbackUrl;
+            video.load();
           }
         }
       });
@@ -716,7 +724,7 @@ export default function LecturePlayerPage() {
         hls.destroy();
       }
     };
-  }, [videoUrl]);
+  }, [videoUrl, lecture?.videoUrl]);
 
   // ============================================
   // Loading State
