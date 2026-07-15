@@ -658,6 +658,67 @@ export default function LecturePlayerPage() {
   }, [isPlaying, volume]);
 
   // ============================================
+  // Video source helpers (computed before early returns to keep hooks stable)
+  // ============================================
+
+  const progress =
+    currentTime && duration ? (currentTime / duration) * 100 : 0;
+  const videoUrl = lecture?.hlsUrl || lecture?.videoUrl || "";
+  const videoType = (() => {
+    const ext = videoUrl.split(".").pop()?.split("?")[0]?.toLowerCase();
+    const mimeMap: Record<string, string> = {
+      mp4: "video/mp4",
+      webm: "video/webm",
+      ogv: "video/ogg",
+      ogg: "video/ogg",
+      mov: "video/quicktime",
+      m3u8: "application/x-mpegURL",
+    };
+    return mimeMap[ext || ""] || "video/mp4";
+  })();
+  const posterUrl = lecture?.thumbnailUrl || "";
+
+  // ============================================
+  // HLS.js initialization for Bunny Stream HLS playback
+  // ============================================
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoUrl) return;
+
+    let hls: Hls | null = null;
+    const isHlsStream =
+      videoUrl.includes(".m3u8") || videoUrl.includes("playlist.m3u8");
+
+    if (isHlsStream && Hls.isSupported()) {
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 60,
+        maxBufferLength: 60,
+      });
+      hls.loadSource(videoUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setIsBuffering(false);
+      });
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          console.error("[HLS] Fatal error:", data.type, data.details);
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hls?.startLoad();
+          }
+        }
+      });
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [videoUrl]);
+
+  // ============================================
   // Loading State
   // ============================================
 
@@ -784,73 +845,6 @@ export default function LecturePlayerPage() {
       </div>
     );
   }
-
-  // ============================================
-  // Main Player UI
-  // ============================================
-
-  const progress = currentTime && duration ? (currentTime / duration) * 100 : 0;
-  // 🐰 Bunny Stream HLS URL — adaptive bitrate streaming
-  // HLS.js handles quality switching automatically.
-  const videoUrl = lecture.hlsUrl || lecture.videoUrl || "";
-
-  // Determine video MIME type from URL extension
-  const videoType = (() => {
-    const ext = videoUrl.split(".").pop()?.split("?")[0]?.toLowerCase();
-    const mimeMap: Record<string, string> = {
-      mp4: "video/mp4",
-      webm: "video/webm",
-      ogv: "video/ogg",
-      ogg: "video/ogg",
-      mov: "video/quicktime",
-      m3u8: "application/x-mpegURL",
-    };
-    return mimeMap[ext || ""] || "video/mp4";
-  })();
-
-  // Bunny Stream thumbnail URL for poster
-  const posterUrl = lecture.thumbnailUrl || "";
-
-  // ============================================
-  // HLS.js initialization for Bunny Stream HLS playback
-  // ============================================
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !videoUrl) return;
-
-    let hls: Hls | null = null;
-    const isHlsStream =
-      videoUrl.includes(".m3u8") || videoUrl.includes("playlist.m3u8");
-
-    if (isHlsStream && Hls.isSupported()) {
-      hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 60,
-        maxBufferLength: 60,
-      });
-      hls.loadSource(videoUrl);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setIsBuffering(false);
-      });
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) {
-          console.error("[HLS] Fatal error:", data.type, data.details);
-          // Try to recover or fall back to source elements
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            hls?.startLoad();
-          }
-        }
-      });
-    }
-
-    return () => {
-      if (hls) {
-        hls.destroy();
-      }
-    };
-  }, [videoUrl]);
 
   return (
     <div className="min-h-screen bg-gray-950">
