@@ -163,6 +163,7 @@ export default function DashboardPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [inPersonRegistrations, setInPersonRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
 
@@ -195,8 +196,11 @@ export default function DashboardPage() {
       authFetchJson("/api/user/profile", { method: "GET" }).then(
         (result) => result.data,
       ),
+      authFetchJson("/api/in-person-training", { method: "GET" }).then(
+        (result) => result.data,
+      ),
     ])
-      .then(([enr, st, profileResult]) => {
+      .then(([enr, st, profileResult, inPersonResult]) => {
         setEnrollments(enr.data?.data || []);
         setStats(st.data);
 
@@ -205,6 +209,8 @@ export default function DashboardPage() {
         if (userData) {
           setProfile(userData);
         }
+
+        setInPersonRegistrations(inPersonResult?.data || []);
       })
       .catch(() => {
         if (fallbackProfile) {
@@ -400,6 +406,47 @@ export default function DashboardPage() {
             </div>
           </div>
         </motion.div>
+
+        {inPersonRegistrations.length > 0 && (
+          <div className="mb-8 rounded-[24px] border border-[#c9952a]/20 bg-[#140d0b]/90 p-5 shadow-[0_16px_48px_rgba(0,0,0,0.22)]">
+            <h2 className="mb-4 text-lg font-semibold text-[#f5c96b]">
+              In-person training status
+            </h2>
+            <div className="space-y-3">
+              {inPersonRegistrations.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-[18px] border border-[#c9952a]/20 bg-[#1a120d] p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {item.course_id || "In-person training"}
+                      </p>
+                      <p className="text-xs text-[#f5e7c4]/70">
+                        Status: {item.registration_status || "Pending"}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-[#2b2018] px-3 py-1 text-xs text-[#f5e7c4]">
+                      {item.payment_status || "Pending"}
+                    </span>
+                  </div>
+                  {item.coupon_code ? (
+                    <div className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                      <p className="font-semibold">Your coupon code</p>
+                      <p className="mt-1 font-mono">{item.coupon_code}</p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[#f5e7c4]/70">
+                      Your payment is being reviewed. Once approved, your coupon
+                      code will appear here.
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards */}
         {stats && (

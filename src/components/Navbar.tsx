@@ -201,6 +201,12 @@ export default function Navbar() {
               >
                 FAQ
               </Link>
+              <Link
+                href="/in-person-training"
+                className="text-xs sm:text-sm text-[#f5c96b] hover:text-[#ef4444] transition-colors font-semibold relative after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-0 after:bg-[#ef4444] after:transition-all after:duration-300 hover:after:w-full"
+              >
+                In-Person Training
+              </Link>
 
               {/* ── Theme Toggle (Desktop) ─────────────── */}
               <ThemeSwitch />
@@ -477,6 +483,27 @@ export default function Navbar() {
                     </svg>
                   }
                   label="FAQ"
+                  badge="New"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+                <MobileMenuItem
+                  href="/in-person-training"
+                  icon={
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"
+                      />
+                    </svg>
+                  }
+                  label="In-Person Training"
                   badge="New"
                   onClick={() => setMobileMenuOpen(false)}
                 />
