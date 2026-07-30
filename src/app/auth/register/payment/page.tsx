@@ -1,10 +1,9 @@
 "use client";
+import Image from "next/image";
 import { Suspense, useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authFetchJson } from "@/lib/utils/auth-fetch";
 import { cachedFetch, cachedAuthFetchJson } from "@/lib/utils/cache";
-import { SegmentedToggle } from "@/components/toggle";
-import type { SegmentedOption } from "@/components/toggle";
 
 function PaymentForm() {
   const router = useRouter();
@@ -29,8 +28,13 @@ function PaymentForm() {
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(
     queryUserId,
   );
-  const [loadingUser, setLoadingUser] = useState(!queryUserId);
-  const [token, setToken] = useState<string>("");
+  const [token] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("token") || "";
+  });
+  const [loadingUser, setLoadingUser] = useState<boolean>(
+    !!queryUserId || Boolean(token),
+  );
   const [course, setCourse] = useState<{
     id: string;
     title: string;
@@ -45,7 +49,7 @@ function PaymentForm() {
     pendingReceiptUrl?: string | null;
   } | null>(null);
   const [courseStatus, setCourseStatus] = useState<
-    "active" | "processing" | "none"
+    "active" | "processing" | "rejected" | "none"
   >("none");
   const [fullName, setFullName] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
@@ -55,9 +59,9 @@ function PaymentForm() {
     "type-selection",
   );
   const [success, setSuccess] = useState(false);
+  const [showRejectedNotice, setShowRejectedNotice] = useState(true);
 
   useEffect(() => {
-    setToken(localStorage.getItem("token") || "");
     return () => {
       if (revokeRef.current) {
         URL.revokeObjectURL(revokeRef.current);
@@ -68,7 +72,6 @@ function PaymentForm() {
 
   useEffect(() => {
     if (!token && !queryUserId) {
-      setLoadingUser(false);
       return;
     }
 
@@ -119,23 +122,39 @@ function PaymentForm() {
                 { method: "GET" },
                 15_000,
               );
-              const items =
+              type EnrollmentItem = {
+                courseId?: string;
+                course?: { id?: string };
+                status?: string;
+              };
+              const items: EnrollmentItem[] =
                 enrResult.data?.data?.data ||
                 enrResult.data?.data ||
                 enrResult.data ||
                 [];
               const active = items.some(
-                (e: any) =>
+                (e) =>
                   (e.courseId || e.course?.id) === courseId &&
                   e.status === "active",
               );
+              const rejected = items.some(
+                (e) =>
+                  (e.courseId || e.course?.id) === courseId &&
+                  e.status === "rejected",
+              );
               const processing = items.some(
-                (e: any) =>
+                (e) =>
                   (e.courseId || e.course?.id) === courseId &&
                   e.status === "processing",
               );
               setCourseStatus(
-                active ? "active" : processing ? "processing" : "none",
+                active
+                  ? "active"
+                  : rejected
+                    ? "rejected"
+                    : processing
+                      ? "processing"
+                      : "none",
               );
             })(),
           );
@@ -208,20 +227,27 @@ function PaymentForm() {
     : "Selected course";
   const isPending = courseStatus === "processing";
   const isActive = courseStatus === "active";
+  const isRejected = courseStatus === "rejected";
+  const showStatusOnly =
+    !success && (isActive || isPending || (isRejected && showRejectedNotice));
 
   const statusLabel =
     courseStatus === "active"
       ? "Active access"
       : courseStatus === "processing"
         ? "Pending approval"
-        : "Receipt required";
+        : courseStatus === "rejected"
+          ? "Payment rejected"
+          : "Receipt required";
 
   const statusColor =
     courseStatus === "active"
       ? "bg-emerald-100 text-emerald-800"
       : courseStatus === "processing"
         ? "bg-amber-100 text-amber-800"
-        : "bg-slate-100 text-slate-800";
+        : courseStatus === "rejected"
+          ? "bg-red-100 text-red-800"
+          : "bg-slate-100 text-slate-800";
 
   const handleFile = (f: File | null) => {
     setError(null);
@@ -245,9 +271,9 @@ function PaymentForm() {
     setFile(f);
   };
 
-  const proceedToDetails = () => {
-    if (!paymentType) return;
+  const proceedToDetails = (type: "local" | "diaspora") => {
     setError(null);
+    setPaymentType(type);
     setStep("details");
   };
 
@@ -298,7 +324,7 @@ function PaymentForm() {
         }
       };
       reader.readAsDataURL(file);
-    } catch (err) {
+    } catch {
       setError("Upload failed. Try again.");
     } finally {
       setLoading(false);
@@ -362,11 +388,13 @@ function PaymentForm() {
               ? "🎉 You already have access to this course. Continue learning from your dashboard."
               : courseStatus === "processing"
                 ? "⏳ Your receipt is under review. Admin approval is required before course access becomes active."
-                : queryUserId
-                  ? "📋 Complete payment for your new registration by uploading a receipt."
-                  : "🔒 Select a payment method, upload your receipt, and our admin team will review it."}
+                : courseStatus === "rejected"
+                  ? "Unfortunately, your submitted payment receipt was rejected by our team. Please upload a new receipt or contact support for assistance."
+                  : queryUserId
+                    ? "📋 Complete payment for your new registration by uploading a receipt."
+                    : "🔒 Select a payment method, upload your receipt, and our admin team will review it."}
           </p>
-          {(courseStatus === "active" || courseStatus === "processing") && (
+          {(courseStatus === "active" || courseStatus === "processing" || courseStatus === "rejected") && (
             <div className="mt-4 rounded-lg bg-slate-900 p-4 border border-slate-600">
               <p className="font-semibold text-accent mb-2">
                 Current course status
@@ -374,7 +402,9 @@ function PaymentForm() {
               <p className="text-slate-300 text-sm">
                 {courseStatus === "active"
                   ? "✅ You have active access to this course. Open the course page to continue learning immediately."
-                  : "⏱️ Your receipt submission is pending review. Admin approval is required before course access becomes active."}
+                  : courseStatus === "processing"
+                    ? "⏱️ Your receipt submission is pending review. Admin approval is required before course access becomes active."
+                    : "❌ Your payment receipt was rejected. Upload a new receipt to continue or contact support if you need help."}
               </p>
             </div>
           )}
@@ -508,111 +538,195 @@ function PaymentForm() {
               </button>
             </div>
           </div>
-        ) : step === "type-selection" ? (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <p className="text-slate-300 text-lg font-semibold">
-                How would you like to pay?
-              </p>
-              <p className="text-slate-400 text-sm mt-2">
-                Select your payment location to continue
+        ) : showStatusOnly ? (
+          <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-700 p-8 backdrop-blur animate-fadeIn">
+            <div className="text-center mb-6">
+              <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg ${
+                isRejected
+                  ? "bg-red-500 shadow-red-500/30"
+                  : "bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-emerald-500/30"
+              }`}>
+                <svg
+                  className="w-10 h-10"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  {isRejected ? (
+                    <path d="M6.343 6.343l11.314 11.314m0-11.314L6.343 17.657" />
+                  ) : (
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                  )}
+                </svg>
+              </div>
+              <h2 className={`text-2xl font-bold mb-1 ${isRejected ? "text-red-100" : "text-emerald-100"}`}>
+                {isRejected
+                  ? "🚫 Payment Not Approved"
+                  : isActive
+                    ? "🎉 Payment Approved"
+                    : "⏳ Payment Pending Review"}
+              </h2>
+              <p className={`text-sm ${isRejected ? "text-red-200/80" : "text-emerald-200/80"}`}>
+                {isRejected
+                  ? "Our team reviewed your submission and did not approve the payment. Please re-submit a valid receipt or contact support for help."
+                  : isActive
+                    ? "Your payment has been approved and your course access is now active."
+                    : isRejected
+                    ? "Your payment receipt was rejected by our team. Please upload a corrected receipt or contact support for assistance."
+                    : "Your receipt is under review. We will notify you once approval is complete."}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Local Payment Option */}
+            <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 p-6 mb-6 space-y-4">
+              <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">
+                📄 Payment Summary
+              </p>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-600/50">
+                <span className="text-slate-400 text-sm">👤 Student Name</span>
+                <span className="text-white font-semibold text-sm text-right">
+                  {fullName || profile?.fullName || "—"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-600/50">
+                <span className="text-slate-400 text-sm">📚 Course</span>
+                <span className="text-white font-semibold text-sm text-right">
+                  {course?.title || "Selected Course"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-600/50">
+                <span className="text-slate-400 text-sm">💰 Amount</span>
+                <span className="text-accent font-bold text-lg">
+                  {(course?.currency || "ETB") + " " + (course?.price ?? "—")}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2">
+                <span className="text-slate-400 text-sm">📊 Status</span>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                  isActive
+                    ? "bg-emerald-900/30 border border-emerald-600/50 text-emerald-300"
+                    : isRejected
+                      ? "bg-red-900/30 border border-red-600/50 text-red-300"
+                      : "bg-amber-900/40 border border-amber-600/50 text-amber-300"
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${
+                    isRejected
+                      ? "bg-red-400"
+                      : "bg-amber-400"
+                  } animate-pulse`}></span>
+                  {isActive ? "Approved" : isRejected ? "Rejected" : "Reviewing"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-3 flex-wrap">
               <button
-                onClick={() => {
-                  setPaymentType("local");
-                  proceedToDetails();
-                }}
-                className="group relative p-6 rounded-2xl border-2 border-slate-600 bg-gradient-to-br from-slate-800 to-slate-700 hover:border-accent hover:shadow-lg hover:shadow-accent/20 transition-all duration-300 text-left"
+                onClick={() => router.push(redirectTo as string)}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full font-semibold hover:shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-300"
+              >
+                ← Back to Dashboard
+              </button>
+              {isRejected ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRejectedNotice(false);
+                    setCourseStatus("none");
+                    setStep("type-selection");
+                    setPaymentType(null);
+                    setMessage(null);
+                    setError(null);
+                  }}
+                  className="px-6 py-3 border-2 border-red-500 text-red-300 rounded-full font-semibold hover:bg-red-500/10 transition-all duration-300 w-full sm:w-auto"
+                >
+                  Upload New Receipt
+                </button>
+              ) : isActive ? (
+                <button
+                  onClick={() => router.push(`/courses/${courseId}`)}
+                  className="px-6 py-3 border-2 border-emerald-500 text-emerald-300 rounded-full font-semibold hover:bg-emerald-500/10 transition-all duration-300"
+                >
+                  Open Course
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : step === "type-selection" ? (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <p className="text-slate-100 text-2xl font-semibold sm:text-3xl">
+                Choose your payment channel
+              </p>
+              <p className="mx-auto mt-3 max-w-2xl text-slate-400 sm:text-base leading-7">
+                Select the most convenient payment route for your location, then upload your receipt for verification. The process is secure, fast, and handled by our team.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => proceedToDetails("local")}
+                className="group w-full relative flex min-h-[150px] flex-col justify-between rounded-[28px] border border-slate-700 bg-slate-950/95 p-5 text-left shadow-xl shadow-slate-900/20 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-accent hover:bg-slate-900"
               >
                 <div className="flex items-start gap-4">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full text-white group-hover:scale-110 transition-transform">
+                  <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-400 to-amber-500 text-white transition-transform duration-200 group-hover:scale-105">
                     <svg
-                      className="w-7 h-7"
+                      className="h-7 w-7"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
                     </svg>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-1">
-                      Local Payment
-                    </h3>
-                    <p className="text-slate-400 text-sm">
-                      Pay within Ethiopia using Telebirr or CBE Birr
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">Local Payment</h3>
+                    <p className="mt-2 text-sm text-slate-400">
+                      Pay within Ethiopia using Telebirr or CBE Birr.
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 text-right">
-                  <svg
-                    className="w-6 h-6 text-accent inline-block group-hover:translate-x-1 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
+
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent">
+                  Continue with local payment
+                </span>
               </button>
 
-              {/* Diaspora Payment Option */}
               <button
-                onClick={() => {
-                  setPaymentType("diaspora");
-                  proceedToDetails();
-                }}
-                className="group relative p-6 rounded-2xl border-2 border-slate-600 bg-gradient-to-br from-slate-800 to-slate-700 hover:border-accent hover:shadow-lg hover:shadow-accent/20 transition-all duration-300 text-left"
+                type="button"
+                onClick={() => proceedToDetails("diaspora")}
+                className="group w-full relative flex min-h-[150px] flex-col justify-between rounded-[28px] border border-slate-700 bg-slate-950/95 p-5 text-left shadow-xl shadow-slate-900/20 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-accent hover:bg-slate-900"
               >
                 <div className="flex items-start gap-4">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full text-white group-hover:scale-110 transition-transform">
+                  <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-400 to-blue-500 text-white transition-transform duration-200 group-hover:scale-105">
                     <svg
-                      className="w-7 h-7"
+                      className="h-7 w-7"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                     </svg>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-1">
-                      Diaspora Payment
-                    </h3>
-                    <p className="text-slate-400 text-sm">
-                      Pay internationally using PayPal or Credit Card
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">Diaspora Payment</h3>
+                    <p className="mt-2 text-sm text-slate-400">
+                      Pay internationally using PayPal or Credit Card.
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 text-right">
-                  <svg
-                    className="w-6 h-6 text-accent inline-block group-hover:translate-x-1 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
+
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent">
+                  Continue with international payment
+                </span>
               </button>
             </div>
 
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => router.push(redirectTo as string)}
-                className="px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 transition-all duration-300 font-semibold w-full"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-6 py-3 text-sm font-semibold text-slate-300 transition duration-200 hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -681,10 +795,13 @@ function PaymentForm() {
                         </span>
                       </p>
                       <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-slate-600 inline-block">
-                        <img
+                        <Image
                           src="/telebirr qrcode.jpeg"
                           alt="telebirr-qr"
-                          className="w-48 h-48 object-contain"
+                          width={192}
+                          height={192}
+                          className="object-contain"
+                          unoptimized
                         />
                       </div>
                     </div>
@@ -738,8 +855,9 @@ function PaymentForm() {
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
+                    type="button"
                     onClick={() => setDiasporaChannel("paypal")}
-                    className={`p-4 rounded-lg border-2 transition-all duration-300 text-left ${
+                    className={`p-5 rounded-3xl border-2 transition-all duration-200 text-left ${
                       diasporaChannel === "paypal"
                         ? "border-accent bg-accent/10"
                         : "border-slate-600 bg-slate-800/50 hover:border-slate-500"
@@ -753,8 +871,9 @@ function PaymentForm() {
                     </p>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setDiasporaChannel("creditcard")}
-                    className={`p-4 rounded-lg border-2 transition-all duration-300 text-left ${
+                    className={`p-5 rounded-3xl border-2 transition-all duration-200 text-left ${
                       diasporaChannel === "creditcard"
                         ? "border-accent bg-accent/10"
                         : "border-slate-600 bg-slate-800/50 hover:border-slate-500"
@@ -795,10 +914,13 @@ function PaymentForm() {
                         </span>
                       </p>
                       <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-slate-600 inline-block">
-                        <img
+                        <Image
                           src="/paypal qrcode.png"
                           alt="paypal-qr"
-                          className="w-48 h-48 object-contain"
+                          width={192}
+                          height={192}
+                          className="object-contain"
+                          unoptimized
                         />
                       </div>
                     </div>
@@ -956,10 +1078,13 @@ function PaymentForm() {
                 <div className="mt-4 space-y-4">
                   {/* Image Preview */}
                   <div className="rounded-xl border-2 border-slate-600 bg-slate-900 overflow-hidden">
-                    <img
-                      src={filePreviewUrl ?? undefined}
+                    <Image
+                      src={filePreviewUrl ?? ""}
                       alt="Receipt preview"
+                      width={720}
+                      height={360}
                       className="w-full max-h-72 object-contain p-2"
+                      unoptimized
                     />
                   </div>
                   {/* File Info */}
