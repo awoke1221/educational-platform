@@ -65,7 +65,9 @@ export default function AdminInPersonTrainingPage() {
               : "Registration approved."
             : "Registration rejected.",
         );
-        await loadData();
+        setRegistrations((prev) =>
+          prev.filter((item) => item.id !== registrationId),
+        );
       } else {
         setError(result.data?.error || "Unable to update registration");
       }

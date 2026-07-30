@@ -854,7 +854,7 @@ export default function LecturePlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="h-screen bg-gray-950 flex flex-col overflow-hidden">
       {/* Mini progress bar at top of page */}
       <div className="fixed top-0 left-0 right-0 h-[3px] bg-gray-800 z-50">
         <motion.div
@@ -932,14 +932,14 @@ export default function LecturePlayerPage() {
         </div>
       </motion.div>
 
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
         {/* ============================================ */}
         {/* Video Player Section */}
         {/* ============================================ */}
-        <div className="flex-1 lg:max-w-[calc(100%-380px)]">
+        <div className="flex-1 flex flex-col lg:min-w-0">
           <div
             ref={containerRef}
-            className="relative bg-black group max-h-[50vh] overflow-hidden rounded-xl"
+            className="relative bg-black group flex-1 flex flex-col min-h-0"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => isPlaying && setShowControls(false)}
           >
@@ -952,7 +952,8 @@ export default function LecturePlayerPage() {
             {/* Video Element */}
             <video
               ref={videoRef}
-              className="w-full h-full object-contain cursor-pointer relative z-10"
+              className="w-full h-full object-contain cursor-pointer relative z-10 min-h-0"
+              style={{ maxHeight: "100%", maxWidth: "100%" }}
               poster={posterUrl || undefined}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
@@ -1345,122 +1346,117 @@ export default function LecturePlayerPage() {
           </div>
 
           {/* ============================================ */}
-          {/* Lecture Info */}
+          {/* Lecture Info & Navigation (below player) */}
           {/* ============================================ */}
-          <motion.div
-            className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-800"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="flex items-start justify-between gap-4">
+          <div className="bg-gray-900/95 backdrop-blur-sm border-t border-gray-800/50 px-4 sm:px-6 py-3 flex-shrink-0">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h2 className="text-sm sm:text-base font-semibold text-white truncate">
                   {lecture.title}
                 </h2>
                 {lecture.description && (
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 whitespace-pre-line leading-relaxed">
+                  <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">
                     {lecture.description}
                   </p>
                 )}
               </div>
+              <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+                {/* Progress bar */}
+                <div className="hidden sm:flex items-center gap-2">
+                  <div className="w-20 bg-gray-800 rounded-full h-1.5">
+                    <motion.div
+                      className={`h-1.5 rounded-full ${
+                        isCompleted
+                          ? "bg-green-500"
+                          : "bg-gradient-to-r from-[#a30000] to-[#c9952a]"
+                      }`}
+                      style={{ width: `${Math.min(progress, 100)}%` }}
+                      layout
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-400 tabular-nums">
+                    {Math.round(progress)}%
+                  </span>
+                </div>
+                {isCompleted && (
+                  <span className="text-[11px] bg-green-900/40 text-green-400 px-2 py-0.5 rounded-full border border-green-800/50 font-medium flex-shrink-0">
+                    ✓ ተጠናቋል
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Progress Indicator */}
-            <div className="mt-4 flex items-center gap-3">
-              <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-2 max-w-xs">
-                <motion.div
-                  className={`h-2 rounded-full ${
-                    isCompleted
-                      ? "bg-green-500"
-                      : "bg-gradient-to-r from-secondary to-accent"
-                  }`}
-                  style={{ width: `${Math.min(progress, 100)}%` }}
-                  layout
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-                {Math.round(progress)}%
-              </span>
-              {isCompleted && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full font-medium"
+            {/* Prev / Next Navigation */}
+            <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-800/50">
+              {prevLecture ? (
+                <Link
+                  href={`/courses/${courseId}/lectures/${prevLecture.id}`}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors group min-w-0"
                 >
-                  ተጠናቋል
-                </motion.span>
+                  <svg
+                    className="w-3.5 h-3.5 flex-shrink-0 group-hover:-translate-x-0.5 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span className="truncate max-w-[100px] sm:max-w-[200px]">
+                    {prevLecture.title}
+                  </span>
+                </Link>
+              ) : (
+                <div />
+              )}
+
+              <Link
+                href={`/progress/${courseId}`}
+                className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors px-2 py-1 rounded hover:bg-gray-800 flex-shrink-0"
+              >
+                እድገት
+              </Link>
+
+              {nextLecture ? (
+                <Link
+                  href={`/courses/${courseId}/lectures/${nextLecture.id}`}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors group min-w-0"
+                >
+                  <span className="truncate max-w-[100px] sm:max-w-[200px]">
+                    {nextLecture.title}
+                  </span>
+                  <svg
+                    className="w-3.5 h-3.5 flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </Link>
+              ) : (
+                <div />
               )}
             </div>
-          </motion.div>
-
-          {/* ============================================ */}
-          {/* Prev / Next Navigation */}
-          {/* ============================================ */}
-          <div className="bg-white dark:bg-gray-900 px-4 sm:px-6 py-4 flex items-center justify-between gap-3 border-b border-gray-200 dark:border-gray-800">
-            {prevLecture ? (
-              <Link
-                href={`/courses/${courseId}/lectures/${prevLecture.id}`}
-                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-secondary transition-colors group"
-              >
-                <svg
-                  className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                <span className="hidden sm:inline">ያለፈው</span>
-                <span className="truncate max-w-[120px] sm:max-w-[200px]">
-                  {prevLecture.title}
-                </span>
-              </Link>
-            ) : (
-              <div />
-            )}
-
-            {nextLecture ? (
-              <Link
-                href={`/courses/${courseId}/lectures/${nextLecture.id}`}
-                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-secondary transition-colors group"
-              >
-                <span className="truncate max-w-[120px] sm:max-w-[200px]">
-                  {nextLecture.title}
-                </span>
-                <span className="hidden sm:inline">ቀጣይ</span>
-                <svg
-                  className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </Link>
-            ) : (
-              <div />
-            )}
           </div>
         </div>
 
         {/* ============================================ */}
         {/* Lecture Sidebar */}
         {/* ============================================ */}
-        <div className="w-full lg:w-[380px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 lg:min-h-screen">
-          <div className="sticky top-0">
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div className="w-full lg:w-[400px] lg:min-w-[400px] bg-white dark:bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 flex flex-col max-h-[40vh] lg:max-h-none">
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
                 የኮርሱ ምዕራፎች
               </h3>
@@ -1468,7 +1464,7 @@ export default function LecturePlayerPage() {
                 {lectures?.lectures.length || 0} ምዕራፎች
               </p>
             </div>
-            <div className="overflow-y-auto max-h-[calc(100vh-120px)]">
+            <div className="overflow-y-auto flex-1">
               {lectures?.lectures.map((lec, i) => {
                 const isActive = lec.id === lectureId;
                 const lecProgress = lectures.progress[lec.id];
