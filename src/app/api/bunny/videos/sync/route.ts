@@ -66,35 +66,23 @@ function extractGroupInfo(
 
   // Check for keyword-based groups
   const keywordGroups: [RegExp, string][] = [
-    /intro/i,
-    "Introduction",
-    /setup|install/i,
-    "Setup",
-    /basic|beginner|starter/i,
-    "Basics",
-    /advanced|expert|pro/i,
-    "Advanced",
-    /tips?|trick|hack/i,
-    "Tips & Tricks",
-    /tutorial|guide|how.?to/i,
-    "Tutorials",
-    /strategy|plan/i,
-    "Strategies",
-    /content|creation|create/i,
-    "Content Creation",
-    /edit/i,
-    "Editing",
-    /analytics|insight/i,
-    "Analytics",
-    /promot|market|grow/i,
-    "Promotion & Growth",
-    /monetiz|earn|money/i,
-    "Monetization",
+    [/intro/i, "Introduction"],
+    [/setup|install/i, "Setup"],
+    [/basic|beginner|starter/i, "Basics"],
+    [/advanced|expert|pro/i, "Advanced"],
+    [/tips?|trick|hack/i, "Tips & Tricks"],
+    [/tutorial|guide|how.?to/i, "Tutorials"],
+    [/strategy|plan/i, "Strategies"],
+    [/content|creation|create/i, "Content Creation"],
+    [/edit/i, "Editing"],
+    [/analytics|insight/i, "Analytics"],
+    [/promot|market|grow/i, "Promotion & Growth"],
+    [/monetiz|earn|money/i, "Monetization"],
   ];
 
-  for (let i = 0; i < keywordGroups.length; i += 2) {
-    if (keywordGroups[i].test(title)) {
-      return { group: keywordGroups[i + 1], order: null };
+  for (const [pattern, group] of keywordGroups) {
+    if (pattern.test(title)) {
+      return { group, order: null };
     }
   }
 
