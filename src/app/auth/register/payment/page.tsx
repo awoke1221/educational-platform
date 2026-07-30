@@ -290,40 +290,54 @@ function PaymentForm() {
     setStep("receipt");
   };
 
+  const readFileAsDataUrl = (file: File) => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result !== "string") {
+          reject(new Error("Unable to read file"));
+          return;
+        }
+        const base64 = result.split(",")[1];
+        if (!base64) {
+          reject(new Error("Unable to read file"));
+          return;
+        }
+        resolve(base64);
+      };
+      reader.onerror = () => reject(new Error("Unable to read file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const uploadReceipt = async () => {
     if (!file) return setError("Please select a receipt image");
     setLoading(true);
     setError(null);
     try {
       const channel = paymentType === "local" ? localChannel : diasporaChannel;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(",")[1];
-        const res = await fetch(
-          `/api/registrations/${resolvedUserId}/receipt`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              paymentMethod: paymentType,
-              paymentChannel: channel,
-              filename: file.name,
-              fileBase64: base64,
-              courseId,
-              fullName: fullName.trim(),
-              phoneNumber: phoneNumber.trim(),
-            }),
-          },
-        );
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.error || "Upload failed");
-        } else {
-          setMessage("success");
-          setSuccess(true);
-        }
-      };
-      reader.readAsDataURL(file);
+      const base64 = await readFileAsDataUrl(file);
+      const res = await fetch(`/api/registrations/${resolvedUserId}/receipt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentMethod: paymentType,
+          paymentChannel: channel,
+          filename: file.name,
+          fileBase64: base64,
+          courseId,
+          fullName: fullName.trim(),
+          phoneNumber: phoneNumber.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Upload failed");
+        return;
+      }
+      setMessage("success");
+      setSuccess(true);
     } catch {
       setError("Upload failed. Try again.");
     } finally {
@@ -343,72 +357,78 @@ function PaymentForm() {
       </div>
 
       <div className="w-full max-w-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-700 relative z-10">
-        {/* Header with icon */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent to-secondary rounded-full mb-4">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent mb-2">
-            Complete Payment
-          </h1>
-          <p className="text-slate-300">
-            Secure payment to unlock your learning journey
-          </p>
-        </div>
+        {!success && !showStatusOnly && (
+          <>
+            {/* Header with icon */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent to-secondary rounded-full mb-4">
+                <svg
+                  className="w-8 h-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent mb-2">
+                Complete Payment
+              </h1>
+              <p className="text-slate-300">
+                Secure payment to unlock your learning journey
+              </p>
+            </div>
 
-        {/* Course info card */}
-        <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 p-6 mb-6 backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <div>
-              <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">
-                Course Details
-              </p>
-              <p className="font-bold text-white text-lg">{courseLabel}</p>
-            </div>
-            <span
-              className={`inline-flex rounded-full px-4 py-2 text-xs font-bold ${statusColor}`}
-            >
-              {statusLabel}
-            </span>
-          </div>
-          <p className="text-slate-300 text-sm leading-relaxed">
-            {courseStatus === "active"
-              ? "🎉 You already have access to this course. Continue learning from your dashboard."
-              : courseStatus === "processing"
-                ? "⏳ Your receipt is under review. Admin approval is required before course access becomes active."
-                : courseStatus === "rejected"
-                  ? "Unfortunately, your submitted payment receipt was rejected by our team. Please upload a new receipt or contact support for assistance."
-                  : queryUserId
-                    ? "📋 Complete payment for your new registration by uploading a receipt."
-                    : "🔒 Select a payment method, upload your receipt, and our admin team will review it."}
-          </p>
-          {(courseStatus === "active" || courseStatus === "processing" || courseStatus === "rejected") && (
-            <div className="mt-4 rounded-lg bg-slate-900 p-4 border border-slate-600">
-              <p className="font-semibold text-accent mb-2">
-                Current course status
-              </p>
-              <p className="text-slate-300 text-sm">
+            {/* Course info card */}
+            <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 p-6 mb-6 backdrop-blur">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <div>
+                  <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">
+                    Course Details
+                  </p>
+                  <p className="font-bold text-white text-lg">{courseLabel}</p>
+                </div>
+                <span
+                  className={`inline-flex rounded-full px-4 py-2 text-xs font-bold ${statusColor}`}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed">
                 {courseStatus === "active"
-                  ? "✅ You have active access to this course. Open the course page to continue learning immediately."
+                  ? "🎉 You already have access to this course. Continue learning from your dashboard."
                   : courseStatus === "processing"
-                    ? "⏱️ Your receipt submission is pending review. Admin approval is required before course access becomes active."
-                    : "❌ Your payment receipt was rejected. Upload a new receipt to continue or contact support if you need help."}
+                    ? "⏳ Your receipt is under review. Admin approval is required before course access becomes active."
+                    : courseStatus === "rejected"
+                      ? "Unfortunately, your submitted payment receipt was rejected by our team. Please upload a new receipt or contact support for assistance."
+                      : queryUserId
+                        ? "📋 Complete payment for your new registration by uploading a receipt."
+                        : "🔒 Select a payment method, upload your receipt, and our admin team will review it."}
               </p>
+              {(courseStatus === "active" ||
+                courseStatus === "processing" ||
+                courseStatus === "rejected") && (
+                <div className="mt-4 rounded-lg bg-slate-900 p-4 border border-slate-600">
+                  <p className="font-semibold text-accent mb-2">
+                    Current course status
+                  </p>
+                  <p className="text-slate-300 text-sm">
+                    {courseStatus === "active"
+                      ? "✅ You have active access to this course. Open the course page to continue learning immediately."
+                      : courseStatus === "processing"
+                        ? "⏱️ Your receipt submission is pending review. Admin approval is required before course access becomes active."
+                        : "❌ Your payment receipt was rejected. Upload a new receipt to continue or contact support if you need help."}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
         {success ? (
           <div className="rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 border border-emerald-700 p-8 backdrop-blur animate-fadeIn">
@@ -541,11 +561,13 @@ function PaymentForm() {
         ) : showStatusOnly ? (
           <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-700 p-8 backdrop-blur animate-fadeIn">
             <div className="text-center mb-6">
-              <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg ${
-                isRejected
-                  ? "bg-red-500 shadow-red-500/30"
-                  : "bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-emerald-500/30"
-              }`}>
+              <div
+                className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg ${
+                  isRejected
+                    ? "bg-red-500 shadow-red-500/30"
+                    : "bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-emerald-500/30"
+                }`}
+              >
                 <svg
                   className="w-10 h-10"
                   fill="currentColor"
@@ -558,21 +580,25 @@ function PaymentForm() {
                   )}
                 </svg>
               </div>
-              <h2 className={`text-2xl font-bold mb-1 ${isRejected ? "text-red-100" : "text-emerald-100"}`}>
+              <h2
+                className={`text-2xl font-bold mb-1 ${isRejected ? "text-red-100" : "text-emerald-100"}`}
+              >
                 {isRejected
                   ? "🚫 Payment Not Approved"
                   : isActive
                     ? "🎉 Payment Approved"
                     : "⏳ Payment Pending Review"}
               </h2>
-              <p className={`text-sm ${isRejected ? "text-red-200/80" : "text-emerald-200/80"}`}>
+              <p
+                className={`text-sm ${isRejected ? "text-red-200/80" : "text-emerald-200/80"}`}
+              >
                 {isRejected
                   ? "Our team reviewed your submission and did not approve the payment. Please re-submit a valid receipt or contact support for help."
                   : isActive
                     ? "Your payment has been approved and your course access is now active."
                     : isRejected
-                    ? "Your payment receipt was rejected by our team. Please upload a corrected receipt or contact support for assistance."
-                    : "Your receipt is under review. We will notify you once approval is complete."}
+                      ? "Your payment receipt was rejected by our team. Please upload a corrected receipt or contact support for assistance."
+                      : "Your receipt is under review. We will notify you once approval is complete."}
               </p>
             </div>
 
@@ -604,19 +630,25 @@ function PaymentForm() {
 
               <div className="flex items-center justify-between py-2">
                 <span className="text-slate-400 text-sm">📊 Status</span>
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                  isActive
-                    ? "bg-emerald-900/30 border border-emerald-600/50 text-emerald-300"
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                    isActive
+                      ? "bg-emerald-900/30 border border-emerald-600/50 text-emerald-300"
+                      : isRejected
+                        ? "bg-red-900/30 border border-red-600/50 text-red-300"
+                        : "bg-amber-900/40 border border-amber-600/50 text-amber-300"
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isRejected ? "bg-red-400" : "bg-amber-400"
+                    } animate-pulse`}
+                  ></span>
+                  {isActive
+                    ? "Approved"
                     : isRejected
-                      ? "bg-red-900/30 border border-red-600/50 text-red-300"
-                      : "bg-amber-900/40 border border-amber-600/50 text-amber-300"
-                }`}>
-                  <span className={`w-2 h-2 rounded-full ${
-                    isRejected
-                      ? "bg-red-400"
-                      : "bg-amber-400"
-                  } animate-pulse`}></span>
-                  {isActive ? "Approved" : isRejected ? "Rejected" : "Reviewing"}
+                      ? "Rejected"
+                      : "Reviewing"}
                 </span>
               </div>
             </div>
@@ -660,7 +692,9 @@ function PaymentForm() {
                 Choose your payment channel
               </p>
               <p className="mx-auto mt-3 max-w-2xl text-slate-400 sm:text-base leading-7">
-                Select the most convenient payment route for your location, then upload your receipt for verification. The process is secure, fast, and handled by our team.
+                Select the most convenient payment route for your location, then
+                upload your receipt for verification. The process is secure,
+                fast, and handled by our team.
               </p>
             </div>
 
@@ -681,7 +715,9 @@ function PaymentForm() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-white">Local Payment</h3>
+                    <h3 className="text-xl font-semibold text-white">
+                      Local Payment
+                    </h3>
                     <p className="mt-2 text-sm text-slate-400">
                       Pay within Ethiopia using Telebirr or CBE Birr.
                     </p>
@@ -709,7 +745,9 @@ function PaymentForm() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-white">Diaspora Payment</h3>
+                    <h3 className="text-xl font-semibold text-white">
+                      Diaspora Payment
+                    </h3>
                     <p className="mt-2 text-sm text-slate-400">
                       Pay internationally using PayPal or Credit Card.
                     </p>
@@ -1030,17 +1068,28 @@ function PaymentForm() {
             </div>
           </div>
         ) : step === "receipt" ? (
-          <div className="space-y-4 animate-fadeIn">
-            <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-slate-600">
-              <p className="font-bold text-accent text-sm flex items-center gap-2 mb-2">
-                <span className="text-lg">📸</span> Step 3: Upload your receipt
-              </p>
-              <p className="text-slate-300 text-sm mb-4">
-                Choose the receipt image you received from the payment provider.
-                Please ensure the receipt clearly shows the transaction details.
+          <div className="space-y-5 animate-fadeIn">
+            <div className="rounded-[32px] border border-slate-700 bg-slate-950/95 p-6 shadow-2xl shadow-slate-950/20 ring-1 ring-slate-800">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-[0.24em]">
+                    STEP 3 • Upload receipt
+                  </p>
+                  <h3 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+                    Finalize your payment verification
+                  </h3>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+                  <span className="h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+                  Secure upload
+                </div>
+              </div>
+
+              <p className="mt-4 max-w-2xl text-slate-400 leading-7">
+                Upload your payment receipt so our team can verify the transaction details. Make sure the receipt clearly shows the date, amount, and reference.
               </p>
 
-              <div className="relative">
+              <div className="mt-6">
                 <input
                   type="file"
                   accept="image/*"
@@ -1050,10 +1099,10 @@ function PaymentForm() {
                 />
                 <label
                   htmlFor="file-input"
-                  className="block px-4 py-8 border-2 border-dashed border-slate-500 rounded-lg text-center cursor-pointer hover:border-accent transition-colors group"
+                  className="group block rounded-[28px] border border-slate-700 bg-slate-900/95 px-5 py-10 text-center transition duration-200 hover:border-accent hover:bg-slate-900 shadow-xl shadow-slate-950/20 cursor-pointer"
                 >
                   <svg
-                    className="mx-auto h-12 w-12 text-slate-400 group-hover:text-accent transition-colors mb-2"
+                    className="mx-auto h-14 w-14 text-slate-400 transition duration-200 group-hover:text-accent mb-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1065,100 +1114,92 @@ function PaymentForm() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <p className="text-slate-300 font-semibold">
-                    Click to upload or drag image here
+                  <p className="text-lg font-semibold text-white">
+                    Click to upload or drag and drop your receipt
                   </p>
-                  <p className="text-slate-400 text-xs mt-1">
-                    PNG, JPG, GIF up to 5MB
+                  <p className="mt-2 text-sm text-slate-400">
+                    PNG, JPG, GIF • up to 5MB
                   </p>
                 </label>
               </div>
 
               {file && (
-                <div className="mt-4 space-y-4">
-                  {/* Image Preview */}
-                  <div className="rounded-xl border-2 border-slate-600 bg-slate-900 overflow-hidden">
+                <div className="mt-6 rounded-[28px] border border-slate-700 bg-slate-900/95 p-4 shadow-inner shadow-slate-950/20">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-slate-200 font-semibold truncate">
+                        {file.name}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/30 px-3 py-2 text-emerald-200 text-xs font-semibold">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Receipt selected
+                    </div>
+                  </div>
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
                     <Image
                       src={filePreviewUrl ?? ""}
                       alt="Receipt preview"
                       width={720}
                       height={360}
-                      className="w-full max-h-72 object-contain p-2"
+                      className="w-full max-h-[280px] object-contain"
                       unoptimized
                     />
-                  </div>
-                  {/* File Info */}
-                  <div className="p-3 bg-emerald-900/30 border border-emerald-700/50 rounded-lg flex items-center gap-3">
-                    <svg
-                      className="w-5 h-5 text-emerald-400 flex-shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-emerald-300 text-sm font-semibold truncate">
-                        {file.name}
-                      </p>
-                      <p className="text-emerald-400/70 text-xs">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {error && (
-              <div className="p-4 rounded-lg bg-red-900/30 border border-red-700/50 text-red-300 text-sm flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 flex-shrink-0 mt-0.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>{error}</span>
-              </div>
-            )}
-            {message && (
-              <div className="p-4 rounded-lg bg-emerald-900/30 border border-emerald-700/50 text-emerald-300 text-sm flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 flex-shrink-0 mt-0.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>{message}</span>
+              <div className="rounded-3xl border border-red-700/40 bg-red-950/80 p-4 text-sm text-red-200 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-2xl bg-red-700/20 text-red-300">
+                    !
+                  </span>
+                  <p>{error}</p>
+                </div>
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3">
+            {message && (
+              <div className="rounded-3xl border border-emerald-700/40 bg-emerald-950/80 p-4 text-sm text-emerald-200 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-700/20 text-emerald-200">
+                    ✓
+                  </span>
+                  <p>{message}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-2">
               <button
+                type="button"
                 onClick={uploadReceipt}
                 disabled={loading || courseStatus !== "none"}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-accent to-secondary text-slate-900 rounded-lg hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                className="inline-flex items-center justify-center gap-3 rounded-3xl bg-gradient-to-r from-accent to-secondary px-6 py-3 text-sm font-semibold text-slate-950 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "📤 Uploading..." : "🚀 Send Payment Receipt"}
+                {loading ? (
+                  <>
+                    <span className="inline-flex h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+                    Uploading receipt...
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg">🚀</span>
+                    Send payment receipt
+                  </>
+                )}
               </button>
               <button
+                type="button"
                 onClick={() => setStep("details")}
-                className="px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 transition-all duration-300 font-semibold"
+                className="rounded-3xl border border-slate-700 bg-slate-900/95 px-6 py-3 text-sm font-semibold text-slate-200 transition duration-200 hover:border-accent hover:text-white"
               >
-                Back to Details
+                Back to payment details
               </button>
             </div>
           </div>
