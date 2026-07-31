@@ -4,6 +4,8 @@
 **Platform:** Next.js 16 (App Router) + Supabase + Bunny.net Stream (HLS) + Bunny Storage (images)  
 **Target:** Production deployment handling **50,000+ concurrent students**
 
+# deployment rediness chcking
+
 ---
 
 ## 📊 Executive Summary
