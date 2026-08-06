@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// 🚀 All animations replaced with pure CSS — no Framer Motion overhead
 
-// 🚀 All Framer Motion variants removed — using pure CSS instead
-
-// 🎬 Trailer Video Player with Bunny Stream Embed
 const TRAILER_VIDEO_ID = process.env.NEXT_PUBLIC_TRAILER_VIDEO_ID || "";
 
 function TrailerVideoPlayer() {
@@ -19,194 +15,352 @@ function TrailerVideoPlayer() {
 
   if (hasError || !TRAILER_VIDEO_ID) {
     return (
-      <div className="w-full h-full flex items-center justify-center text-white/30 text-sm">
-        <div className="text-center">
-          <svg
-            className="w-10 h-10 mx-auto mb-2 opacity-50"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-            />
-          </svg>
-          <p>Set NEXT_PUBLIC_TRAILER_VIDEO_ID env var</p>
-        </div>
+      <div
+        className="
+          absolute
+          inset-0
+          flex
+          items-center
+          justify-center
+          bg-black/80
+        "
+      >
+        <p className="text-white/60 text-sm">
+          Set NEXT_PUBLIC_TRAILER_VIDEO_ID env var
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full">
-      <iframe
-        src={`https://iframe.mediadelivery.net/embed/695187/${TRAILER_VIDEO_ID}?autoplay=true&loop=true&muted=true`}
-        className="w-full h-full absolute inset-0"
-        loading="lazy"
-        allow="autoplay; encrypted-media; picture-in-picture"
-        allowFullScreen
-        title="Adonay Documentary"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-      />
-    </div>
+    <iframe
+      src={`https://iframe.mediadelivery.net/embed/695187/${TRAILER_VIDEO_ID}?autoplay=true&loop=true&muted=true`}
+      className="absolute inset-0 w-full h-full"
+      loading="lazy"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowFullScreen
+      title="Adonay Documentary"
+      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+    />
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 100);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+
     window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative text-white min-h-dvh md:min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-[#0a0a0a]">
-        {/* Dark gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40 pointer-events-none" />
-        {/* Subtle red glow accent */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[#a30000]/10 blur-[120px] pointer-events-none gpu-layer" />
-        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
-          <div className="flex flex-col items-center gap-8 lg:gap-10">
-            {/* ─── Premium Hero Title with 3D Tilt (pure CSS, zero JS) ─── */}
-            <div
-              className="text-center w-full max-w-full overflow-visible"
-              style={{ perspective: "800px" }}
+    <div
+      className="
+        min-h-screen
+        bg-[#050505]
+        text-white
+        overflow-hidden
+      "
+    >
+      <section
+        className="
+          relative
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          px-5
+          sm:px-8
+        "
+      >
+        {/* Background */}
+
+        <div className="absolute inset-0">
+          <div
+            className="
+              absolute
+              inset-0
+              bg-gradient-to-br
+              from-[#25DCEB]/10
+              via-black
+              to-[#FF3B6B]/20
+            "
+          />
+
+          {/* Cyan Glow */}
+
+          <div
+            className="
+              absolute
+              top-10
+              left-10
+              w-96
+              h-96
+              rounded-full
+              bg-[#25DCEB]/20
+              blur-[150px]
+              animate-pulse
+            "
+          />
+
+          {/* Pink Glow */}
+
+          <div
+            className="
+              absolute
+              bottom-10
+              right-10
+              w-96
+              h-96
+              rounded-full
+              bg-[#FF3B6B]/20
+              blur-[150px]
+            "
+          />
+        </div>
+
+        <div
+          className="
+            relative
+            z-10
+            w-full
+            max-w-6xl
+            text-center
+          "
+          style={{
+            perspective: "900px",
+          }}
+        >
+          {/* Welcome Text */}
+
+          <div
+            className="
+              flex
+              justify-center
+              mb-4
+            "
+          >
+            <span
+              className="
+                text-xs
+                sm:text-sm
+                tracking-[0.45em]
+                uppercase
+                text-[#D9D9D9]
+                italic
+              "
             >
-              {/* ── "Welcome to" with decorative side lines ── */}
-              <div
-                className="flex items-center justify-center gap-3 sm:gap-5 mb-3 sm:mb-4"
-                style={{
-                  transform: "rotateX(6deg)",
-                  transformStyle: "preserve-3d",
-                }}
+              Welcome to
+            </span>
+          </div>
+
+          {/* 3D Academy Title */}
+
+          <div
+            className="
+              relative
+              inline-block
+              pb-6
+            "
+            style={{
+              transform: "rotateX(8deg)",
+              transformStyle: "preserve-3d",
+            }}
+          >
+            <h1
+              className="
+                text-4xl
+                sm:text-5xl
+                md:text-7xl
+                lg:text-8xl
+                font-black
+                tracking-tight
+              "
+              style={{
+                textShadow: `
+                0 2px 0 rgba(255,255,255,.15),
+                0 5px 20px rgba(37,220,235,.25),
+                0 0 40px rgba(255,59,107,.25)
+                `,
+              }}
+            >
+              <span
+                className="
+                  bg-gradient-to-r
+                  from-[#25DCEB]
+                  via-[#D9D9D9]
+                  to-[#FF3B6B]
+                  bg-clip-text
+                  text-transparent
+                  italic
+                "
               >
-                <div className="w-10 sm:w-16 h-px bg-gradient-to-r from-transparent via-[#ef4444]/30 to-transparent" />
-                <span
-                  className="relative text-[11px] sm:text-xs md:text-sm tracking-[0.35em] uppercase text-white/90 italic"
-                  style={{
-                    fontFamily: "var(--font-cormorant), serif",
-                    fontWeight: 700,
-                    textShadow: "0 0 12px rgba(239,68,68,0.4)",
-                  }}
-                >
-                  Welcome to
-                  <span className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-[#ef4444]/60 to-transparent" />
-                </span>
-                <div className="w-10 sm:w-16 h-px bg-gradient-to-r from-transparent via-[#ef4444]/30 to-transparent" />
-              </div>
+                Adonay TikTok Academy
+              </span>
+            </h1>
 
-              {/* ── Main 3D Title with decorative accents ── */}
+            {/* Tagline */}
+
+            <p
+              className="
+                mt-6
+                text-sm
+                sm:text-lg
+                md:text-xl
+                font-bold
+                tracking-[0.3em]
+                uppercase
+                bg-gradient-to-r
+                from-[#25DCEB]
+                via-[#D9D9D9]
+                to-[#FF3B6B]
+                bg-clip-text
+                text-transparent
+              "
+            >
+              Learn • Create • Grow • Go Viral
+            </p>
+
+            {/* Animated Line */}
+
+            <div
+              className="
+                relative
+                mt-7
+                mx-auto
+                h-[3px]
+                w-3/4
+                overflow-hidden
+                rounded-full
+                bg-white/10
+              "
+            >
               <div
-                className="relative inline-block pb-5 max-w-full"
-                style={{
-                  transform: "rotateX(8deg)",
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                <h1
-                  className="relative text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black leading-none tracking-tight"
-                  style={{
-                    color: "#fff",
-                    textShadow: [
-                      // 3D extrusion layers — reduced on mobile
-                      "0 1px 0 #e8e8e8",
-                      "0 2px 0 #c8c8c8",
-                      "0 3px 0 #a8a8a8",
-                      "0 4px 0 #888888",
-                      "0 5px 0 #686868",
-                      "0 6px 0 #484848",
-                      "0 8px 3px rgba(0,0,0,.2)",
-                      // Red glow aura — stronger for mobile visibility
-                      "0 0 15px rgba(239,68,68,.5)",
-                      "0 0 35px rgba(239,68,68,.15)",
-                      // Depth
-                      "0 4px 12px rgba(0,0,0,.25)",
-                    ].join(","),
-                  }}
-                >
-                  <span
-                    className="bg-gradient-to-r from-white via-[#fcd34d] to-[#ef4444] bg-clip-text text-transparent italic"
-                    style={{ fontFamily: "var(--font-playfair), serif" }}
-                  >
-                    Adonay TikTok Academy
-                  </span>
-                </h1>
-
-                {/* Decorative gradient underlines — tilted to match */}
-                <div
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[3px] rounded-full bg-gradient-to-r from-transparent via-[#ef4444]/50 to-transparent"
-                  style={{ transform: "rotateX(8deg)" }}
-                />
-                <div
-                  className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1/2 h-px rounded-full bg-gradient-to-r from-transparent via-[#fcd34d]/30 to-transparent"
-                  style={{ transform: "rotateX(8deg)" }}
-                />
-              </div>
-
-              {/* ── Premium Downward Arrow ── */}
-              <div className="mt-16 sm:mt-20 md:mt-24 mb-8 sm:mb-12 flex flex-col items-center gap-2 animate-bounce">
-                {/* Glowing circle backdrop */}
-                <div className="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-b from-[#ef4444]/20 to-transparent blur-md" />
-                  <div className="absolute inset-[2px] rounded-full border border-[#ef4444]/30" />
-                  {/* Double chevron */}
-                  <svg
-                    width="22"
-                    height="22"
-                    viewBox="0 0 22 22"
-                    fill="none"
-                    className="relative sm:w-6 sm:h-6"
-                  >
-                    <path
-                      d="M4 6l7 7 7-7"
-                      stroke="#ef4444"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M4 12l7 7 7-7"
-                      stroke="#f87171"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      opacity="0.6"
-                    />
-                  </svg>
-                </div>
-                {/* Pulse dot */}
-                <div className="w-1 h-1 rounded-full bg-[#ef4444] shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
-              </div>
+                className="
+                  absolute
+                  inset-0
+                  bg-gradient-to-r
+                  from-transparent
+                  via-[#25DCEB]
+                  to-[#FF3B6B]
+                  animate-pulse
+                "
+              />
             </div>
+          </div>
 
-            {/* 🎬 Trailer Video — immediately below the arrow */}
-            <div className="w-full max-w-md mx-auto mt-4 sm:mt-6 md:mt-8">
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-black/60 shadow-lg shadow-[#a30000]/20 border border-white/5">
-                <TrailerVideoPlayer />
-              </div>
+          {/* Animated Arrow */}
+
+          <div
+            className="
+              mt-16
+              flex
+              flex-col
+              items-center
+              gap-3
+              animate-bounce
+            "
+          >
+            <div
+              className="
+                relative
+                w-12
+                h-12
+                rounded-full
+                flex
+                items-center
+                justify-center
+                border
+                border-[#25DCEB]/50
+                bg-[#25DCEB]/10
+                shadow-[0_0_25px_rgba(37,220,235,.4)]
+              "
+            >
+              <svg width="25" height="25" viewBox="0 0 22 22" fill="none">
+                <path
+                  d="M4 6l7 7 7-7"
+                  stroke="#25DCEB"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+
+                <path
+                  d="M4 12l7 7 7-7"
+                  stroke="#FF3B6B"
+                  strokeWidth="2"
+                  opacity=".8"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Video */}
+
+          <div
+            className="
+              max-w-xl
+              mx-auto
+              mt-10
+            "
+          >
+            <div
+              className="
+                relative
+                aspect-video
+                rounded-2xl
+                overflow-hidden
+                bg-black
+                border
+                border-[#25DCEB]/40
+                shadow-[0_0_60px_rgba(37,220,235,.2)]
+              "
+            >
+              <TrailerVideoPlayer />
             </div>
           </div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll Indicator */}
+
         <div
-          className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
-            scrolled ? "opacity-0" : "opacity-100"
-          }`}
+          className={`
+            absolute
+            bottom-8
+            left-1/2
+            -translate-x-1/2
+            transition-opacity
+            duration-500
+            ${scrolled ? "opacity-0" : "opacity-100"}
+          `}
         >
-          <span className="text-xs text-white/40 tracking-widest uppercase">
-            ወደ ታች ያስሱ
-          </span>
-          <div className="w-5 h-8 border-2 border-white/20 rounded-full flex justify-center p-1 animate-pulse">
-            <div className="w-1.5 h-1.5 bg-[#ef4444] rounded-full animate-bounce" />
+          <div
+            className="
+              w-6
+              h-10
+              border
+              border-[#D9D9D9]/30
+              rounded-full
+              flex
+              justify-center
+              pt-2
+            "
+          >
+            <div
+              className="
+                w-1.5
+                h-1.5
+                rounded-full
+                bg-[#FF3B6B]
+                animate-bounce
+              "
+            />
           </div>
         </div>
       </section>
