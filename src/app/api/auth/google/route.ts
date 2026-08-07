@@ -15,7 +15,7 @@ import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { getSupabaseAnon } from "@/lib/db/supabaseAnonClient";
 import { env } from "@/config/env";
 import { getAppBaseUrl } from "@/lib/utils/app-url";
-
+// supabase
 export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabaseAnon();
