@@ -468,7 +468,7 @@ export default function AboutPage() {
                     <div className="bg-white/10 backdrop-blur-xl rounded-lg px-4 py-2 border border-white/10">
                       <p className="text-white font-semibold text-sm">አዶናይ</p>
                       <p className="text-white/60 text-xs">
-                        የፐርሰናል ብራንዲንግ እና TikTok ባለሙያ
+                        የፐርሰናል ብራንዲንግ እና የTikTok ባለሙያ
                       </p>
                     </div>
                   </div>
@@ -779,11 +779,11 @@ export default function AboutPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-              የልዩ{" "}
+              በዚህ ኮርስ{" "}
               <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
-                ብቃት
+                የምትማሩት
               </span>{" "}
-              መስኮች
+              ዘርፎች
             </h2>
             <SectionDivider />
             <p className="text-white/60 max-w-2xl mx-auto text-base sm:text-lg">
