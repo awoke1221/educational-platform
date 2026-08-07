@@ -1570,10 +1570,10 @@ export default function LecturePlayerPage() {
           <div className="flex flex-col flex-1 min-h-0">
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
-                የኮርሱ ምዕራፎች
+                course lessons
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {lectures?.lectures.length || 0} ምዕራፎች
+                {lectures?.lectures.length || 0} lessons
               </p>
             </div>
             <div className="overflow-y-auto flex-1">

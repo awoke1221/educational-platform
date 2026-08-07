@@ -303,8 +303,8 @@ export default function CoursesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              የ TikTok ስኬት ምስጢሮችን ይማሩ። የቫይራል ይዘት ይፍጠሩ፣ ታዳሚዎን ያሳድጉ እና የሚታመን ዲጂታል
-              ብራንድ ይገንቡ።
+              የ TikTok ስኬት ምስጢሮችን ይማሩ። የቫይራል content ይፍጠሩ፣ ታዳሚዎን ያሳድጉ እና የሚታመን
+              ዲጂታል ብራንድ ይገንቡ።
             </motion.p>
             <motion.div
               className="grid grid-cols-3 gap-4 sm:gap-8 max-w-lg mx-auto"

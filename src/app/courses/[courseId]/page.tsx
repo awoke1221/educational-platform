@@ -131,8 +131,8 @@ export default function CourseDetailPage() {
   }, [courseId, token]);
 
   const levelLabels: Record<string, string> = {
-    beginner: "Beginner",
-    intermediate: "Intermediate",
+    beginner: "Advanced",
+    intermediate: "Advanced",
     advanced: "Advanced",
   };
 

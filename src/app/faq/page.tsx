@@ -95,7 +95,7 @@ const faqData: FaqItem[] = [
   {
     id: 10,
     category: "ድጋፍ",
-    question: "እርዳታ ካስፈለገ እንዴት ማግኘት እችላለሁ?",
+    question: "እርዳታ ካስፈለገኝ እንዴት ማግኘት እችላለሁ?",
     answer:
       "የድጋፍ ቡድናችን ለተማሪዎቻችን ሁልጊዜ ለመርዳት ዝግጁ ነው። ለማንኛውም ጥያቄ፣ የኮርስ እገዛ ወይም ቴክኒካዊ ድጋፍ በ WhatsApp 09xxxxxxx ሊያገኙን ይችላሉ። እንዲሁም በኢሜይል ወይም በሌሎች የግንኙነት መንገዶች ከእኛ ጋር መገናኘት ይችላሉ።",
     icon: "💬",
@@ -418,9 +418,9 @@ export default function FaqPage() {
               </motion.span>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 sm:mb-6 tracking-tight">
-                መልስ ያግኙ{" "}
+                በተደጋጋሚ የሚጠየቁ{" "}
                 <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
-                  ያፍሩ
+                  ጥያቄዎች
                 </span>
               </h1>
               <p className="text-base sm:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
