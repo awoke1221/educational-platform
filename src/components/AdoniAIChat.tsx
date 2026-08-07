@@ -40,7 +40,7 @@ export default function AdoniAIChat() {
         id: crypto.randomUUID(),
         role: "assistant",
         content:
-          "Hello! I’m Adoni AI, your premium learning assistant for Adonay TikTok Academy. I can help with courses, enrollment, lessons, payments, and student support.",
+          "Hello! I’m  AI, your premium learning assistant for Adonay TikTok Academy. I can help with courses, enrollment, lessons, payments, and student support.",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "numeric",
           minute: "2-digit",
@@ -140,7 +140,7 @@ export default function AdoniAIChat() {
                 />
               </div>
               <div>
-                <p className="text-sm font-semibold">Adoni AI</p>
+                <p className="text-sm font-semibold">AI</p>
                 <p className="text-[11px] text-white/80">
                   Professional support • Instant answers
                 </p>
@@ -171,7 +171,7 @@ export default function AdoniAIChat() {
                     }`}
                   >
                     <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] opacity-70">
-                      {message.role === "user" ? "You" : "Adoni AI"}
+                      {message.role === "user" ? "You" : " AI"}
                       <span>•</span>
                       <span>{message.timestamp}</span>
                     </div>
@@ -189,7 +189,7 @@ export default function AdoniAIChat() {
                   <div className="rounded-2xl bg-[#f8f7f2] px-3 py-2.5 text-sm text-[#172033] shadow-sm dark:bg-[#1f2937] dark:text-[#e5e7eb]">
                     <div className="flex items-center gap-2">
                       <FiLoader className="animate-spin" />
-                      Adoni AI is crafting a polished answer…
+                      AI is crafting answer…
                     </div>
                   </div>
                 </div>
@@ -244,7 +244,7 @@ export default function AdoniAIChat() {
           />
         </div>
         <div className="text-left">
-          <p className="text-sm font-semibold">Adoni AI</p>
+          <p className="text-sm font-semibold">AI</p>
         </div>
       </button>
     </div>
