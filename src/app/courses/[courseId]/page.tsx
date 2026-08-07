@@ -442,7 +442,7 @@ export default function CourseDetailPage() {
                 {lectureGroups.map((group) => (
                   <div
                     key={group.group}
-                    className="rounded-xl border border-[#c9952a]/10 p-3"
+                    className="rounded-2xl border border-[#c9952a]/10 bg-[#140d0b]/50 p-3"
                   >
                     <button
                       onClick={() =>
@@ -451,60 +451,76 @@ export default function CourseDetailPage() {
                           [group.group]: !s[group.group],
                         }))
                       }
-                      className="w-full flex items-center justify-between py-2 px-3"
+                      className="w-full flex items-center justify-between rounded-xl px-3 py-2 transition-colors hover:bg-[#1a120d]"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-semibold text-[#f5c96b]">
                           {group.group}
                         </span>
-                        <span className="text-xs text-[#f5e7c4]/70">
-                          {group.items.length} videos
+                        <span className="rounded-full border border-[#c9952a]/20 bg-[#2b2018] px-2.5 py-0.5 text-[11px] text-[#f5e7c4]/70">
+                          {group.items.length} lesson
+                          {group.items.length === 1 ? "" : "s"}
                         </span>
                       </div>
                       <div className="text-sm text-[#f5e7c4]/60">
-                        {openGroups[group.group] ? "-" : "+"}
+                        {openGroups[group.group] ? "−" : "+"}
                       </div>
                     </button>
 
                     {openGroups[group.group] && (
                       <div className="mt-2 space-y-2">
-                        {group.items.map((lec, i) => (
-                          <div
-                            key={lec.id}
-                            onClick={() => {
-                              if (isEnrolled)
-                                router.push(
-                                  `/courses/${courseId}/lectures/${lec.id}`,
-                                );
-                            }}
-                            className={`flex items-center gap-3 rounded-[12px] p-2 transition-colors ${
-                              isEnrolled
-                                ? "cursor-pointer hover:bg-[#1a120d]"
-                                : "opacity-80"
-                            }`}
-                          >
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 bg-[#2b2018] text-[#f5e7c4]/70">
-                              {lec.orderIndex}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h3 className="text-sm font-medium text-white">
-                                    {lec.title.replace(/^[^\-]+-\s*/i, "")}
-                                  </h3>
-                                  <p className="text-[12px] text-[#f5e7c4]/60">
-                                    {lec.duration
-                                      ? formatDuration(lec.duration)
-                                      : "-"}
-                                  </p>
+                        {group.items.map((lec, i) => {
+                          const displayTitle = lec.title.replace(
+                            /^[^-]+-\s*/i,
+                            "",
+                          );
+                          const canOpen = isEnrolled || isAdmin;
+
+                          return (
+                            <div
+                              key={lec.id}
+                              onClick={() => {
+                                if (canOpen) {
+                                  router.push(
+                                    `/courses/${courseId}/lectures/${lec.id}`,
+                                  );
+                                }
+                              }}
+                              className={`rounded-[14px] border border-[#c9952a]/10 p-3 transition-all ${
+                                canOpen
+                                  ? "cursor-pointer bg-[#1a120d] hover:border-[#c9952a]/30 hover:bg-[#22160f]"
+                                  : "bg-[#140d0b]/60 opacity-80"
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2b2018] text-sm font-semibold text-[#f5c96b]">
+                                  {i + 1}
                                 </div>
-                                <div className="text-sm text-[#f5e7c4]/60">
-                                  {lec.orderIndex}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <h3 className="text-sm font-medium text-white">
+                                        {displayTitle}
+                                      </h3>
+                                      <p className="mt-1 text-[12px] text-[#f5e7c4]/60">
+                                        {canOpen
+                                          ? lec.duration
+                                            ? `${formatDuration(lec.duration)} • Watch now`
+                                            : "Watch now"
+                                          : "Unlock after enrollment"}
+                                      </p>
+                                    </div>
+                                    <div className="shrink-0 rounded-full border border-[#c9952a]/20 bg-[#1c120d] px-2.5 py-1 text-[11px] font-medium text-[#f5c96b]">
+                                      {lec.duration
+                                        ? formatDuration(lec.duration)
+                                        : "Video"}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
