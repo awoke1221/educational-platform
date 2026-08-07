@@ -15,13 +15,11 @@ export async function GET(request: Request) {
     // 🐰 Bunny Stream — Hero video via Stream API
     // ============================================
 
-    // 1. Check for fallback hero video ID from env
-    const fallbackId =
-      env.bunnyStream.fallbackHeroVideoId?.trim() ||
-      env.bunnyStream.trailerVideoId?.trim();
-
-    // 2. Use provided videoId or fallback
-    const videoId = providedVideoId || fallbackId;
+    // 1. Prefer the configured trailer video ID, then fall back to the legacy hero video ID.
+    const videoId =
+      providedVideoId ||
+      env.bunnyStream.trailerVideoId?.trim() ||
+      env.bunnyStream.fallbackHeroVideoId?.trim();
 
     if (videoId) {
       const embedUrl = BunnyStreamService.getEmbedUrl(videoId);
