@@ -67,6 +67,19 @@ interface CourseLectures {
   progress: Record<string, { isCompleted: boolean; watchPercentage: number }>;
 }
 
+interface LectureGroupItem {
+  id: string;
+  title: string;
+  duration: number | null;
+  orderIndex: number;
+  isPublished: boolean;
+  videoUrl?: string;
+  cloudinaryPublicId?: string | null;
+  displayTitle: string;
+  classIndex: number;
+  parsedClassNumber?: number | null;
+}
+
 interface Enrollment {
   id: string;
   status: string;
@@ -287,10 +300,13 @@ export default function LecturePlayerPage() {
   // Group lectures into chapters for sidebar
   function groupLecturesSide(list: CourseLectures["lectures"]) {
     if (!list || list.length === 0)
-      return [] as { group: string; items: typeof list }[];
-    const map: Record<string, typeof list> = {} as any;
+      return [] as { group: string; items: LectureGroupItem[] }[];
+
+    const map: Record<string, LectureGroupItem[]> = {};
+
     for (const l of list) {
-      const [maybeGroup] = l.title.split(" - ");
+      const splitTitle = l.title.split(" - ");
+      const maybeGroup = splitTitle[0];
       const isChapter = /^(?:Chapter)\b/i.test(maybeGroup);
       const isPod = /podcast/i.test(maybeGroup) || /podcasts/i.test(maybeGroup);
       const group = isChapter
@@ -298,9 +314,28 @@ export default function LecturePlayerPage() {
         : isPod
           ? "Podcasts"
           : maybeGroup || "Other";
-      map[group] = map[group] || [];
-      map[group].push(l);
+
+      const displayTitle =
+        isChapter && splitTitle.length > 1
+          ? splitTitle.slice(1).join(" - ").trim()
+          : l.title;
+
+      const classMatch =
+        displayTitle.match(/Class[_\s-]*0*(\d+)/i) ||
+        l.title.match(/Class[_\s-]*0*(\d+)/i);
+      const parsedClassNumber = classMatch ? Number(classMatch[1]) : null;
+
+      const item: LectureGroupItem = {
+        ...l,
+        displayTitle,
+        classIndex: parsedClassNumber ?? 0,
+        parsedClassNumber,
+      };
+
+      if (!map[group]) map[group] = [];
+      map[group].push(item);
     }
+
     const groups = Object.keys(map).map((g) => ({ group: g, items: map[g] }));
     groups.sort((a, b) => {
       const na = a.group.match(/Chapter\s*(\d+)/i);
@@ -312,6 +347,24 @@ export default function LecturePlayerPage() {
       if (b.group === "Podcasts") return -1;
       return a.group.localeCompare(b.group);
     });
+
+    for (const group of groups) {
+      group.items = group.items
+        .slice()
+        .sort((a, b) => {
+          if (a.parsedClassNumber && b.parsedClassNumber) {
+            return a.parsedClassNumber - b.parsedClassNumber;
+          }
+          if (a.parsedClassNumber) return -1;
+          if (b.parsedClassNumber) return 1;
+          return a.orderIndex - b.orderIndex;
+        })
+        .map((item, index) => ({
+          ...item,
+          classIndex: item.parsedClassNumber ?? index + 1,
+        }));
+    }
+
     return groups;
   }
 
@@ -1524,131 +1577,137 @@ export default function LecturePlayerPage() {
               </p>
             </div>
             <div className="overflow-y-auto flex-1">
-              {lectureGroups.map((group) => (
-                <div key={group.group} className="">
-                  <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {group.group}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {group.items.length} videos
-                      </p>
+              {lectureGroups.map((group) => {
+                const isPodcastGroup = group.group === "Podcasts";
+                return (
+                  <div key={group.group} className="">
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {group.group}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {group.items.length} videos
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setOpenGroups((s) => ({
+                            ...s,
+                            [group.group]: !s[group.group],
+                          }))
+                        }
+                        className="text-sm text-gray-500 px-2"
+                      >
+                        {openGroups[group.group] ? "-" : "+"}
+                      </button>
                     </div>
-                    <button
-                      onClick={() =>
-                        setOpenGroups((s) => ({
-                          ...s,
-                          [group.group]: !s[group.group],
-                        }))
-                      }
-                      className="text-sm text-gray-500 px-2"
-                    >
-                      {openGroups[group.group] ? "-" : "+"}
-                    </button>
-                  </div>
 
-                  {openGroups[group.group] && (
-                    <div>
-                      {group.items.map((lec, i) => {
-                        const isActive = lec.id === lectureId;
-                        const lecProgress = lectures?.progress[lec.id];
-                        const lecCompleted = lecProgress?.isCompleted || false;
-                        const lecPct = lecProgress?.watchPercentage || 0;
+                    {openGroups[group.group] && (
+                      <div>
+                        {group.items.map((lec, i) => {
+                          const isActive = lec.id === lectureId;
+                          const lecProgress = lectures?.progress[lec.id];
+                          const lecCompleted =
+                            lecProgress?.isCompleted || false;
+                          const lecPct = lecProgress?.watchPercentage || 0;
 
-                        return (
-                          <Link
-                            key={lec.id}
-                            href={`/courses/${courseId}/lectures/${lec.id}`}
-                            className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                              isActive
-                                ? "bg-primary/5 dark:bg-secondary/5 border-l-2 border-l-secondary"
-                                : "border-l-2 border-l-transparent"
-                            }`}
-                          >
-                            <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5 ${
-                                lecCompleted
-                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                                  : isActive
-                                    ? "bg-secondary text-white"
-                                    : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                          return (
+                            <Link
+                              key={lec.id}
+                              href={`/courses/${courseId}/lectures/${lec.id}`}
+                              className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                                isActive
+                                  ? "bg-primary/5 dark:bg-secondary/5 border-l-2 border-l-secondary"
+                                  : "border-l-2 border-l-transparent"
                               }`}
                             >
-                              {lecCompleted ? (
+                              <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5 ${
+                                  lecCompleted
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                    : isActive
+                                      ? "bg-secondary text-white"
+                                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                                }`}
+                              >
+                                {lecCompleted ? (
+                                  <svg
+                                    className="w-3.5 h-3.5"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                ) : (
+                                  i + 1
+                                )}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p
+                                  className={`text-sm leading-snug ${
+                                    isActive
+                                      ? "font-semibold text-primary dark:text-secondary"
+                                      : lecCompleted
+                                        ? "font-medium text-green-700 dark:text-green-400"
+                                        : "font-medium text-gray-700 dark:text-gray-300"
+                                  }`}
+                                >
+                                  {lec.displayTitle}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                                    {isPodcastGroup
+                                      ? formatDurationMinutes(lec.duration)
+                                      : `Class ${lec.classIndex} • ${formatDurationMinutes(lec.duration)}`}
+                                  </span>
+                                  {lecCompleted && (
+                                    <span className="text-xs text-green-500">
+                                      ተጠናቋል
+                                    </span>
+                                  )}
+                                  {!lecCompleted && lecPct > 0 && (
+                                    <span className="text-xs text-secondary">
+                                      {lecPct}%
+                                    </span>
+                                  )}
+                                </div>
+                                {!lecCompleted && lecPct > 0 && (
+                                  <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1 mt-1.5">
+                                    <div
+                                      className="bg-secondary h-1 rounded-full"
+                                      style={{ width: `${lecPct}%` }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
+                              {isActive && (
                                 <svg
-                                  className="w-3.5 h-3.5"
+                                  className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5"
                                   fill="currentColor"
                                   viewBox="0 0 20 20"
                                 >
                                   <path
                                     fillRule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                     clipRule="evenodd"
                                   />
                                 </svg>
-                              ) : (
-                                i + 1
                               )}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className={`text-sm leading-snug ${
-                                  isActive
-                                    ? "font-semibold text-primary dark:text-secondary"
-                                    : lecCompleted
-                                      ? "font-medium text-green-700 dark:text-green-400"
-                                      : "font-medium text-gray-700 dark:text-gray-300"
-                                }`}
-                              >
-                                {lec.title}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-gray-400 dark:text-gray-500">
-                                  {formatDurationMinutes(lec.duration)}
-                                </span>
-                                {lecCompleted && (
-                                  <span className="text-xs text-green-500">
-                                    ተጠናቋል
-                                  </span>
-                                )}
-                                {!lecCompleted && lecPct > 0 && (
-                                  <span className="text-xs text-secondary">
-                                    {lecPct}%
-                                  </span>
-                                )}
-                              </div>
-                              {!lecCompleted && lecPct > 0 && (
-                                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1 mt-1.5">
-                                  <div
-                                    className="bg-secondary h-1 rounded-full"
-                                    style={{ width: `${lecPct}%` }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-
-                            {isActive && (
-                              <svg
-                                className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
 
               {(!lectures?.lectures || lectures.lectures.length === 0) && (
                 <div className="p-6 text-center">
