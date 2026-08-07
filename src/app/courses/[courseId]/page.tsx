@@ -163,6 +163,75 @@ export default function CourseDetailPage() {
 
   const courseStatus = getCourseStatus();
 
+  function formatDurationHoursMinutes(seconds: number): string {
+    if (!seconds || seconds <= 0) return "0 min";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
+    }
+    return `${minutes} min`;
+  }
+
+  // Group lectures into chapters based on title prefix (e.g. "Chapter 1 - ..." or "Podcasts - ...")
+  function groupLectures(lectures: CourseDetail["lectures"]) {
+    if (!lectures)
+      return [] as { group: string; items: CourseDetail["lectures"] }[];
+
+    const map: Record<string, CourseDetail["lectures"]> = {} as any;
+    for (const l of lectures) {
+      const [maybeGroup] = l.title.split(" - ");
+      const isChapter = /^(?:Chapter)\b/i.test(maybeGroup);
+      const isPod = /podcast/i.test(maybeGroup) || /podcasts/i.test(maybeGroup);
+      const group = isChapter
+        ? maybeGroup
+        : isPod
+          ? "Podcasts"
+          : maybeGroup || "Other";
+      map[group] = map[group] || [];
+      map[group].push(l);
+    }
+
+    const groups = Object.keys(map).map((g) => ({ group: g, items: map[g] }));
+    groups.sort((a, b) => {
+      const na = a.group.match(/Chapter\s*(\d+)/i);
+      const nb = b.group.match(/Chapter\s*(\d+)/i);
+      if (na && nb) return Number(na[1]) - Number(nb[1]);
+      if (na) return -1;
+      if (nb) return 1;
+      if (a.group === "Podcasts") return 1;
+      if (b.group === "Podcasts") return -1;
+      return a.group.localeCompare(b.group);
+    });
+    return groups;
+  }
+
+  const lectureGroups = groupLectures(course?.lectures || []);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    lectureGroups.forEach((g) => (init[g.group] = true));
+    return init;
+  });
+
+  const lectureDurations = course?.lectures?.map((lec) => {
+    const value =
+      typeof lec.duration === "string" ? Number(lec.duration) : lec.duration;
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  });
+
+  const actualLectureCount =
+    course?.lectures?.length ?? course?.videoCount ?? 0;
+  const actualTotalDuration =
+    lectureDurations && lectureDurations.length > 0
+      ? lectureDurations.reduce((sum, dur) => sum + dur, 0)
+      : (course?.duration ?? 0);
+  const actualDurationLabel =
+    actualTotalDuration > 0
+      ? formatDurationHoursMinutes(actualTotalDuration)
+      : course?.duration && course.duration > 0
+        ? formatDurationHoursMinutes(course.duration)
+        : "0 min";
+
   if (loading)
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
@@ -216,8 +285,8 @@ export default function CourseDetailPage() {
               {course.instructor?.fullName}
             </motion.p>
             <div className="mt-4 flex flex-wrap gap-4 text-sm text-[#f5e7c4]/80">
-              <span>{course.videoCount} videos</span>
-              <span>{formatDuration(course.duration)}</span>
+              <span>{actualLectureCount} videos</span>
+              <span>{actualDurationLabel}</span>
               <span>{course.enrollmentCount} learners</span>
               <span className="font-bold text-[#f5c96b]">
                 {course.price.toLocaleString()} {course.currency || "ETB"}
@@ -369,80 +438,78 @@ export default function CourseDetailPage() {
                 )}
               </div>
             ) : (
-              <div className="space-y-2">
-                {course.lectures?.map((lec, i) => (
+              <div className="space-y-4">
+                {lectureGroups.map((group) => (
                   <div
-                    key={lec.id}
-                    className={`flex items-center gap-3 rounded-[16px] border border-[#c9952a]/15 p-3 transition-colors ${
-                      isEnrolled
-                        ? "cursor-pointer bg-[#1a120d] hover:bg-[#22170f]"
-                        : "cursor-default bg-[#140d0b]/70"
-                    }`}
-                    onClick={() => {
-                      if (isEnrolled) {
-                        router.push(`/courses/${courseId}/lectures/${lec.id}`);
-                      }
-                    }}
+                    key={group.group}
+                    className="rounded-xl border border-[#c9952a]/10 p-3"
                   >
-                    <span
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${
-                        isEnrolled
-                          ? "bg-gradient-to-br from-[#a30000] to-[#c9952a] text-white"
-                          : "bg-[#2b2018] text-[#f5e7c4]/70"
-                      }`}
+                    <button
+                      onClick={() =>
+                        setOpenGroups((s) => ({
+                          ...s,
+                          [group.group]: !s[group.group],
+                        }))
+                      }
+                      className="w-full flex items-center justify-between py-2 px-3"
                     >
-                      {isEnrolled ? (
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-                        </svg>
-                      )}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`font-medium text-sm ${
-                          isEnrolled ? "text-primary" : "text-gray-400"
-                        }`}
-                      >
-                        {lec.title}
-                      </p>
-                      <p className="text-xs text-[#f5e7c4]/60">
-                        {formatDuration(lec.duration)}
-                      </p>
-                    </div>
-                    {isEnrolled ? (
-                      <svg
-                        className="h-4 w-4 flex-shrink-0 text-[#f5c96b]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    ) : (
-                      <span className="flex-shrink-0 text-xs text-[#f5e7c4]/60">
-                        Enroll
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-[#f5c96b]">
+                          {group.group}
+                        </span>
+                        <span className="text-xs text-[#f5e7c4]/70">
+                          {group.items.length} videos
+                        </span>
+                      </div>
+                      <div className="text-sm text-[#f5e7c4]/60">
+                        {openGroups[group.group] ? "-" : "+"}
+                      </div>
+                    </button>
+
+                    {openGroups[group.group] && (
+                      <div className="mt-2 space-y-2">
+                        {group.items.map((lec, i) => (
+                          <div
+                            key={lec.id}
+                            onClick={() => {
+                              if (isEnrolled)
+                                router.push(
+                                  `/courses/${courseId}/lectures/${lec.id}`,
+                                );
+                            }}
+                            className={`flex items-center gap-3 rounded-[12px] p-2 transition-colors ${
+                              isEnrolled
+                                ? "cursor-pointer hover:bg-[#1a120d]"
+                                : "opacity-80"
+                            }`}
+                          >
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 bg-[#2b2018] text-[#f5e7c4]/70">
+                              {lec.orderIndex}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h3 className="text-sm font-medium text-white">
+                                    {lec.title.replace(/^[^\-]+-\s*/i, "")}
+                                  </h3>
+                                  <p className="text-[12px] text-[#f5e7c4]/60">
+                                    {lec.duration
+                                      ? formatDuration(lec.duration)
+                                      : "-"}
+                                  </p>
+                                </div>
+                                <div className="text-sm text-[#f5e7c4]/60">
+                                  {lec.orderIndex}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 ))}
-                {(!course.lectures || course.lectures.length === 0) && (
+                {lectureGroups.length === 0 && (
                   <div className="py-8 text-center text-sm text-[#f5e7c4]/70">
                     No lessons available yet.
                   </div>

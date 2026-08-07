@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { updateCourseSchema } from "@/lib/validators/schemas";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { BunnyStreamService } from "@/lib/bunny";
 import {
   successResponse,
   errorResponse,
@@ -54,18 +55,44 @@ export async function GET(
 
     const { data: lectures, error: lecturesErr } = await supabaseAdmin!
       .from("Lecture")
-      .select("id, title, duration, orderIndex")
+      .select("id, title, duration, orderIndex, cloudinaryPublicId")
       .eq("courseId", courseId)
       .eq("isPublished", true)
       .order("orderIndex", { ascending: true });
 
     if (lecturesErr) throw lecturesErr;
 
-    // Proxy Bunny CDN URLs to avoid CORS/ORB blocking
+    const lectureDurations = await Promise.all(
+      (lectures || []).map(async (lec: any) => {
+        if (Number.isFinite(lec.duration) && lec.duration > 0) {
+          return Number(lec.duration);
+        }
+        if (lec.cloudinaryPublicId && BunnyStreamService.isConfigured()) {
+          try {
+            const video = await BunnyStreamService.getVideo(
+              lec.cloudinaryPublicId,
+            );
+            return Number.isFinite(video.length) ? Math.round(video.length) : 0;
+          } catch (error) {
+            return 0;
+          }
+        }
+        return 0;
+      }),
+    );
+
+    const lectureCount = (lectures || []).length;
+    const lectureDuration = lectureDurations.reduce((sum, dur) => sum + dur, 0);
+
     const proxiedCourse = proxifyCourse({
       ...course,
       instructor: instr || null,
-      lectures: lectures || [],
+      lectures: (lectures || []).map((lec: any, index: number) => ({
+        ...lec,
+        duration: lec.duration || lectureDurations[index] || 0,
+      })),
+      videoCount: course.videoCount || lectureCount,
+      duration: course.duration || lectureDuration,
     });
 
     return successResponse(proxiedCourse, "Course retrieved successfully");

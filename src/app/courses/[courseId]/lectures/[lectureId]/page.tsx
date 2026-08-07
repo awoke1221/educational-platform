@@ -13,7 +13,6 @@ import {
   markLectureCompleted,
   isLectureCompleted,
 } from "@/lib/utils/videoPersistence";
-import { formatDuration } from "@/lib/utils/common";
 import {
   isCacheAvailable,
   isVideoUrl,
@@ -91,6 +90,16 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatDurationMinutes(seconds: number | null | undefined): string {
+  if (!seconds || seconds <= 0) return "Unknown";
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) {
+    return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
+  }
+  return `${minutes} min`;
 }
 
 // ============================================
@@ -274,6 +283,56 @@ export default function LecturePlayerPage() {
     currentIndex >= 0 && currentIndex < (lectures?.lectures.length ?? 0) - 1
       ? lectures?.lectures[currentIndex + 1]
       : null;
+
+  // Group lectures into chapters for sidebar
+  function groupLecturesSide(list: CourseLectures["lectures"]) {
+    if (!list || list.length === 0)
+      return [] as { group: string; items: typeof list }[];
+    const map: Record<string, typeof list> = {} as any;
+    for (const l of list) {
+      const [maybeGroup] = l.title.split(" - ");
+      const isChapter = /^(?:Chapter)\b/i.test(maybeGroup);
+      const isPod = /podcast/i.test(maybeGroup) || /podcasts/i.test(maybeGroup);
+      const group = isChapter
+        ? maybeGroup
+        : isPod
+          ? "Podcasts"
+          : maybeGroup || "Other";
+      map[group] = map[group] || [];
+      map[group].push(l);
+    }
+    const groups = Object.keys(map).map((g) => ({ group: g, items: map[g] }));
+    groups.sort((a, b) => {
+      const na = a.group.match(/Chapter\s*(\d+)/i);
+      const nb = b.group.match(/Chapter\s*(\d+)/i);
+      if (na && nb) return Number(na[1]) - Number(nb[1]);
+      if (na) return -1;
+      if (nb) return 1;
+      if (a.group === "Podcasts") return 1;
+      if (b.group === "Podcasts") return -1;
+      return a.group.localeCompare(b.group);
+    });
+    return groups;
+  }
+
+  const lectureGroups = groupLecturesSide(lectures?.lectures || []);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    lectureGroups.forEach((g) => (init[g.group] = true));
+    return init;
+  });
+
+  useEffect(() => {
+    if (
+      (lectures?.lectures?.length || 0) > 0 &&
+      Object.keys(openGroups).length === 0
+    ) {
+      const init: Record<string, boolean> = {};
+      lectureGroups.forEach((g) => (init[g.group] = true));
+      setOpenGroups(init);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lectures]);
 
   // ============================================
   // Preload next lecture video when current one is playing
@@ -1465,99 +1524,131 @@ export default function LecturePlayerPage() {
               </p>
             </div>
             <div className="overflow-y-auto flex-1">
-              {lectures?.lectures.map((lec, i) => {
-                const isActive = lec.id === lectureId;
-                const lecProgress = lectures.progress[lec.id];
-                const lecCompleted = lecProgress?.isCompleted || false;
-                const lecPct = lecProgress?.watchPercentage || 0;
-
-                return (
-                  <Link
-                    key={lec.id}
-                    href={`/courses/${courseId}/lectures/${lec.id}`}
-                    className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                      isActive
-                        ? "bg-primary/5 dark:bg-secondary/5 border-l-2 border-l-secondary"
-                        : "border-l-2 border-l-transparent"
-                    }`}
-                  >
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5 ${
-                        lecCompleted
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                          : isActive
-                            ? "bg-secondary text-white"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      {lecCompleted ? (
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        i + 1
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={`text-sm leading-snug ${
-                          isActive
-                            ? "font-semibold text-primary dark:text-secondary"
-                            : lecCompleted
-                              ? "font-medium text-green-700 dark:text-green-400"
-                              : "font-medium text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {lec.title}
+              {lectureGroups.map((group) => (
+                <div key={group.group} className="">
+                  <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {group.group}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-400 dark:text-gray-500">
-                          {formatDuration(lec.duration)}
-                        </span>
-                        {lecCompleted && (
-                          <span className="text-xs text-green-500">ተጠናቋል</span>
-                        )}
-                        {!lecCompleted && lecPct > 0 && (
-                          <span className="text-xs text-secondary">
-                            {lecPct}%
-                          </span>
-                        )}
-                      </div>
-                      {!lecCompleted && lecPct > 0 && (
-                        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1 mt-1.5">
-                          <div
-                            className="bg-secondary h-1 rounded-full"
-                            style={{ width: `${lecPct}%` }}
-                          />
-                        </div>
-                      )}
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {group.items.length} videos
+                      </p>
                     </div>
+                    <button
+                      onClick={() =>
+                        setOpenGroups((s) => ({
+                          ...s,
+                          [group.group]: !s[group.group],
+                        }))
+                      }
+                      className="text-sm text-gray-500 px-2"
+                    >
+                      {openGroups[group.group] ? "-" : "+"}
+                    </button>
+                  </div>
 
-                    {isActive && (
-                      <svg
-                        className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </Link>
-                );
-              })}
+                  {openGroups[group.group] && (
+                    <div>
+                      {group.items.map((lec, i) => {
+                        const isActive = lec.id === lectureId;
+                        const lecProgress = lectures?.progress[lec.id];
+                        const lecCompleted = lecProgress?.isCompleted || false;
+                        const lecPct = lecProgress?.watchPercentage || 0;
+
+                        return (
+                          <Link
+                            key={lec.id}
+                            href={`/courses/${courseId}/lectures/${lec.id}`}
+                            className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                              isActive
+                                ? "bg-primary/5 dark:bg-secondary/5 border-l-2 border-l-secondary"
+                                : "border-l-2 border-l-transparent"
+                            }`}
+                          >
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5 ${
+                                lecCompleted
+                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                  : isActive
+                                    ? "bg-secondary text-white"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                              }`}
+                            >
+                              {lecCompleted ? (
+                                <svg
+                                  className="w-3.5 h-3.5"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              ) : (
+                                i + 1
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={`text-sm leading-snug ${
+                                  isActive
+                                    ? "font-semibold text-primary dark:text-secondary"
+                                    : lecCompleted
+                                      ? "font-medium text-green-700 dark:text-green-400"
+                                      : "font-medium text-gray-700 dark:text-gray-300"
+                                }`}
+                              >
+                                {lec.title}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-400 dark:text-gray-500">
+                                  {formatDurationMinutes(lec.duration)}
+                                </span>
+                                {lecCompleted && (
+                                  <span className="text-xs text-green-500">
+                                    ተጠናቋል
+                                  </span>
+                                )}
+                                {!lecCompleted && lecPct > 0 && (
+                                  <span className="text-xs text-secondary">
+                                    {lecPct}%
+                                  </span>
+                                )}
+                              </div>
+                              {!lecCompleted && lecPct > 0 && (
+                                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1 mt-1.5">
+                                  <div
+                                    className="bg-secondary h-1 rounded-full"
+                                    style={{ width: `${lecPct}%` }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                            {isActive && (
+                              <svg
+                                className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
 
               {(!lectures?.lectures || lectures.lectures.length === 0) && (
                 <div className="p-6 text-center">

@@ -653,6 +653,58 @@ export default function AdminCourseDetailPage() {
     advanced: "Advanced",
   };
 
+  // Group lectures into chapters for admin UI (preserve original order)
+  function groupLecturesAdmin(lects: Lecture[]) {
+    if (!lects || lects.length === 0)
+      return [] as { group: string; items: Lecture[] }[];
+    const map: Record<string, Lecture[]> = {} as any;
+    for (const l of lects) {
+      const [maybeGroup] = l.title.split(" - ");
+      const isChapter = /^(?:Chapter)\b/i.test(maybeGroup);
+      const isPod = /podcast/i.test(maybeGroup) || /podcasts/i.test(maybeGroup);
+      const group = isChapter
+        ? maybeGroup
+        : isPod
+          ? "Podcasts"
+          : maybeGroup || "Other";
+      map[group] = map[group] || [];
+      map[group].push(l);
+    }
+
+    const groups = Object.keys(map).map((g) => ({ group: g, items: map[g] }));
+    groups.sort((a, b) => {
+      const na = a.group.match(/Chapter\s*(\d+)/i);
+      const nb = b.group.match(/Chapter\s*(\d+)/i);
+      if (na && nb) return Number(na[1]) - Number(nb[1]);
+      if (na) return -1;
+      if (nb) return 1;
+      if (a.group === "Podcasts") return 1;
+      if (b.group === "Podcasts") return -1;
+      return a.group.localeCompare(b.group);
+    });
+    return groups;
+  }
+
+  const sortedLectures = [...lectures].sort(
+    (a, b) => a.orderIndex - b.orderIndex,
+  );
+  const lectureGroups = groupLecturesAdmin(sortedLectures);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    lectureGroups.forEach((g) => (init[g.group] = true));
+    return init;
+  });
+
+  useEffect(() => {
+    // Initialize openGroups when lectures change, if not already set
+    if (Object.keys(openGroups).length === 0 && lectureGroups.length > 0) {
+      const init: Record<string, boolean> = {};
+      lectureGroups.forEach((g) => (init[g.group] = true));
+      setOpenGroups(init);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lectureGroups]);
+
   // ============================================
   // Render
   // ============================================
@@ -983,221 +1035,242 @@ export default function AdminCourseDetailPage() {
                 className="space-y-2"
                 as="div"
               >
-                {lectures
-                  .sort((a, b) => a.orderIndex - b.orderIndex)
-                  .map((lecture, index) => {
-                    const isUploading =
-                      uploadState.isUploading &&
-                      uploadState.lectureId === lecture.id;
-                    const isUploaded =
-                      !uploadState.isUploading &&
-                      uploadState.progress === 100 &&
-                      uploadState.lectureId === lecture.id;
-                    const hasError =
-                      uploadState.error && uploadState.lectureId === lecture.id;
+                {lectureGroups.map((group) => (
+                  <div key={group.group} className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() =>
+                            setOpenGroups((s) => ({
+                              ...s,
+                              [group.group]: !s[group.group],
+                            }))
+                          }
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          {group.group}
+                        </button>
+                        <span className="text-xs text-gray-400">
+                          {group.items.length} items
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {openGroups[group.group] ? "-" : "+"}
+                      </div>
+                    </div>
 
-                    return (
-                      <Reorder.Item
-                        key={lecture.id}
-                        value={lecture}
-                        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:border-secondary/30 transition-colors"
-                        whileDrag={{
-                          scale: 1.02,
-                          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-                          zIndex: 50,
-                        }}
-                      >
-                        <div className="p-4 sm:p-5">
-                          <div className="flex items-start justify-between gap-4">
-                            {/* Drag Handle + Info */}
-                            <div className="flex-1 min-w-0 flex items-start gap-3">
-                              {/* Drag Handle */}
-                              <div className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors touch-none">
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M8 6h2v2H8V6zm6 0h2v2h-2V6zM8 11h2v2H8v-2zm6 0h2v2h-2v-2zm-6 5h2v2H8v-2zm6 0h2v2h-2v-2z" />
-                                </svg>
-                              </div>
+                    {openGroups[group.group] &&
+                      group.items.map((lecture) => {
+                        const isUploading =
+                          uploadState.isUploading &&
+                          uploadState.lectureId === lecture.id;
+                        const isUploaded =
+                          !uploadState.isUploading &&
+                          uploadState.progress === 100 &&
+                          uploadState.lectureId === lecture.id;
+                        const hasError =
+                          uploadState.error &&
+                          uploadState.lectureId === lecture.id;
 
-                              {/* Info */}
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
-                                    {index + 1}
-                                  </span>
-                                  <h3 className="font-semibold text-gray-900 text-sm truncate">
-                                    {lecture.title}
-                                  </h3>
-                                  {lecture.isPublished ? (
-                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex-shrink-0">
-                                      ታትሟል
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full flex-shrink-0">
-                                      ረቂቅ
-                                    </span>
-                                  )}
+                        return (
+                          <Reorder.Item
+                            key={lecture.id}
+                            value={lecture}
+                            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:border-secondary/30 transition-colors"
+                            whileDrag={{
+                              scale: 1.02,
+                              boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                              zIndex: 50,
+                            }}
+                          >
+                            <div className="p-4 sm:p-5">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0 flex items-start gap-3">
+                                  <div className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors touch-none">
+                                    <svg
+                                      className="w-5 h-5"
+                                      fill="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path d="M8 6h2v2H8V6zm6 0h2v2h-2V6zM8 11h2v2H8v-2zm6 0h2v2h-2v-2zm-6 5h2v2H8v-2zm6 0h2v2h-2v-2z" />
+                                    </svg>
+                                  </div>
+
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                                        {lecture.orderIndex}
+                                      </span>
+                                      <h3 className="font-semibold text-gray-900 text-sm truncate">
+                                        {lecture.title}
+                                      </h3>
+                                      {lecture.isPublished ? (
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex-shrink-0">
+                                          ታትሟል
+                                        </span>
+                                      ) : (
+                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full flex-shrink-0">
+                                          ረቂቅ
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {lecture.description && (
+                                      <p className="text-xs text-gray-500 mt-1.5 ml-9 line-clamp-2">
+                                        {lecture.description}
+                                      </p>
+                                    )}
+
+                                    <div className="flex flex-wrap items-center gap-3 mt-2 ml-9">
+                                      <span className="text-xs text-gray-400">
+                                        {lecture.duration
+                                          ? formatDuration(lecture.duration)
+                                          : "ቆይታ የለም"}
+                                      </span>
+                                      {lecture.cloudinaryPublicId && (
+                                        <span className="text-xs text-green-600 flex items-center gap-1">
+                                          <svg
+                                            className="w-3 h-3"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"
+                                            />
+                                          </svg>
+                                          ቪዲዮ ተጭኗል
+                                        </span>
+                                      )}
+                                      {lecture.videoSize && (
+                                        <span className="text-xs text-gray-400">
+                                          {formatFileSize(
+                                            Number(lecture.videoSize),
+                                          )}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-gray-400">
+                                        {lecture.views} እይታዎች
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
 
-                                {lecture.description && (
-                                  <p className="text-xs text-gray-500 mt-1.5 ml-9 line-clamp-2">
-                                    {lecture.description}
-                                  </p>
-                                )}
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  <button
+                                    onClick={() =>
+                                      handleUploadVideo(lecture.id)
+                                    }
+                                    disabled={uploadState.isUploading}
+                                    className={`p-2 rounded-lg transition-colors ${lecture.cloudinaryPublicId ? "text-green-600 hover:bg-green-50" : "text-gray-400 hover:bg-gray-100 hover:text-primary"} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    title={
+                                      lecture.cloudinaryPublicId
+                                        ? "ቪዲዮ ቀይር"
+                                        : "ቪዲዮ ጫን"
+                                    }
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                      />
+                                    </svg>
+                                  </button>
 
-                                {/* Meta Info */}
-                                <div className="flex flex-wrap items-center gap-3 mt-2 ml-9">
-                                  <span className="text-xs text-gray-400">
-                                    {lecture.duration
-                                      ? formatDuration(lecture.duration)
-                                      : "ቆይታ የለም"}
-                                  </span>
                                   {lecture.cloudinaryPublicId && (
-                                    <span className="text-xs text-green-600 flex items-center gap-1">
+                                    <Link
+                                      href={`/courses/${courseId}/lectures/${lecture.id}`}
+                                      target="_blank"
+                                      className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
+                                      title="ተመልከት"
+                                    >
                                       <svg
-                                        className="w-3 h-3"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
                                       >
                                         <path
-                                          fillRule="evenodd"
-                                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                          clipRule="evenodd"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                        />
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                                         />
                                       </svg>
-                                      ቪዲዮ ተጭኗል
-                                    </span>
+                                    </Link>
                                   )}
-                                  {lecture.videoSize && (
-                                    <span className="text-xs text-gray-400">
-                                      {formatFileSize(
-                                        Number(lecture.videoSize),
-                                      )}
-                                    </span>
-                                  )}
-                                  <span className="text-xs text-gray-400">
-                                    {lecture.views} እይታዎች
-                                  </span>
+
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteLecture(lecture.id)
+                                    }
+                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="ሰርዝ"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                  </button>
+
+                                  <div className="ml-3 flex flex-col items-start">
+                                    {isUploading && (
+                                      <div className="w-36">
+                                        <div className="w-full bg-gray-100 rounded-full h-2">
+                                          <div
+                                            className="bg-secondary h-2 rounded-full transition-all"
+                                            style={{
+                                              width: `${uploadState.progress}%`,
+                                            }}
+                                          />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1 text-left">
+                                          {uploadState.progress}%
+                                        </p>
+                                      </div>
+                                    )}
+                                    {hasError && (
+                                      <div className="mt-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded-lg">
+                                        {uploadState.error}
+                                      </div>
+                                    )}
+                                    {isUploaded && (
+                                      <div className="mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                                        Video uploaded
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <button
-                                onClick={() => handleUploadVideo(lecture.id)}
-                                disabled={uploadState.isUploading}
-                                className={`p-2 rounded-lg transition-colors ${
-                                  lecture.cloudinaryPublicId
-                                    ? "text-green-600 hover:bg-green-50"
-                                    : "text-gray-400 hover:bg-gray-100 hover:text-primary"
-                                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                title={
-                                  lecture.cloudinaryPublicId
-                                    ? "ቪዲዮ ቀይር"
-                                    : "ቪዲዮ ጫን"
-                                }
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                  />
-                                </svg>
-                              </button>
-
-                              {lecture.cloudinaryPublicId && (
-                                <Link
-                                  href={`/courses/${courseId}/lectures/${lecture.id}`}
-                                  target="_blank"
-                                  className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
-                                  title="ተመልከት"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                    />
-                                  </svg>
-                                </Link>
-                              )}
-
-                              <button
-                                onClick={() => handleDeleteLecture(lecture.id)}
-                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="ሰርዝ"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                              </button>
-
-                              <div className="ml-3 flex flex-col items-start">
-                                {isUploading && (
-                                  <div className="w-36">
-                                    <div className="w-full bg-gray-100 rounded-full h-2">
-                                      <div
-                                        className="bg-secondary h-2 rounded-full transition-all"
-                                        style={{
-                                          width: `${uploadState.progress}%`,
-                                        }}
-                                      />
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1 text-left">
-                                      {uploadState.progress}%
-                                    </p>
-                                  </div>
-                                )}
-                                {hasError && (
-                                  <div className="mt-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded-lg">
-                                    {uploadState.error}
-                                  </div>
-                                )}
-                                {isUploaded && (
-                                  <div className="mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-lg">
-                                    Video uploaded
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Reorder.Item>
-                    );
-                  })}
+                          </Reorder.Item>
+                        );
+                      })}
+                  </div>
+                ))}
               </Reorder.Group>
             )}
           </div>

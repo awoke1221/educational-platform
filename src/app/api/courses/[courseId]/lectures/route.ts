@@ -5,14 +5,35 @@ import crypto from "node:crypto";
 import { NextRequest } from "next/server";
 import { verifyAuth } from "@/lib/auth/middleware";
 import { resolveUserIdForAuth } from "@/lib/auth/userLookup";
-import { createLectureSchema } from "@/lib/validators/schemas";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { BunnyStreamService } from "@/lib/bunny";
+import { createLectureSchema } from "@/lib/validators/schemas";
 import {
   successResponse,
   errorResponse,
   notFoundResponse,
   handleApiError,
 } from "@/lib/utils/api";
+
+type LectureRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  duration: number | null;
+  orderIndex: number;
+  isPublished: boolean;
+  views: number | null;
+  createdAt: string | null;
+  videoUrl?: string | null;
+  cloudinaryPublicId?: string | null;
+  videoSize?: string | null;
+};
+
+type UserProgressRow = {
+  lectureId: string;
+  isCompleted: boolean;
+  watchPercentage: number;
+};
 
 // ============================================
 // Helper: Check course ownership
@@ -100,7 +121,7 @@ export async function GET(
     }
 
     // Only show published lectures to non-owners
-    const lectureSelect: Record<string, any> = {
+    const lectureSelect: Record<string, boolean> = {
       id: true,
       title: true,
       description: true,
@@ -116,9 +137,10 @@ export async function GET(
     lectureSelect.cloudinaryPublicId = true; // Bunny storage path
     lectureSelect.videoSize = true;
 
+    const selectFields = Object.keys(lectureSelect).join(",");
     let lectureQuery = supabaseAdmin!
       .from("Lecture")
-      .select(Object.keys(lectureSelect).join(","))
+      .select(selectFields)
       .eq("courseId", courseId)
       .order("orderIndex", { ascending: true });
 
@@ -126,11 +148,43 @@ export async function GET(
       lectureQuery = lectureQuery.eq("isPublished", true);
     }
 
-    const { data: lectures, error: lecErr } = await lectureQuery;
+    const { data: lectures, error: lecErr } = (await lectureQuery) as {
+      data: LectureRow[] | null;
+      error: unknown;
+    };
     if (lecErr) throw lecErr;
 
+    const resolvedLectures = await Promise.all(
+      ((lectures || []) as LectureRow[]).map(async (lec) => {
+        const durationValue = Number.isFinite(lec.duration ?? 0)
+          ? (lec.duration as number)
+          : 0;
+
+        const duration =
+          durationValue > 0
+            ? durationValue
+            : lec.cloudinaryPublicId && BunnyStreamService.isConfigured()
+              ? await BunnyStreamService.getVideo(lec.cloudinaryPublicId)
+                  .then((video) =>
+                    Number.isFinite(video.length)
+                      ? Math.round(video.length)
+                      : 0,
+                  )
+                  .catch(() => 0)
+              : 0;
+
+        return {
+          ...lec,
+          duration,
+        };
+      }),
+    );
+
     // Get course progress if user is enrolled
-    let progress: Record<string, any> = {};
+    let progress: Record<
+      string,
+      { isCompleted: boolean; watchPercentage: number }
+    > = {};
     if (auth && !isOwner) {
       const resolvedUserId = await resolveUserIdForAuth(
         auth.userId,
@@ -138,30 +192,39 @@ export async function GET(
       );
       const lookupUserId = resolvedUserId || auth.userId;
 
-      const { data: enrollment } = await supabaseAdmin!
+      const { data: enrollment } = (await supabaseAdmin!
         .from("Enrollment")
-        .select("*")
+        .select("status")
         .eq("userId", lookupUserId)
         .eq("courseId", courseId)
-        .maybeSingle();
+        .maybeSingle()) as { data: { status: string } | null };
 
       if (enrollment) {
-        const { data: userProgress } = await supabaseAdmin!
+        const { data: userProgress } = (await supabaseAdmin!
           .from("UserProgress")
           .select("lectureId, isCompleted, watchPercentage")
-          .eq("userId", lookupUserId);
+          .eq("userId", lookupUserId)) as {
+          data: UserProgressRow[] | null;
+          error: unknown;
+        };
 
         // Filter to lectures in this course (simplified - UserProgress is filtered by enrollment)
         if (userProgress) {
           progress = userProgress.reduce(
-            (acc: any, p: any) => {
+            (
+              acc: Record<
+                string,
+                { isCompleted: boolean; watchPercentage: number }
+              >,
+              p,
+            ) => {
               acc[p.lectureId] = {
                 isCompleted: p.isCompleted,
                 watchPercentage: p.watchPercentage,
               };
               return acc;
             },
-            {} as Record<string, any>,
+            {},
           );
         }
       }
@@ -170,7 +233,7 @@ export async function GET(
     return successResponse(
       {
         courseId,
-        lectures,
+        lectures: resolvedLectures,
         progress,
       },
       "Lectures retrieved successfully",
