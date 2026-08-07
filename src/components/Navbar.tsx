@@ -50,7 +50,7 @@ export default function Navbar() {
     setInitialized(true);
   }, []);
 
-  // Keep nav in sync when user logs in/out (cross-tab)
+  // Keep nav in sync when user logs in/out, including same-tab auth changes.
   useEffect(() => {
     if (!initialized) return;
     const checkAuth = () => {
@@ -66,8 +66,13 @@ export default function Navbar() {
         setUser(null);
       }
     };
+
     window.addEventListener("storage", checkAuth);
-    return () => window.removeEventListener("storage", checkAuth);
+    window.addEventListener("auth-changed", checkAuth);
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("auth-changed", checkAuth);
+    };
   }, [initialized]);
 
   // Close dropdown when clicking outside

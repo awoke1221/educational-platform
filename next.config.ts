@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60,
   },
 
   // ── Security headers & compression ────────────────────────────

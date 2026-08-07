@@ -47,8 +47,7 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          error:
-            "The AI assistant is not configured yet. Please add a DeepSeek API key.",
+          error: "The AI assistant is not configured yet.",
         },
         { status: 503 },
       );

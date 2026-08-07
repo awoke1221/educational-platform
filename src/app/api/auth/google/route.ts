@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { getSupabaseAnon } from "@/lib/db/supabaseAnonClient";
+import { env } from "@/config/env";
 import { getAppBaseUrl } from "@/lib/utils/app-url";
 
 export async function GET(request: NextRequest) {
@@ -309,7 +310,7 @@ export async function POST(request: NextRequest) {
     if (rawRefreshToken) {
       googleHeaders.append(
         "Set-Cookie",
-        `sb-refresh-token=${rawRefreshToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`,
+        `sb-refresh-token=${rawRefreshToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${env.jwt.refreshTokenExpiry}`,
       );
     }
 

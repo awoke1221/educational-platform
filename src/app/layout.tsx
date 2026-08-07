@@ -9,6 +9,7 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import SessionRestore from "@/components/SessionRestore";
 import { ThemeProvider } from "@/lib/ThemeProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import SessionKeepalive from "@/components/SessionKeepalive";
@@ -63,6 +64,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ServiceWorkerRegister />
+          <SessionRestore />
           <SessionKeepalive />
           <Navbar />
           <main className="flex-1">{children}</main>

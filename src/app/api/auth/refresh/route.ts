@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { refreshTokenSchema } from "@/lib/validators/schemas";
 import { getSupabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { getSupabaseAnon } from "@/lib/db/supabaseAnonClient";
+import { env } from "@/config/env";
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
           ],
           [
             "Set-Cookie",
-            `sb-refresh-token=${session.refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`,
+            `sb-refresh-token=${session.refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${env.jwt.refreshTokenExpiry}`,
           ],
         ],
       },

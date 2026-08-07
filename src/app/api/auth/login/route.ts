@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
     );
     responseHeaders.append(
       "Set-Cookie",
-      `sb-refresh-token=${refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`,
+      `sb-refresh-token=${refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${env.jwt.refreshTokenExpiry}`,
     );
 
     return NextResponse.json(

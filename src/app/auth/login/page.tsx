@@ -67,6 +67,7 @@ function LoginForm() {
         localStorage.setItem("refreshToken", data.tokens.refreshToken);
         localStorage.setItem("tokenExpiresAt", String(data.tokens.expiresAt));
         localStorage.setItem("user", JSON.stringify(data.user));
+        window.dispatchEvent(new Event("auth-changed"));
         router.push(redirectTo);
       } else {
         setError(data.error || "Invalid email or password");
