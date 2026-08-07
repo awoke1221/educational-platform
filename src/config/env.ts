@@ -80,6 +80,7 @@ export const env = {
     libraryId: process.env.BUNNY_STREAM_LIBRARY_ID?.trim() || "",
     hostname: process.env.BUNNY_STREAM_HOSTNAME?.trim() || "video.bunnycdn.com",
     cdnHostname: process.env.BUNNY_STREAM_CDN_HOSTNAME?.trim() || "",
+    trailerVideoId: process.env.NEXT_PUBLIC_TRAILER_VIDEO_ID?.trim() || "",
     // Upload limits
     maxVideoSize: parseInt(
       process.env.BUNNY_STREAM_MAX_VIDEO_SIZE || "5368709120",

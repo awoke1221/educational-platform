@@ -16,30 +16,34 @@ export async function GET(request: Request) {
     // ============================================
 
     // 1. Check for fallback hero video ID from env
-    const fallbackId = env.bunnyStream.fallbackHeroVideoId?.trim();
+    const fallbackId =
+      env.bunnyStream.fallbackHeroVideoId?.trim() ||
+      env.bunnyStream.trailerVideoId?.trim();
 
     // 2. Use provided videoId or fallback
     const videoId = providedVideoId || fallbackId;
 
-    if (videoId && BunnyStreamService.isConfigured()) {
-      const hlsUrl = BunnyStreamService.getHlsUrl(videoId);
+    if (videoId) {
       const embedUrl = BunnyStreamService.getEmbedUrl(videoId);
+      const hlsUrl = BunnyStreamService.getHlsUrl(videoId);
       const thumbnailUrl = BunnyStreamService.getThumbnailUrl(videoId);
 
-      return successResponse(
-        {
-          videoUrl: hlsUrl,
-          hlsUrl,
-          embedUrl,
-          poster: thumbnailUrl,
-          thumbnailUrl,
-          filename: "hero-video",
-          type: "m3u8",
-          videoId,
-          storagePath: videoId,
-        },
-        "Hero video retrieved successfully (Bunny Stream)",
-      );
+      if (embedUrl) {
+        return successResponse(
+          {
+            videoUrl: hlsUrl,
+            hlsUrl,
+            embedUrl,
+            poster: thumbnailUrl,
+            thumbnailUrl,
+            filename: "hero-video",
+            type: "m3u8",
+            videoId,
+            storagePath: videoId,
+          },
+          "Hero video retrieved successfully (Bunny Stream)",
+        );
+      }
     }
 
     // 3. No hero video configured
