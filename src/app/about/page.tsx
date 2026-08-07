@@ -30,7 +30,13 @@ interface ExpertiseItem {
 /* ─── Data ──────────────────────────────────────────────── */
 const heroStats: StatItem[] = [
   { value: "6", label: "ተከታዮች", suffix: "M+", numValue: 6, decimals: 0 },
-  { value: "1.3", label: "እይታዎች", suffix: "B+", numValue: 1.3, decimals: 1 },
+  {
+    value: "1.3",
+    label: "እይታዎች በ 2 ወር",
+    suffix: "B+",
+    numValue: 1.3,
+    decimals: 1,
+  },
   {
     value: "2025",
     label: "TikToker of the Year",
@@ -50,28 +56,28 @@ const heroStats: StatItem[] = [
 const expertiseAreas: ExpertiseItem[] = [
   {
     icon: "🎯",
-    title: "ቫይራል ኮንቴንት ፍጠራ",
-    desc: "በሚሊዮኖች የሚቆጠሩ እይታዎችን የሚያመጡ ኮንቴንቶችን የመፍጠር ስልቶች",
+    title: "ቫይራል ኮንቴንት አሰራር",
+    desc: "በሚሊዮኖች የሚቆጠሩ እይታዎችን የሚያመጡ ኮንቴንቶችን የመስራት ስልቶች",
   },
   {
     icon: "⭐",
     title: "ፐርሰናል ብራንዲንግ",
-    desc: "ጠንካራ የግል ብራንድ በመገንባት ዘላቂ ተፅዕኖ መፍጠር",
+    desc: "ጠንካራ የግል ብራንድ በመገንባት ዘላቂ ተፅዕኖ የመፍጠር ስልቶች",
   },
   {
     icon: "📈",
-    title: "የTikTok እድገት ስልቶች",
+    title: "የTikTok ተከታይ እድገት ስልቶች",
     desc: "ከዜሮ ወደ ሚሊዮኖች የሚወስዱ የተረጋገጡ የእድገት ስልቶች",
   },
   {
     icon: "👥",
-    title: "አድማጭ ግንባታ",
-    desc: "ታማኝ እና ንቁ ተከታዮችን የመገንባት ስነ-ጥበብ",
+    title: "ተከታዮችን ማፍራት",
+    desc: "ታማኝ እና ንቁ ተከታዮችን የመገንባት ሚስጥሮች",
   },
   {
     icon: "🧠",
     title: "የኮንቴንት ሳይኮሎጂ",
-    desc: "የሰዎችን ትኩረት የሚስቡ እና የሚያስቆዩ የስነ-ልቦና መርሆች",
+    desc: "የሰዎችን ትኩረት የሚስቡ እና የሚያስቆዩ የስነ-ልቦና ስልቶች",
   },
   {
     icon: "📖",
@@ -81,7 +87,7 @@ const expertiseAreas: ExpertiseItem[] = [
   {
     icon: "🎬",
     title: "Camera Confidence",
-    desc: "በካሜራ ፊት በራስ መተማመን እና ተፈጥሯዊ መሆን",
+    desc: "በካሜራ ፊት በራስ መተማመን እና ተፈጥሯዊ መሆን የሚያስችል ስልቶች",
   },
   {
     icon: "💰",
@@ -113,7 +119,7 @@ const timelineData = [
   },
   {
     year: "መድረስ",
-    title: "1.3B+ እይታዎች",
+    title: "1.3B+ እይታዎች በሁለት ወራት ብቻ",
     desc: "በሁለት ወራት ውስጥ ይህ ቁጥር ከ1.3 ቢሊዮን በላይ ደርሷል።",
   },
   {
