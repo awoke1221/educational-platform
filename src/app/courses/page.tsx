@@ -292,7 +292,7 @@ export default function CoursesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              ያሉን{" "}
+              የሚገኙ{" "}
               <span className="bg-gradient-to-r from-[#7f1d1d] to-[#dc2626] bg-clip-text text-transparent">
                 ኮርሶች
               </span>
@@ -303,7 +303,8 @@ export default function CoursesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              ቢሊዮኖች እይታዎችን ያመጡ ስልቶችን ይማሩ፣ ብራንድዎን ይገንቡ
+              የ TikTok ስኬት ምስጢሮችን ይማሩ። የቫይራል ይዘት ይፍጠሩ፣ ታዳሚዎን ያሳድጉ እና የሚታመን ዲጂታል
+              ብራንድ ይገንቡ።
             </motion.p>
             <motion.div
               className="grid grid-cols-3 gap-4 sm:gap-8 max-w-lg mx-auto"
@@ -313,8 +314,8 @@ export default function CoursesPage() {
             >
               {[
                 { value: isLoaded ? totalCount : "—", label: "ኮርሶች" },
-                { value: "24/7", label: "ድጋፍ" },
-                { value: "ቀላል", label: "ምዝገባ" },
+                { value: "24/7", label: " የተማሪ ድጋፍ" },
+                { value: " ፈጣን", label: "ምዝገባ" },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent drop-shadow-lg">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface HeroVideoData {
   embedUrl?: string;
@@ -376,6 +377,70 @@ export default function Home() {
               "
             >
               <TrailerVideoPlayer />
+            </div>
+            {/* Continue Learning CTA */}
+
+            <div className="mt-8 flex justify-center">
+              <Link
+                href="/courses"
+                className="
+      group
+      relative
+      inline-flex
+      items-center
+      gap-3
+      px-8
+      py-4
+      rounded-full
+      font-bold
+      text-white
+      bg-gradient-to-r
+      from-[#25DCEB]
+      via-[#1bb9d0]
+      to-[#FF3B6B]
+      shadow-[0_0_35px_rgba(37,220,235,.35)]
+      hover:shadow-[0_0_60px_rgba(255,59,107,.45)]
+      hover:scale-105
+      transition-all
+      duration-300
+      overflow-hidden
+    "
+              >
+                <span
+                  className="
+        absolute
+        inset-0
+        bg-white/20
+        translate-x-[-100%]
+        group-hover:translate-x-[100%]
+        transition-transform
+        duration-700
+      "
+                />
+
+                <span className="relative z-10">Continue Learning</span>
+
+                <svg
+                  className="
+        relative
+        z-10
+        w-5
+        h-5
+        group-hover:translate-x-1
+        transition-transform
+      "
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </Link>
             </div>
           </div>
         </div>
