@@ -2,18 +2,56 @@
 
 import { useEffect, useState } from "react";
 
-const TRAILER_VIDEO_ID = process.env.NEXT_PUBLIC_TRAILER_VIDEO_ID || "";
+interface HeroVideoData {
+  embedUrl?: string;
+  hlsUrl?: string;
+  poster?: string;
+  thumbnailUrl?: string;
+}
 
 function TrailerVideoPlayer() {
+  const [heroVideo, setHeroVideo] = useState<HeroVideoData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (!TRAILER_VIDEO_ID) {
-      setHasError(true);
+    let cancelled = false;
+
+    async function loadHeroVideo() {
+      try {
+        const response = await fetch("/api/bunny/hero-video");
+        if (!response.ok) {
+          throw new Error(`Hero video API returned ${response.status}`);
+        }
+
+        const json = await response.json();
+        if (!json.success || !json.data || !json.data.embedUrl) {
+          throw new Error(json.message || "No hero video available");
+        }
+
+        if (!cancelled) {
+          setHeroVideo(json.data);
+        }
+      } catch (error) {
+        console.warn("Hero video loading failed:", error);
+        if (!cancelled) {
+          setHasError(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     }
+
+    loadHeroVideo();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  if (hasError || !TRAILER_VIDEO_ID) {
+  if (loading) {
     return (
       <div
         className="
@@ -25,16 +63,31 @@ function TrailerVideoPlayer() {
           bg-black/80
         "
       >
-        <p className="text-white/60 text-sm">
-          Set NEXT_PUBLIC_TRAILER_VIDEO_ID env var
-        </p>
+        <p className="text-white/60 text-sm">Loading intro video...</p>
+      </div>
+    );
+  }
+
+  if (hasError || !heroVideo?.embedUrl) {
+    return (
+      <div
+        className="
+          absolute
+          inset-0
+          flex
+          items-center
+          justify-center
+          bg-black/80
+        "
+      >
+        <p className="text-white/60 text-sm">Intro video unavailable</p>
       </div>
     );
   }
 
   return (
     <iframe
-      src={`https://iframe.mediadelivery.net/embed/695187/${TRAILER_VIDEO_ID}?autoplay=true&loop=true&muted=true`}
+      src={`${heroVideo.embedUrl}?autoplay=true&loop=true&muted=true`}
       className="absolute inset-0 w-full h-full"
       loading="lazy"
       allow="autoplay; encrypted-media; picture-in-picture"
