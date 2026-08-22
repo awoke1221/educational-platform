@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { StorageService } from "@/lib/storage/supabase";
+import { EmailService } from "@/lib/email";
 
 export async function POST(
   request: NextRequest,
@@ -245,10 +246,12 @@ export async function POST(
           .maybeSingle();
 
         // Map front-end payment channel values to database-allowed values.
-        // Allowed: telebirr, cb_birr, bank_transfer, laki_pay
-        const dbPaymentMethod = (paymentChannel || paymentMethod || "telebirr")
-          .replace("paypal", "laki_pay")
-          .replace("creditcard", "laki_pay");
+        // Allowed: telebirr, cb_birr, bank_transfer, paypal
+        const dbPaymentMethod = (
+          paymentChannel ||
+          paymentMethod ||
+          "telebirr"
+        ).replace("creditcard", "paypal");
 
         const paymentData = {
           enrollmentId: enrollment.id,
@@ -348,6 +351,22 @@ export async function POST(
 
     console.log(
       `[RECEIPT] User ${userId} submitted receipt: ${uploadResult.storagePath}`,
+    );
+    const { data: user } = await supabaseAdmin!
+      .from("User")
+      .select("email, fullName")
+      .eq("id", userId)
+      .maybeSingle();
+    const { data: courseForEmail } = courseId
+      ? await supabaseAdmin!
+          .from("Course")
+          .select("title")
+          .eq("id", courseId)
+          .maybeSingle()
+      : { data: null };
+    await EmailService.localPaymentSubmitted(
+      user,
+      courseForEmail?.title || "your course",
     );
 
     return NextResponse.json(

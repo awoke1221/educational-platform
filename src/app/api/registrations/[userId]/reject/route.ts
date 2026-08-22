@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { requireRole, verifyAuth } from "@/lib/auth/middleware";
 import { StorageService } from "@/lib/storage/supabase";
+import { EmailService } from "@/lib/email";
 
 /**
  * Delete a receipt file from storage and clear its URL/key from the DB.
@@ -10,7 +11,9 @@ import { StorageService } from "@/lib/storage/supabase";
  */
 async function clearReceiptFromPayment(payment: any): Promise<void> {
   if (payment?.receiptScreenshotKey) {
-    const result = await StorageService.deleteFile(payment.receiptScreenshotKey);
+    const result = await StorageService.deleteFile(
+      payment.receiptScreenshotKey,
+    );
     if (!result.success) {
       console.warn(
         "[REJECT] Failed to delete receipt file from storage:",
@@ -35,7 +38,10 @@ async function clearReceiptFromPayment(payment: any): Promise<void> {
       .update(clearFields)
       .eq("id", payment.id);
     if (clearErr) {
-      console.warn("[REJECT] Failed to clear Payment receipt fields:", clearErr);
+      console.warn(
+        "[REJECT] Failed to clear Payment receipt fields:",
+        clearErr,
+      );
     }
   }
 }
@@ -187,6 +193,23 @@ export async function POST(
           .maybeSingle();
       }
 
+      const [{ data: user }, { data: course }] = await Promise.all([
+        supabaseAdmin!
+          .from("User")
+          .select("email, fullName")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabaseAdmin!
+          .from("Course")
+          .select("id, title")
+          .eq("id", courseId)
+          .maybeSingle(),
+      ]);
+      await EmailService.localPaymentRejected(
+        user,
+        course?.title || "your course",
+        rejectionReason,
+      );
       console.log(
         `[REJECT] Enrollment rejected for user ${userId} course ${courseId}`,
       );
@@ -288,7 +311,25 @@ export async function POST(
         );
     }
 
-    // no notification email sent for global rejection
+    const { data: user } = await supabaseAdmin!
+      .from("User")
+      .select("email, fullName")
+      .eq("id", userId)
+      .maybeSingle();
+    await Promise.all(
+      (pendingEnrollments || []).map(async (enrollment: any) => {
+        const { data: course } = await supabaseAdmin!
+          .from("Course")
+          .select("title")
+          .eq("id", enrollment.courseId)
+          .maybeSingle();
+        await EmailService.localPaymentRejected(
+          user,
+          course?.title || "your course",
+          rejectionReason,
+        );
+      }),
+    );
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {

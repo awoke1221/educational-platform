@@ -7,7 +7,7 @@ import {
   localPaymentSchema,
   diasporaPaymentSchema,
 } from "@/lib/validators/schemas";
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import PaymentService from "@/lib/payment";
 import {
   successResponse,
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       return successResponse(result, result.message, 201);
     } else {
       // ============================================
-      // Diaspora Payment (Laki Pay)
+      // Diaspora Payment (PayPal)
       // ============================================
       const validation = diasporaPaymentSchema.safeParse(body);
       if (!validation.success) {
@@ -149,4 +149,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
-

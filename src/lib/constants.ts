@@ -37,7 +37,7 @@ export const LOCAL_PAYMENT_TYPES = {
 } as const;
 
 export const DIASPORA_PAYMENT_TYPES = {
-  LAKI_PAY: "laki_pay",
+  PAYPAL: "paypal",
 } as const;
 
 // ============================================

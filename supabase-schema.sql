@@ -1,15 +1,13 @@
 -- ============================================
--- AD LMS Database Schema for Supabase
--- UPDATED: Google OAuth Support & Complete Schema
--- Copy this entire file into Supabase SQL Editor
+-- Adonay tiktok academy Database Schema for Supabase
 -- Go to: https://supabase.com/dashboard/project/gsiqibgpimazfivfrtxz/sql/new
 -- ============================================
 
--- Step 1: Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Step 1: Enable necessary extensions for UUID generation and cryptographic functions for password hashing
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Step 2: Create schema
+-- Step 2: Create schema 
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- Step 3: Migrations - Add Google OAuth columns if they don't exist
@@ -40,7 +38,7 @@ BEGIN
     END IF;
 END $$;
 
--- Users table
+-- Users table 
 CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,

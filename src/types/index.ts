@@ -89,7 +89,7 @@ export interface Payment {
   amount: number;
   currency: string;
   paymentMethod: "local" | "diaspora";
-  paymentType?: "telebirr" | "cb_birr" | "bank_transfer" | "laki_pay";
+  paymentType?: "telebirr" | "cb_birr" | "bank_transfer" | "paypal";
   status: "pending" | "processing" | "approved" | "rejected";
   transactionId?: string;
   receiptUrl?: string;

@@ -290,6 +290,47 @@ function PaymentForm() {
     setStep("receipt");
   };
 
+  const startPayPalPayment = async () => {
+    if (!course) return setError("Course details are still loading.");
+    if (!fullName.trim()) return setError("Please enter your full name.");
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await authFetchJson("/api/payments", {
+        method: "POST",
+        body: JSON.stringify({
+          paymentType: "diaspora",
+          courseId: course.id,
+          amount: Number((course.price * 0.012).toFixed(2)),
+        }),
+      });
+      if (!result.response.ok) {
+        setError(result.data?.error || "Unable to start PayPal payment");
+        return;
+      }
+      const checkoutUrl =
+        result.data?.data?.checkoutUrl || result.data?.checkoutUrl;
+      if (!checkoutUrl) throw new Error("PayPal checkout URL was not returned");
+      window.location.assign(checkoutUrl);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to start PayPal payment",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinue = () => {
+    if (paymentType === "diaspora") {
+      void startPayPalPayment();
+    } else {
+      proceedToReceipt();
+    }
+  };
+
   const readFileAsDataUrl = (file: File) => {
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -1049,11 +1090,13 @@ function PaymentForm() {
 
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={proceedToReceipt}
+                onClick={handleContinue}
                 disabled={loading || courseStatus !== "none"}
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-accent to-secondary text-slate-900 rounded-lg hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
               >
-                Continue to Receipt Upload
+                {paymentType === "diaspora"
+                  ? "Continue to PayPal"
+                  : "Continue to Receipt Upload"}
               </button>
               <button
                 onClick={() => {
@@ -1086,7 +1129,9 @@ function PaymentForm() {
               </div>
 
               <p className="mt-4 max-w-2xl text-slate-400 leading-7">
-                Upload your payment receipt so our team can verify the transaction details. Make sure the receipt clearly shows the date, amount, and reference.
+                Upload your payment receipt so our team can verify the
+                transaction details. Make sure the receipt clearly shows the
+                date, amount, and reference.
               </p>
 
               <div className="mt-6">

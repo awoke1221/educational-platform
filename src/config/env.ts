@@ -134,11 +134,11 @@ export const env = {
   // Payment Gateway Configuration
   // ============================================
   payment: {
-    lakiPay: {
-      apiKey: process.env.LAKI_PAY_API_KEY || "",
-      apiSecret: process.env.LAKI_PAY_API_SECRET || "",
-      webhookSecret: process.env.LAKI_PAY_WEBHOOK_SECRET || "",
-      baseUrl: process.env.LAKI_PAY_BASE_URL || "https://api.lakipay.com",
+    paypal: {
+      clientId: process.env.PAYPAL_CLIENT_ID || "",
+      clientSecret: process.env.PAYPAL_CLIENT_SECRET || "",
+      baseUrl:
+        process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com",
     },
     telebirr: {
       merchantCode: process.env.TELEBIRR_MERCHANT_CODE || "",
@@ -149,6 +149,12 @@ export const env = {
   // ============================================
   // Email Configuration
   // ============================================
+  email: {
+    resendApiKey: process.env.RESEND_API_KEY || "",
+    from:
+      process.env.RESEND_FROM_EMAIL ||
+      "Adonay TikTok Academy <noreply@adonaytiktokacademy.com>",
+  },
 
   // ============================================
   // Application Configuration

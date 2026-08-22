@@ -1,16 +1,9 @@
-// src/lib/payment/index.ts
-// Payment Service - Unified Payment Processing
-
-import { supabaseAdmin  } from "@/lib/db/supabaseAdmin";
-import LakiPayService from "./lakiPay";
-
-// ============================================
-// Payment Types
-// ============================================
+import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
+import { EmailService } from "@/lib/email";
+import PayPalService from "./paypal";
 
 export type PaymentType = "local" | "diaspora";
 export type LocalPaymentMethod = "telebirr" | "cb_birr" | "bank_transfer";
-export type PaymentStatus = "pending" | "processing" | "approved" | "rejected";
 
 export interface ProcessPaymentParams {
   userId: string;
@@ -19,105 +12,51 @@ export interface ProcessPaymentParams {
   paymentType: PaymentType;
   paymentMethod?: LocalPaymentMethod;
   transactionId?: string;
-  receiptScreenshotUrl?: string;
-  metadata?: Record<string, any>;
 }
 
-// ============================================
-// Payment Service
-// ============================================
-
 export class PaymentService {
-  // Helper: get a single row, throw if not found
-  private static async getOne(
-    table: string,
-    id: string,
-    select = "*",
-  ): Promise<Record<string, any>> {
+  private static async getOne(table: string, id: string, select = "*") {
     const { data, error } = await supabaseAdmin!
       .from(table)
       .select(select)
       .eq("id", id)
       .single();
     if (error || !data) throw new Error(`${table} not found`);
-    return data as Record<string, any>;
+    // Database rows are intentionally dynamic because Supabase is queried by table name.
+    return data as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 
-  // Helper: maybe get a single row
-  private static async maybeOne(
-    table: string,
-    filters: Record<string, any>,
-    select = "*",
-  ): Promise<Record<string, any> | null> {
-    let query = supabaseAdmin!.from(table).select(select);
-    for (const [k, v] of Object.entries(filters)) {
-      query = query.eq(k, v) as any;
-    }
-    const { data, error } = await query.maybeSingle();
-    if (error) return null;
-    return data as Record<string, any> | null;
-  }
-
-  /**
-   * Process a local payment (Telebirr, CB Birr, Bank Transfer)
-   */
-  static async processLocalPayment(params: ProcessPaymentParams): Promise<{
-    success: boolean;
-    payment: any;
-    enrollment: any;
-    message: string;
-  }> {
-    // Verify course exists
+  static async processLocalPayment(params: ProcessPaymentParams) {
     const course = await this.getOne(
       "Course",
       params.courseId,
       "id, title, price",
     );
-
-    // Check if user already has an active enrollment
-    const { data: existingEnrollment, error: enrollErr } = await supabaseAdmin!
+    const { data: existingEnrollment } = await supabaseAdmin!
       .from("Enrollment")
       .select("*, payment:Payment(*)")
       .eq("userId", params.userId)
       .eq("courseId", params.courseId)
       .maybeSingle();
-
-    if (!enrollErr && existingEnrollment) {
-      if (existingEnrollment.status === "active") {
-        throw new Error("You are already enrolled in this course");
-      }
-      const pay = Array.isArray(existingEnrollment.payment)
-        ? existingEnrollment.payment[0]
-        : existingEnrollment.payment;
-      if (pay?.status === "pending") {
-        throw new Error("You have a pending payment for this course");
-      }
-    }
-
-    // Create or keep enrollment
-    let enrollment;
-    if (existingEnrollment) {
-      if (existingEnrollment.status === "active") {
-        throw new Error("You are already enrolled in this course");
-      }
-      if (existingEnrollment.status !== "processing") {
-        const { data: updatedEnroll, error: updateEnrollErr } =
-          await supabaseAdmin!
-            .from("Enrollment")
-            .update({
-              status: "processing",
-              updatedAt: new Date().toISOString(),
-            })
-            .eq("id", existingEnrollment.id)
-            .select()
-            .single();
-        if (updateEnrollErr) throw new Error("Failed to update enrollment");
-        enrollment = updatedEnroll;
-      } else {
-        enrollment = existingEnrollment;
-      }
+    if (existingEnrollment?.status === "active")
+      throw new Error("You are already enrolled in this course");
+    const existingPayment = Array.isArray(existingEnrollment?.payment)
+      ? existingEnrollment.payment[0]
+      : existingEnrollment?.payment;
+    if (existingPayment?.status === "pending")
+      throw new Error("You have a pending payment for this course");
+    let enrollment = existingEnrollment;
+    if (enrollment) {
+      const { data, error } = await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "processing", updatedAt: new Date().toISOString() })
+        .eq("id", enrollment.id)
+        .select()
+        .single();
+      if (error) throw new Error("Failed to update enrollment");
+      enrollment = data;
     } else {
-      const { data: newEnroll, error: createErr } = await supabaseAdmin!
+      const { data, error } = await supabaseAdmin!
         .from("Enrollment")
         .insert({
           userId: params.userId,
@@ -128,21 +67,9 @@ export class PaymentService {
         })
         .select()
         .single();
-      if (createErr) throw new Error("Failed to create enrollment");
-      enrollment = newEnroll;
+      if (error) throw new Error("Failed to create enrollment");
+      enrollment = data;
     }
-
-    // Create or update payment record
-    const { data: existingPayment } = await supabaseAdmin!
-      .from("Payment")
-      .select("*")
-      .eq("enrollmentId", enrollment.id)
-      .maybeSingle();
-
-    if (existingPayment && existingPayment.status === "pending") {
-      throw new Error("You have a pending payment for this course");
-    }
-
     const paymentPayload = {
       enrollmentId: enrollment.id,
       userId: params.userId,
@@ -153,51 +80,33 @@ export class PaymentService {
       paymentMethod: params.paymentMethod || "telebirr",
       status: "pending",
       transactionId: params.transactionId || null,
-      receiptScreenshotUrl: params.receiptScreenshotUrl || null,
       updatedAt: new Date().toISOString(),
     };
-
-    const paymentRecord = existingPayment
-      ? await supabaseAdmin!
+    const query = existingPayment
+      ? supabaseAdmin!
           .from("Payment")
           .update(paymentPayload)
           .eq("id", existingPayment.id)
-          .select()
-          .single()
-      : await supabaseAdmin!
-          .from("Payment")
-          .insert(paymentPayload)
-          .select()
-          .single();
-
-    if (!paymentRecord || paymentRecord.error) {
-      throw new Error("Failed to create payment");
-    }
-    const payment = paymentRecord.data || paymentRecord;
-
-    console.log(
-      `[PAYMENT] Local payment created: ${payment.id} for course ${params.courseId}`,
-    );
-
+      : supabaseAdmin!.from("Payment").insert(paymentPayload);
+    const { data: payment, error: paymentError } = await query
+      .select()
+      .single();
+    if (paymentError || !payment) throw new Error("Failed to create payment");
+    const { data: user } = await supabaseAdmin!
+      .from("User")
+      .select("email, fullName")
+      .eq("id", params.userId)
+      .maybeSingle();
+    await EmailService.localPaymentSubmitted(user, course.title);
     return {
       success: true,
-      payment: {
-        id: payment.id,
-        amount: payment.amount,
-        currency: payment.currency,
-        paymentMethod: payment.paymentMethod,
-        status: payment.status,
-        transactionId: payment.transactionId,
-      },
-      enrollment: { id: enrollment.id, status: enrollment.status },
+      payment,
+      enrollment,
       message:
         "Payment submitted successfully. An admin will review and approve it shortly.",
     };
   }
 
-  /**
-   * Process a diaspora payment (Laki Pay)
-   */
   static async processDiasporaPayment(params: {
     userId: string;
     courseId: string;
@@ -205,53 +114,36 @@ export class PaymentService {
     customerEmail: string;
     customerName: string;
     customerPhone?: string;
-  }): Promise<{
-    success: boolean;
-    checkoutUrl: string;
-    transactionId: string;
-    message: string;
-  }> {
-    if (!LakiPayService.isConfigured()) {
+  }) {
+    if (!PayPalService.isConfigured())
       throw new Error(
-        "Laki Pay is not configured. Please set LAKI_PAY_API_KEY and LAKI_PAY_API_SECRET.",
+        "PayPal is not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.",
       );
-    }
-
     const course = await this.getOne(
       "Course",
       params.courseId,
       "id, title, price",
     );
-
     const { data: existingEnrollment } = await supabaseAdmin!
       .from("Enrollment")
       .select("*")
       .eq("userId", params.userId)
       .eq("courseId", params.courseId)
       .maybeSingle();
-
-    if (existingEnrollment?.status === "active") {
+    if (existingEnrollment?.status === "active")
       throw new Error("You are already enrolled in this course");
-    }
-
     let enrollment = existingEnrollment;
-    if (existingEnrollment) {
-      if (existingEnrollment.status !== "processing") {
-        const { data: updatedEnrollment, error: updateEnrollErr } =
-          await supabaseAdmin!
-            .from("Enrollment")
-            .update({
-              status: "processing",
-              updatedAt: new Date().toISOString(),
-            })
-            .eq("id", existingEnrollment.id)
-            .select()
-            .single();
-        if (updateEnrollErr) throw new Error("Failed to update enrollment");
-        enrollment = updatedEnrollment;
-      }
+    if (enrollment) {
+      const { data, error } = await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "processing", updatedAt: new Date().toISOString() })
+        .eq("id", enrollment.id)
+        .select()
+        .single();
+      if (error) throw new Error("Failed to update enrollment");
+      enrollment = data;
     } else {
-      const { data: newEnroll, error: createErr } = await supabaseAdmin!
+      const { data, error } = await supabaseAdmin!
         .from("Enrollment")
         .insert({
           userId: params.userId,
@@ -262,29 +154,17 @@ export class PaymentService {
         })
         .select()
         .single();
-      if (createErr) throw new Error("Failed to create enrollment");
-      enrollment = newEnroll;
+      if (error) throw new Error("Failed to create enrollment");
+      enrollment = data;
     }
-
-    const merchantReference = `ENR-${enrollment.id}-${Date.now()}`;
-    const lakiPay = LakiPayService.getInstance();
-
-    const lakiPayResponse = await lakiPay.initializePayment({
+    const paypalOrder = await PayPalService.getInstance().createOrder({
       amount: params.amount,
       currency: "USD",
-      merchantReference,
-      customerEmail: params.customerEmail,
-      customerName: params.customerName,
-      customerPhone: params.customerPhone,
+      referenceId: `ENR-${enrollment.id}`,
+      customId: enrollment.id,
       description: `Enrollment in ${course.title}`,
-      metadata: {
-        enrollmentId: enrollment.id,
-        courseId: params.courseId,
-        userId: params.userId,
-      },
     });
-
-    const { data: payment, error: payErr } = await supabaseAdmin!
+    const { data: payment, error } = await supabaseAdmin!
       .from("Payment")
       .insert({
         enrollmentId: enrollment.id,
@@ -293,46 +173,139 @@ export class PaymentService {
         amount: params.amount,
         currency: "USD",
         paymentType: "diaspora",
-        paymentMethod: "laki_pay",
+        paymentMethod: "paypal",
         status: "processing",
-        lakiPayTransactionId: lakiPayResponse.transactionId,
-        paymentGatewayResponse: lakiPayResponse,
+        paypalOrderId: paypalOrder.orderId,
+        paypalStatus: paypalOrder.status,
+        paymentGatewayResponse: paypalOrder,
       })
       .select()
       .single();
-    if (payErr) throw new Error("Failed to create payment");
-
-    console.log(
-      `[PAYMENT] Diaspora payment initiated: ${payment.id}, LakiPay TX: ${lakiPayResponse.transactionId}`,
-    );
-
+    if (error || !payment) throw new Error("Failed to create PayPal payment");
     return {
       success: true,
-      checkoutUrl: lakiPayResponse.checkoutUrl,
-      transactionId: lakiPayResponse.transactionId,
-      message: "Redirecting to payment gateway...",
+      checkoutUrl: paypalOrder.checkoutUrl,
+      transactionId: paypalOrder.orderId,
+      message: "Redirecting to PayPal...",
     };
   }
 
-  /**
-   * Approve a local payment (admin action)
-   */
+  static async capturePayPalPayment(orderId: string) {
+    const { data: payment } = await supabaseAdmin!
+      .from("Payment")
+      .select("*, user:User(email, fullName), course:Course(id, title)")
+      .eq("paypalOrderId", orderId)
+      .maybeSingle();
+    if (!payment) throw new Error("PayPal payment not found");
+    if (payment.status === "approved")
+      return { success: true, message: "Payment already completed" };
+    const course = Array.isArray(payment.course)
+      ? payment.course[0]
+      : payment.course;
+    const user = Array.isArray(payment.user) ? payment.user[0] : payment.user;
+    try {
+      const capture = await PayPalService.getInstance().captureOrder(orderId);
+      if (capture.status !== "COMPLETED")
+        throw new Error(
+          `PayPal payment status: ${capture.status || "unknown"}`,
+        );
+      const { error } = await supabaseAdmin!
+        .from("Payment")
+        .update({
+          status: "approved",
+          paypalStatus: capture.status,
+          approvedAt: new Date().toISOString(),
+          paymentGatewayResponse: capture,
+        })
+        .eq("id", payment.id)
+        .eq("status", "processing");
+      if (error) throw error;
+      await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "active", updatedAt: new Date().toISOString() })
+        .eq("id", payment.enrollmentId);
+      await EmailService.paypalPaymentCompleted(
+        user,
+        course?.title || "your course",
+        course?.id || payment.courseId,
+      );
+      return {
+        success: true,
+        message: "PayPal payment completed successfully",
+      };
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : "PayPal transaction failed";
+      await supabaseAdmin!
+        .from("Payment")
+        .update({
+          status: "rejected",
+          paypalStatus: "FAILED",
+          rejectedAt: new Date().toISOString(),
+          rejectionReason: reason,
+        })
+        .eq("id", payment.id)
+        .eq("status", "processing");
+      await supabaseAdmin!
+        .from("Enrollment")
+        .update({ status: "cancelled", updatedAt: new Date().toISOString() })
+        .eq("id", payment.enrollmentId);
+      await EmailService.paypalPaymentFailed(
+        user,
+        course?.title || "your course",
+        reason,
+      );
+      throw error;
+    }
+  }
+
+  static async cancelPayPalPayment(orderId: string) {
+    const { data: payment } = await supabaseAdmin!
+      .from("Payment")
+      .select("*, user:User(email, fullName), course:Course(title)")
+      .eq("paypalOrderId", orderId)
+      .maybeSingle();
+    if (!payment || payment.status !== "processing") return;
+    const course = Array.isArray(payment.course)
+      ? payment.course[0]
+      : payment.course;
+    const user = Array.isArray(payment.user) ? payment.user[0] : payment.user;
+    const reason =
+      "The PayPal checkout was cancelled before payment was completed.";
+    await supabaseAdmin!
+      .from("Payment")
+      .update({
+        status: "rejected",
+        paypalStatus: "CANCELLED",
+        rejectedAt: new Date().toISOString(),
+        rejectionReason: reason,
+      })
+      .eq("id", payment.id)
+      .eq("status", "processing");
+    await supabaseAdmin!
+      .from("Enrollment")
+      .update({ status: "cancelled", updatedAt: new Date().toISOString() })
+      .eq("id", payment.enrollmentId);
+    await EmailService.paypalPaymentFailed(
+      user,
+      course?.title || "your course",
+      reason,
+    );
+  }
+
   static async approvePayment(
     paymentId: string,
     adminUserId: string,
     notes?: string,
-  ): Promise<any> {
+  ) {
     const payment = await this.getOne(
       "Payment",
       paymentId,
       "*, enrollment:Enrollment(*)",
     );
-
-    if (payment.status !== "pending") {
+    if (payment.status !== "pending")
       throw new Error("Payment is not in pending status");
-    }
-
-    const { data: updatedPayment, error: upErr } = await supabaseAdmin!
+    const { data: updated, error } = await supabaseAdmin!
       .from("Payment")
       .update({
         status: "approved",
@@ -343,51 +316,23 @@ export class PaymentService {
       .eq("id", paymentId)
       .select()
       .single();
-    if (upErr) throw new Error("Failed to approve payment");
-
+    if (error) throw new Error("Failed to approve payment");
     await supabaseAdmin!
       .from("Enrollment")
-      .update({ status: "active" })
+      .update({ status: "active", updatedAt: new Date().toISOString() })
       .eq("id", payment.enrollmentId);
-
-    // Increment course enrollment count
-    const enroll = Array.isArray(payment.enrollment)
-      ? payment.enrollment[0]
-      : payment.enrollment;
-    const courseId = enroll?.courseId || payment.courseId;
-    const { data: course } = await supabaseAdmin!
-      .from("Course")
-      .select("enrollmentCount")
-      .eq("id", courseId)
-      .single();
-    if (course) {
-      await supabaseAdmin!
-        .from("Course")
-        .update({ enrollmentCount: (course.enrollmentCount || 0) + 1 })
-        .eq("id", courseId);
-    }
-
-    console.log(
-      `[PAYMENT] Payment approved: ${paymentId} by admin ${adminUserId}`,
-    );
-    return updatedPayment;
+    return updated;
   }
 
-  /**
-   * Reject a local payment (admin action)
-   */
   static async rejectPayment(
     paymentId: string,
     adminUserId: string,
     reason: string,
-  ): Promise<any> {
-    const payment = await this.getOne("Payment", paymentId, "*");
-
-    if (payment.status !== "pending") {
+  ) {
+    const payment = await this.getOne("Payment", paymentId);
+    if (payment.status !== "pending")
       throw new Error("Payment is not in pending status");
-    }
-
-    const { data: updatedPayment, error: upErr } = await supabaseAdmin!
+    const { data: updated, error } = await supabaseAdmin!
       .from("Payment")
       .update({
         status: "rejected",
@@ -398,114 +343,24 @@ export class PaymentService {
       .eq("id", paymentId)
       .select()
       .single();
-    if (upErr) throw new Error("Failed to reject payment");
-
+    if (error) throw new Error("Failed to reject payment");
     await supabaseAdmin!
       .from("Enrollment")
-      .update({ status: "cancelled" })
+      .update({ status: "cancelled", updatedAt: new Date().toISOString() })
       .eq("id", payment.enrollmentId);
-
-    console.log(
-      `[PAYMENT] Payment rejected: ${paymentId} by admin ${adminUserId}`,
-    );
-    return updatedPayment;
+    return updated;
   }
 
-  /**
-   * Handle Laki Pay webhook callback
-   */
-  static async handleWebhook(payload: any): Promise<void> {
-    const { transactionId, status } = payload;
-
-    const { data: payment } = await supabaseAdmin!
-      .from("Payment")
-      .select("*, enrollment:Enrollment(*)")
-      .eq("lakiPayTransactionId", transactionId)
-      .maybeSingle();
-
-    if (!payment) {
-      console.error(`[WEBHOOK] Payment not found for TX: ${transactionId}`);
-      return;
-    }
-
-    if (status === "completed") {
-      await supabaseAdmin!
-        .from("Payment")
-        .update({
-          status: "approved",
-          approvedAt: new Date().toISOString(),
-          lakiPayStatus: status,
-          paymentGatewayResponse: payload,
-        })
-        .eq("id", payment.id);
-
-      await supabaseAdmin!
-        .from("Enrollment")
-        .update({ status: "active" })
-        .eq("id", payment.enrollmentId);
-
-      const enroll = Array.isArray(payment.enrollment)
-        ? payment.enrollment[0]
-        : payment.enrollment;
-      const courseId = enroll?.courseId || payment.courseId;
-      const { data: course } = await supabaseAdmin!
-        .from("Course")
-        .select("enrollmentCount")
-        .eq("id", courseId)
-        .single();
-      if (course) {
-        await supabaseAdmin!
-          .from("Course")
-          .update({ enrollmentCount: (course.enrollmentCount || 0) + 1 })
-          .eq("id", courseId);
-      }
-
-      console.log(
-        `[WEBHOOK] Payment completed: ${transactionId}, enrollment activated`,
-      );
-    } else if (status === "failed" || status === "cancelled") {
-      await supabaseAdmin!
-        .from("Payment")
-        .update({
-          status: "rejected",
-          lakiPayStatus: status,
-          rejectedAt: new Date().toISOString(),
-          rejectionReason: `Laki Pay: ${status}`,
-        })
-        .eq("id", payment.id);
-
-      await supabaseAdmin!
-        .from("Enrollment")
-        .update({ status: "cancelled" })
-        .eq("id", payment.enrollmentId);
-
-      console.log(`[WEBHOOK] Payment ${status}: ${transactionId}`);
-    }
-  }
-
-  /**
-   * Get user's payment history
-   */
   static async getUserPayments(userId: string, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-    const from = skip;
-    const to = skip + limit - 1;
-
-    const {
-      data: payments,
-      count,
-      error,
-    } = await supabaseAdmin!
+    const { data, count, error } = await supabaseAdmin!
       .from("Payment")
       .select("*, course:Course(id, title, coverImage)", { count: "exact" })
       .eq("userId", userId)
       .order("createdAt", { ascending: false })
-      .range(from, to);
-
+      .range((page - 1) * limit, page * limit - 1);
     if (error) throw new Error("Failed to fetch payments");
-
     return {
-      payments: payments || [],
+      payments: data || [],
       total: count || 0,
       page,
       limit,
@@ -513,19 +368,8 @@ export class PaymentService {
     };
   }
 
-  /**
-   * Get pending payments for admin review
-   */
   static async getPendingPayments(page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const from = skip;
-    const to = skip + limit - 1;
-
-    const {
-      data: payments,
-      count,
-      error,
-    } = await supabaseAdmin!
+    const { data, count, error } = await supabaseAdmin!
       .from("Payment")
       .select(
         "*, user:User(id, fullName, email, username, phoneNumber), course:Course(id, title, coverImage)",
@@ -534,12 +378,10 @@ export class PaymentService {
       .eq("paymentType", "local")
       .eq("status", "pending")
       .order("createdAt", { ascending: true })
-      .range(from, to);
-
+      .range((page - 1) * limit, page * limit - 1);
     if (error) throw new Error("Failed to fetch pending payments");
-
     return {
-      payments: payments || [],
+      payments: data || [],
       total: count || 0,
       page,
       limit,
@@ -549,4 +391,3 @@ export class PaymentService {
 }
 
 export default PaymentService;
-

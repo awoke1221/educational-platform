@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/db/supabaseAdmin";
 import { requireRole, verifyAuth } from "@/lib/auth/middleware";
+import { EmailService } from "@/lib/email";
 
 export async function POST(
   request: NextRequest,
@@ -125,6 +126,23 @@ export async function POST(
           .maybeSingle();
       }
 
+      const [{ data: user }, { data: course }] = await Promise.all([
+        supabaseAdmin!
+          .from("User")
+          .select("email, fullName")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabaseAdmin!
+          .from("Course")
+          .select("id, title")
+          .eq("id", courseId)
+          .maybeSingle(),
+      ]);
+      await EmailService.localPaymentApproved(
+        user,
+        course?.title || "your course",
+        courseId,
+      );
       console.log(
         `[APPROVE] Enrollment activated for user ${userId} course ${courseId}`,
       );
@@ -206,8 +224,26 @@ export async function POST(
         );
     }
 
+    const { data: user } = await supabaseAdmin!
+      .from("User")
+      .select("email, fullName")
+      .eq("id", userId)
+      .maybeSingle();
+    await Promise.all(
+      (pendingEnrollments || []).map(async (enrollment: any) => {
+        const { data: course } = await supabaseAdmin!
+          .from("Course")
+          .select("id, title")
+          .eq("id", enrollment.courseId)
+          .maybeSingle();
+        await EmailService.localPaymentApproved(
+          user,
+          course?.title || "your course",
+          enrollment.courseId,
+        );
+      }),
+    );
     console.log(`[APPROVE] User ${userId} approved (global)`);
-    // no notification email sent for global approval
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
     console.error("[APPROVE POST ERROR]", err);
