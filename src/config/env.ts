@@ -137,8 +137,8 @@ export const env = {
     paypal: {
       clientId: process.env.PAYPAL_CLIENT_ID || "",
       clientSecret: process.env.PAYPAL_CLIENT_SECRET || "",
-      baseUrl:
-        process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com",
+      baseUrl: process.env.PAYPAL_BASE_URL || "https://api-m.paypal.com",
+      webhookId: process.env.PAYPAL_WEBHOOK_ID || "",
     },
     telebirr: {
       merchantCode: process.env.TELEBIRR_MERCHANT_CODE || "",

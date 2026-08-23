@@ -3,7 +3,8 @@ import axios, { AxiosInstance } from "axios";
 const PAYPAL_CONFIG = {
   clientId: process.env.PAYPAL_CLIENT_ID || "",
   clientSecret: process.env.PAYPAL_CLIENT_SECRET || "",
-  baseUrl: process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com",
+  baseUrl: process.env.PAYPAL_BASE_URL || "https://api-m.paypal.com",
+  webhookId: process.env.PAYPAL_WEBHOOK_ID || "",
   returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/paypal/capture`,
   cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/paypal/cancel`,
 };
@@ -39,7 +40,7 @@ export class PayPalService {
     return PayPalService.instance;
   }
 
-  private async accessToken() {
+  async getAccessToken() {
     const credentials = Buffer.from(
       `${PAYPAL_CONFIG.clientId}:${PAYPAL_CONFIG.clientSecret}`,
     ).toString("base64");
@@ -58,7 +59,7 @@ export class PayPalService {
 
   async createOrder(params: PayPalOrderParams): Promise<PayPalOrderResult> {
     try {
-      const token = await this.accessToken();
+      const token = await this.getAccessToken();
       const response = await this.client.post(
         "/v2/checkout/orders",
         {
@@ -107,7 +108,7 @@ export class PayPalService {
   }
 
   async captureOrder(orderId: string) {
-    const token = await this.accessToken();
+    const token = await this.getAccessToken();
     try {
       const response = await this.client.post(
         `/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`,
@@ -129,6 +130,37 @@ export class PayPalService {
           "PayPal could not complete the transaction",
       );
     }
+  }
+
+  async getOrder(orderId: string) {
+    const token = await this.getAccessToken();
+    const response = await this.client.get(
+      `/v2/checkout/orders/${encodeURIComponent(orderId)}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  }
+
+  async verifyWebhookSignature(
+    rawBody: string,
+    headers: Record<string, string>,
+  ) {
+    if (!PAYPAL_CONFIG.webhookId) return false;
+    const token = await this.getAccessToken();
+    const response = await this.client.post(
+      "/v1/notifications/verify-webhook-signature",
+      {
+        auth_algo: headers["paypal-auth-algo"],
+        cert_url: headers["paypal-cert-url"],
+        transmission_id: headers["paypal-transmission-id"],
+        transmission_sig: headers["paypal-transmission-sig"],
+        transmission_time: headers["paypal-transmission-time"],
+        webhook_id: PAYPAL_CONFIG.webhookId,
+        webhook_event: JSON.parse(rawBody),
+      },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data?.verification_status === "SUCCESS";
   }
 
   static isConfigured() {

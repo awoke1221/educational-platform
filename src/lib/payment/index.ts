@@ -181,7 +181,15 @@ export class PaymentService {
       })
       .select()
       .single();
-    if (error || !payment) throw new Error("Failed to create PayPal payment");
+    if (error || !payment) {
+      console.error("[PAYPAL] Payment record insert failed", {
+        code: error?.code,
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+      });
+      throw new Error("Failed to create PayPal payment");
+    }
     return {
       success: true,
       checkoutUrl: paypalOrder.checkoutUrl,
@@ -191,6 +199,24 @@ export class PaymentService {
   }
 
   static async capturePayPalPayment(orderId: string) {
+    let capture;
+    try {
+      capture = await PayPalService.getInstance().captureOrder(orderId);
+    } catch (error) {
+      const existingOrder = await PayPalService.getInstance().getOrder(orderId);
+      if (existingOrder.status !== "COMPLETED") throw error;
+      capture = existingOrder;
+    }
+    if (capture.status !== "COMPLETED") {
+      throw new Error(`PayPal payment status: ${capture.status || "unknown"}`);
+    }
+    return this.completePayPalPayment(orderId, capture);
+  }
+
+  static async completePayPalPayment(
+    orderId: string,
+    gatewayResponse: Record<string, unknown>,
+  ) {
     const { data: payment } = await supabaseAdmin!
       .from("Payment")
       .select("*, user:User(email, fullName), course:Course(id, title)")
@@ -203,60 +229,35 @@ export class PaymentService {
       ? payment.course[0]
       : payment.course;
     const user = Array.isArray(payment.user) ? payment.user[0] : payment.user;
-    try {
-      const capture = await PayPalService.getInstance().captureOrder(orderId);
-      if (capture.status !== "COMPLETED")
-        throw new Error(
-          `PayPal payment status: ${capture.status || "unknown"}`,
-        );
-      const { error } = await supabaseAdmin!
-        .from("Payment")
-        .update({
-          status: "approved",
-          paypalStatus: capture.status,
-          approvedAt: new Date().toISOString(),
-          paymentGatewayResponse: capture,
-        })
-        .eq("id", payment.id)
-        .eq("status", "processing");
-      if (error) throw error;
-      await supabaseAdmin!
-        .from("Enrollment")
-        .update({ status: "active", updatedAt: new Date().toISOString() })
-        .eq("id", payment.enrollmentId);
-      await EmailService.paypalPaymentCompleted(
-        user,
-        course?.title || "your course",
-        course?.id || payment.courseId,
-      );
-      return {
-        success: true,
-        message: "PayPal payment completed successfully",
-      };
-    } catch (error) {
-      const reason =
-        error instanceof Error ? error.message : "PayPal transaction failed";
-      await supabaseAdmin!
-        .from("Payment")
-        .update({
-          status: "rejected",
-          paypalStatus: "FAILED",
-          rejectedAt: new Date().toISOString(),
-          rejectionReason: reason,
-        })
-        .eq("id", payment.id)
-        .eq("status", "processing");
-      await supabaseAdmin!
-        .from("Enrollment")
-        .update({ status: "cancelled", updatedAt: new Date().toISOString() })
-        .eq("id", payment.enrollmentId);
-      await EmailService.paypalPaymentFailed(
-        user,
-        course?.title || "your course",
-        reason,
-      );
-      throw error;
-    }
+    const { data: updatedPayment, error } = await supabaseAdmin!
+      .from("Payment")
+      .update({
+        status: "approved",
+        paypalStatus:
+          typeof gatewayResponse.status === "string"
+            ? gatewayResponse.status
+            : "COMPLETED",
+        approvedAt: new Date().toISOString(),
+        paymentGatewayResponse: gatewayResponse,
+      })
+      .eq("id", payment.id)
+      .eq("status", "processing")
+      .select("id")
+      .maybeSingle();
+    if (error) throw error;
+    if (!updatedPayment)
+      return { success: true, message: "Payment already completed" };
+    const { error: enrollmentError } = await supabaseAdmin!
+      .from("Enrollment")
+      .update({ status: "active", updatedAt: new Date().toISOString() })
+      .eq("id", payment.enrollmentId);
+    if (enrollmentError) throw enrollmentError;
+    await EmailService.paypalPaymentCompleted(
+      user,
+      course?.title || "your course",
+      course?.id || payment.courseId,
+    );
+    return { success: true, message: "PayPal payment completed successfully" };
   }
 
   static async cancelPayPalPayment(orderId: string) {

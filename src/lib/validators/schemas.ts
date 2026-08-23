@@ -227,7 +227,7 @@ export const uploadLectureVideoSchema = z.object({
 // ============================================
 
 export const localPaymentSchema = z.object({
-  courseId: z.string().cuid("Invalid course ID"),
+  courseId: z.string().uuid("Invalid course ID"),
 
   amount: z.number().min(1, "Amount must be greater than 0"),
 
@@ -255,7 +255,7 @@ export const uploadPaymentScreenshotSchema = z.object({
 });
 
 export const diasporaPaymentSchema = z.object({
-  courseId: z.string().cuid("Invalid course ID"),
+  courseId: z.string().uuid("Invalid course ID"),
 
   amount: z.number().min(1, "Amount must be greater than 0"),
 });

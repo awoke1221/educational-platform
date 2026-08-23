@@ -399,7 +399,7 @@ function PaymentForm() {
           <>
             {/* Header with icon */}
             <div className="mb-7 text-center sm:mb-8">
-              <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-accent to-secondary sm:h-16 sm:w-16">
+              <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-secondary shadow-lg shadow-accent/20 sm:h-16 sm:w-16">
                 <svg
                   className="w-8 h-8 text-white"
                   fill="none"
@@ -414,16 +414,43 @@ function PaymentForm() {
                   />
                 </svg>
               </div>
-              <h1 className="mb-2 text-2xl font-bold text-accent sm:text-3xl">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-accent/80">
+                Secure enrollment
+              </p>
+              <h1 className="mb-2 text-2xl font-bold text-white sm:text-3xl">
                 Complete Payment
               </h1>
-              <p className="text-white/75">
-                Secure payment to unlock your learning journey
+              <p className="mx-auto max-w-md text-sm leading-6 text-white/65 sm:text-base">
+                Choose a payment method to unlock your learning journey.
               </p>
+              <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                <span className="flex items-center gap-2 text-accent">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] text-primary-dark">
+                    1
+                  </span>{" "}
+                  Method
+                </span>
+                <span className="h-px w-8 bg-white/15" />
+                <span
+                  className={step === "type-selection" ? "" : "text-accent"}
+                >
+                  <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">
+                    2
+                  </span>
+                  Details
+                </span>
+                <span className="h-px w-8 bg-white/15" />
+                <span className="hidden sm:inline">
+                  <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">
+                    3
+                  </span>
+                  Confirmation
+                </span>
+              </div>
             </div>
 
             {/* Course info card */}
-            <div className="mb-6 rounded-2xl border border-secondary/20 bg-white/[0.07] p-4 backdrop-blur sm:p-6">
+            <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.06] p-4 shadow-lg shadow-black/10 backdrop-blur sm:p-6">
               <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="mb-1 text-sm uppercase tracking-wider text-accent">
@@ -437,6 +464,14 @@ function PaymentForm() {
                   className={`inline-flex rounded-full px-4 py-2 text-xs font-bold ${statusColor}`}
                 >
                   {statusLabel}
+                </span>
+              </div>
+              <div className="mb-4 flex items-end justify-between gap-4 border-b border-white/10 pb-4">
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/45">
+                  Enrollment total
+                </span>
+                <span className="text-xl font-bold text-accent sm:text-2xl">
+                  {(course?.currency || "ETB") + " " + (course?.price ?? "—")}
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-white/70">
@@ -742,7 +777,7 @@ function PaymentForm() {
               <button
                 type="button"
                 onClick={() => proceedToDetails("local")}
-                className="group w-full relative flex min-h-[150px] flex-col justify-between rounded-[28px] border border-slate-700 bg-slate-950/95 p-5 text-left shadow-xl shadow-slate-900/20 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-accent hover:bg-slate-900"
+                className="group w-full relative flex min-h-[170px] flex-col justify-between rounded-2xl border border-slate-700/80 bg-slate-950/80 p-5 text-left shadow-xl shadow-slate-900/20 transition duration-200 ease-out hover:-translate-y-1 hover:border-accent hover:bg-slate-900 hover:shadow-accent/10"
               >
                 <div className="flex items-start gap-4">
                   <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-400 to-amber-500 text-white transition-transform duration-200 group-hover:scale-105">
@@ -764,15 +799,18 @@ function PaymentForm() {
                   </div>
                 </div>
 
-                <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent">
-                  Continue with local payment
+                <span className="mt-6 inline-flex items-center justify-between text-sm font-semibold text-accent">
+                  Continue with local payment{" "}
+                  <span className="text-lg transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
                 </span>
               </button>
 
               <button
                 type="button"
                 onClick={() => proceedToDetails("diaspora")}
-                className="group w-full relative flex min-h-[150px] flex-col justify-between rounded-[28px] border border-slate-700 bg-slate-950/95 p-5 text-left shadow-xl shadow-slate-900/20 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-accent hover:bg-slate-900"
+                className="group w-full relative flex min-h-[170px] flex-col justify-between rounded-2xl border border-blue-400/30 bg-gradient-to-br from-blue-950/80 to-slate-950/90 p-5 text-left shadow-xl shadow-slate-900/20 transition duration-200 ease-out hover:-translate-y-1 hover:border-blue-300 hover:shadow-blue-400/10"
               >
                 <div className="flex items-start gap-4">
                   <div className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-400 to-blue-500 text-white transition-transform duration-200 group-hover:scale-105">
@@ -794,8 +832,11 @@ function PaymentForm() {
                   </div>
                 </div>
 
-                <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent">
-                  Continue with international payment
+                <span className="mt-6 inline-flex items-center justify-between text-sm font-semibold text-blue-200">
+                  Continue with international payment{" "}
+                  <span className="text-lg transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
                 </span>
               </button>
             </div>
