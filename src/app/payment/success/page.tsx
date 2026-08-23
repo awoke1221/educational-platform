@@ -8,20 +8,19 @@ export default function PaymentSuccessPage() {
           ✓
         </div>
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-          PayPal payment confirmed
+          Payment complete • ክፍያ ተጠናቋል
         </p>
         <h1 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-          Your learning journey is open
+          You are enrolled • ተመዝግበዋል
         </h1>
         <p className="mt-4 text-white/75">
-          Your PayPal payment was completed and your course access is now open.
-          A confirmation email has been sent.
+          Your course is ready. • ኮርሱ ዝግጁ ነው።
         </p>
         <Link
           href="/dashboard"
           className="mt-8 inline-block rounded-lg bg-gradient-to-r from-secondary to-accent px-6 py-3 font-semibold text-primary-dark shadow-lg shadow-secondary/20 transition hover:-translate-y-0.5"
         >
-          Go to dashboard
+          Start learning • መማር ይጀምሩ
         </Link>
       </div>
     </main>

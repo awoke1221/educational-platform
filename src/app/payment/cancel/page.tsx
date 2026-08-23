@@ -13,25 +13,22 @@ export default async function PaymentCancelPage({
           !
         </div>
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.28em] text-red-200">
-          PayPal checkout update
+          Checkout cancelled • ክፍያ ተሰርዟል
         </p>
         <h1 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-          Payment not completed
+          Payment paused • ክፍያው አልተጠናቀቀም
         </h1>
-        <p className="mt-4 text-white/75">
-          Your PayPal transaction was not completed. No course access was
-          granted.
-        </p>
+        <p className="mt-4 text-white/75">No charge was made. • ክፍያ አልተፈጸመም።</p>
         {reason && (
           <p className="mt-3 rounded-lg border border-red-300/20 bg-red-400/10 p-3 text-sm text-red-100">
-            Details: {reason}
+            {reason}
           </p>
         )}
         <Link
           href="/courses"
           className="mt-8 inline-block rounded-lg bg-gradient-to-r from-secondary to-accent px-6 py-3 font-semibold text-primary-dark shadow-lg shadow-secondary/20 transition hover:-translate-y-0.5"
         >
-          Return to courses
+          Back to courses • ወደ ኮርሶች
         </Link>
       </div>
     </main>

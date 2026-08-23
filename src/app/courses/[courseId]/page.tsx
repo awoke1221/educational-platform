@@ -307,7 +307,7 @@ export default function CourseDetailPage() {
                 )}
                 {rejectedEnrollment && (
                   <span className="text-[11px] text-red-200">
-                    Your payment was rejected. Please re-submit.
+                    Payment rejected • ክፍያው ውድቅ ሆኗል
                   </span>
                 )}
               </div>
@@ -321,11 +321,11 @@ export default function CourseDetailPage() {
                 }
                 className="mt-4 inline-block rounded-lg bg-gradient-to-r from-[#a30000] to-[#c9952a] px-8 py-3 font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#c9952a]/25"
               >
-                Continue learning
+                Continue learning • መማር ይቀጥሉ
               </Link>
             ) : pendingEnrollment ? (
               <div className="mt-4 inline-flex flex-col items-center justify-center bg-[#FFF7ED] border border-[#FBBF24] text-[#B45309] px-8 py-3 rounded-lg font-semibold">
-                <span>Pending payment review</span>
+                <span>Pending review • በግምገማ ላይ</span>
                 {paymentDetails && (
                   <span className="text-[10px] font-normal mt-1">
                     {paymentDetails.paymentMethod} receipt submitted{" "}
@@ -343,7 +343,7 @@ export default function CourseDetailPage() {
                   }}
                   className="bg-white text-red-600 px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
                 >
-                  Re-submit payment
+                  Re-submit • እንደገና ይክፈሉ
                 </button>
               </div>
             ) : (
@@ -370,10 +370,10 @@ export default function CourseDetailPage() {
                   {enrolling
                     ? "Enrolling..."
                     : isAdmin
-                      ? "View course"
+                      ? "View course • ኮርሱን ይመልከቱ"
                       : isLoggedIn
-                        ? "Enroll Now"
-                        : "Register & Enroll Now"}
+                        ? "Enroll now • አሁን ይመዝገቡ"
+                        : "Register • ይመዝገቡ"}
                 </button>
               </div>
             )}
@@ -412,17 +412,17 @@ export default function CourseDetailPage() {
                 </div>
                 <h3 className="mb-1 text-base font-semibold text-[#f5e7c4]">
                   {pendingEnrollment
-                    ? "Waiting for admin approval"
+                    ? "Pending review • በግምገማ ላይ"
                     : rejectedEnrollment
-                      ? "Payment rejected"
-                      : "Enroll to unlock this course"}
+                      ? "Payment rejected • ክፍያው ውድቅ ሆኗል"
+                      : "Unlock course • ኮርሱን ይክፈቱ"}
                 </h3>
                 <p className="mx-auto max-w-xs text-sm text-[#f5e7c4]/70">
                   {pendingEnrollment
-                    ? "Your payment is being reviewed. You'll get access once approved."
+                    ? "We will notify you after approval. • ከጸደቀ በኋላ እናሳውቅዎታለን።"
                     : rejectedEnrollment
-                      ? "Your payment was rejected. Please re-submit to access lectures."
-                      : "Complete enrollment to unlock the lessons and start learning."}
+                      ? "Please try again. • እንደገና ይሞክሩ።"
+                      : "Enroll to start learning. • ለመማር ይመዝገቡ።"}
                 </p>
                 {rejectedEnrollment && (
                   <button
@@ -433,7 +433,7 @@ export default function CourseDetailPage() {
                     }
                     className="mt-4 rounded-lg bg-[#2b2018] px-5 py-2 text-sm font-medium text-[#f5c96b] transition-colors hover:bg-[#3a2b1a]"
                   >
-                    Re-submit payment
+                    Re-submit • እንደገና ይክፈሉ
                   </button>
                 )}
               </div>

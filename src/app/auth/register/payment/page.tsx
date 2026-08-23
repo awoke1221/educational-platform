@@ -434,13 +434,13 @@ function PaymentForm() {
               </p>
               <h1 className="mb-2 text-2xl font-bold text-white sm:text-3xl">
                 {paymentType === "diaspora"
-                  ? "Secure PayPal checkout"
+                  ? "PayPal checkout"
                   : "Choose how to pay"}
               </h1>
               <p className="mx-auto max-w-md text-sm leading-6 text-white/65 sm:text-base">
                 {paymentType === "diaspora"
                   ? "Pay with PayPal or card • በ PayPal ወይም ካርድ ይክፈሉ"
-                  : "Select a payment method • የክፍያ መንገድ ይምረጡ"}
+                  : "Local payment • የአገር ውስጥ ክፍያ"}
               </p>
               {paymentType !== "diaspora" && (
                 <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
@@ -476,7 +476,7 @@ function PaymentForm() {
                 <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="mb-1 text-sm uppercase tracking-wider text-accent">
-                      Your enrollment
+                      Course • ኮርስ
                     </p>
                     <p className="break-words text-lg font-bold text-white">
                       {courseLabel}
@@ -501,29 +501,29 @@ function PaymentForm() {
                     ? "🎉 You already have access to this course. Continue learning from your dashboard."
                     : courseStatus === "processing"
                       ? isPayPalRetry
-                        ? "Your previous PayPal checkout was not completed. Start a new checkout to try again."
-                        : "⏳ Your receipt is under review. Admin approval is required before course access becomes active."
+                        ? "PayPal incomplete. Try again. • PayPal አልተጠናቀቀም።"
+                        : "Receipt under review. • ደረሰኙ በግምገማ ላይ ነው።"
                       : courseStatus === "rejected"
-                        ? "Unfortunately, your submitted payment receipt was rejected by our team. Please upload a new receipt or contact support for assistance."
+                        ? "Receipt rejected. Try again. • ደረሰኙ ውድቅ ሆኗል።"
                         : queryUserId
                           ? "📋 Complete payment for your new registration by uploading a receipt."
-                          : "🔒 Select a payment method, upload your receipt, and our admin team will review it."}
+                          : "Upload receipt after payment. • ከከፈሉ በኋላ ደረሰኝ ይጫኑ።"}
                 </p>
                 {(courseStatus === "active" ||
                   courseStatus === "processing" ||
                   courseStatus === "rejected") && (
                   <div className="mt-4 rounded-lg border border-secondary/15 bg-primary-dark/60 p-4">
                     <p className="font-semibold text-accent mb-2">
-                      Current course status
+                      Status • ሁኔታ
                     </p>
                     <p className="text-sm text-white/70">
                       {courseStatus === "active"
-                        ? "✅ You have active access to this course. Open the course page to continue learning immediately."
+                        ? "Access is active. • መዳረሻ ክፍት ነው።"
                         : courseStatus === "processing"
                           ? isPayPalRetry
                             ? "PayPal did not complete the previous checkout. You can start a new payment attempt below."
-                            : "⏱️ Your receipt submission is pending review. Admin approval is required before course access becomes active."
-                          : "❌ Your payment receipt was rejected. Upload a new receipt to continue or contact support if you need help."}
+                            : "Receipt under review. • ደረሰኙ በግምገማ ላይ ነው።"
+                          : "Receipt rejected. Try again. • ደረሰኙ ውድቅ ሆኗል።"}
                     </p>
                   </div>
                 )}
@@ -546,45 +546,43 @@ function PaymentForm() {
                 </svg>
               </div>
               <h2 className="mb-1 text-2xl font-bold text-white">
-                🎉 Receipt Submitted Successfully!
+                Receipt sent • ደረሰኝ ተልኳል
               </h2>
-              <p className="text-white/70 text-sm">
-                Your payment receipt has been received and is being processed.
-              </p>
+              <p className="text-white/70 text-sm">Under review • በግምገማ ላይ</p>
             </div>
 
             {/* Payment Summary Card */}
             <div className="mb-6 space-y-4 rounded-2xl border border-secondary/20 bg-white/[0.07] p-4 sm:p-6">
               <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">
-                📄 Payment Summary
+                Payment • ክፍያ
               </p>
 
               <div className="flex flex-col gap-1 border-b border-white/10 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-slate-400 text-sm">👤 Student Name</span>
+                <span className="text-slate-400 text-sm">Name • ስም</span>
                 <span className="text-white font-semibold text-sm text-right">
                   {fullName || profile?.fullName || "—"}
                 </span>
               </div>
 
               <div className="flex flex-col gap-1 border-b border-white/10 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-slate-400 text-sm">📚 Course</span>
+                <span className="text-slate-400 text-sm">Course • ኮርስ</span>
                 <span className="text-white font-semibold text-sm text-right">
                   {course?.title || "Selected Course"}
                 </span>
               </div>
 
               <div className="flex flex-col gap-1 border-b border-white/10 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-slate-400 text-sm">💰 Amount Paid</span>
+                <span className="text-slate-400 text-sm">Amount • መጠን</span>
                 <span className="text-accent font-bold text-lg">
                   {(course?.currency || "ETB") + " " + (course?.price ?? "—")}
                 </span>
               </div>
 
               <div className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-slate-400 text-sm">📊 Status</span>
+                <span className="text-slate-400 text-sm">Status • ሁኔታ</span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-900/40 border border-amber-600/50 text-amber-300 text-xs font-semibold">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                  Pending Review
+                  Reviewing • በግምገማ ላይ
                 </span>
               </div>
             </div>
@@ -633,9 +631,7 @@ function PaymentForm() {
             {/* Waiting Message */}
             <div className="mb-6 rounded-xl border border-secondary/20 bg-white/[0.05] p-3 text-center sm:p-4">
               <p className="text-sm leading-relaxed text-white/70">
-                ⏳ Please wait while we verify your payment. You will be
-                notified once your enrollment is confirmed. If you have any
-                questions, please contact our support team.
+                Please wait for approval. • እባክዎ ይጠብቁ።
               </p>
             </div>
 
@@ -644,7 +640,7 @@ function PaymentForm() {
                 onClick={() => router.push(redirectTo as string)}
                 className="w-full rounded-lg bg-gradient-to-r from-secondary to-accent px-6 py-3 font-semibold text-primary-dark transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-secondary/30 sm:w-auto"
               >
-                ← Back to Dashboard
+                Dashboard • ዳሽቦርድ
               </button>
               <button
                 onClick={() => {
@@ -656,7 +652,7 @@ function PaymentForm() {
                 }}
                 className="w-full rounded-lg border border-secondary/60 px-6 py-3 font-semibold text-accent transition-all duration-300 hover:bg-secondary/10 sm:w-auto"
               >
-                Submit Another Receipt
+                New receipt • አዲስ ደረሰኝ
               </button>
             </div>
           </div>
@@ -1176,10 +1172,10 @@ function PaymentForm() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-slate-400 text-xs font-semibold uppercase tracking-[0.24em]">
-                    STEP 3 • Receipt upload
+                    Step 3 • ደረሰኝ
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-white sm:text-3xl">
-                    Send your payment receipt
+                    Upload receipt • ደረሰኝ ይጫኑ
                   </h3>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-accent sm:px-4 sm:text-xs">
@@ -1189,9 +1185,7 @@ function PaymentForm() {
               </div>
 
               <p className="mt-4 max-w-2xl text-sm leading-6 text-white/65 sm:text-base sm:leading-7">
-                Add a clear screenshot or photo of your receipt. It should show
-                the date, amount, and transaction reference so our team can
-                review it quickly.
+                Clear image, max 5MB. • ግልጽ ምስል፣ ከ5MB በታች።
               </p>
 
               <div className="mt-6">
@@ -1220,10 +1214,10 @@ function PaymentForm() {
                     />
                   </svg>
                   <p className="text-base font-semibold text-white sm:text-lg">
-                    Add receipt image
+                    Add receipt • ደረሰኝ ይጫኑ
                   </p>
                   <p className="mt-2 text-sm text-slate-400">
-                    PNG, JPG, or GIF • up to 5MB
+                    PNG, JPG, GIF • 5MB
                   </p>
                 </label>
               </div>
@@ -1241,7 +1235,7 @@ function PaymentForm() {
                     </div>
                     <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/30 px-3 py-2 text-emerald-200 text-xs font-semibold">
                       <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      Ready to send
+                      Ready • ዝግጁ
                     </div>
                   </div>
                   <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
@@ -1290,12 +1284,12 @@ function PaymentForm() {
                 {loading ? (
                   <>
                     <span className="inline-flex h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
-                    Uploading receipt...
+                    Uploading... • በመጫን ላይ
                   </>
                 ) : (
                   <>
                     <span className="text-lg">🚀</span>
-                    Submit receipt for review
+                    Submit • ይላኩ
                   </>
                 )}
               </button>
@@ -1304,7 +1298,7 @@ function PaymentForm() {
                 onClick={() => setStep("details")}
                 className="rounded-3xl border border-slate-700 bg-slate-900/95 px-6 py-3 text-sm font-semibold text-slate-200 transition duration-200 hover:border-accent hover:text-white"
               >
-                Back to payment details
+                Back • ተመለስ
               </button>
             </div>
           </div>
