@@ -178,6 +178,7 @@ export class PaymentService {
         paypalOrderId: paypalOrder.orderId,
         paypalStatus: paypalOrder.status,
         paymentGatewayResponse: paypalOrder,
+        updatedAt: new Date().toISOString(),
       })
       .select()
       .single();
