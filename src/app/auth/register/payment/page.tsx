@@ -1155,9 +1155,7 @@ function PaymentForm() {
                   disabled={loading || courseStatus !== "none"}
                   className="flex-1 rounded-lg bg-gradient-to-r from-accent to-secondary px-5 py-3 text-primary-dark transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/30 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
                 >
-                  {paymentType === "diaspora"
-                    ? "Continue securely to PayPal"
-                    : "Continue to receipt upload"}
+                  Continue to receipt upload
                 </button>
                 <button
                   onClick={() => {
