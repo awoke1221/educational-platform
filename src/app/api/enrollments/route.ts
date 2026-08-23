@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const dataQuery = supabase
       .from("Enrollment")
       .select(
-        "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
+        "*, course:Course(*), payment:Payment(id,status,paymentType,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone,createdAt)",
         { count: "exact" },
       )
       .eq("userId", auth.userId)
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
         const legacyResult = await admin!
           .from("Enrollment")
           .select(
-            "*, course:Course(*), payment:Payment(id,status,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone)",
+            "*, course:Course(*), payment:Payment(id,status,paymentType,paymentMethod,amount,currency,receiptScreenshotUrl,payerName,payerPhone,createdAt)",
           )
           .eq("userId", userByEmail.id)
           .order("enrollmentDate", { ascending: false })
@@ -99,7 +99,11 @@ export async function GET(request: NextRequest) {
 
     const normalized = (enrollments || []).map((enrollment: any) => {
       const payment = Array.isArray(enrollment.payment)
-        ? enrollment.payment[0]
+        ? [...enrollment.payment].sort(
+            (first, second) =>
+              new Date(second.createdAt || 0).getTime() -
+              new Date(first.createdAt || 0).getTime(),
+          )[0]
         : enrollment.payment;
       return {
         ...enrollment,

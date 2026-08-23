@@ -45,6 +45,11 @@ function PaymentForm() {
     paymentStatus?: string;
     pendingReceiptUrl?: string | null;
   } | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<{
+    status?: string;
+    paymentType?: string;
+    paymentMethod?: string;
+  } | null>(null);
   const [courseStatus, setCourseStatus] = useState<
     "active" | "processing" | "rejected" | "none"
   >("none");
@@ -123,17 +128,21 @@ function PaymentForm() {
                 courseId?: string;
                 course?: { id?: string };
                 status?: string;
+                payment?: {
+                  status?: string;
+                  paymentType?: string;
+                  paymentMethod?: string;
+                };
               };
               const items: EnrollmentItem[] =
                 enrResult.data?.data?.data ||
                 enrResult.data?.data ||
                 enrResult.data ||
                 [];
-              const active = items.some(
-                (e) =>
-                  (e.courseId || e.course?.id) === courseId &&
-                  e.status === "active",
+              const matchingEnrollment = items.find(
+                (e) => (e.courseId || e.course?.id) === courseId,
               );
+              const active = matchingEnrollment?.status === "active";
               const rejected = items.some(
                 (e) =>
                   (e.courseId || e.course?.id) === courseId &&
@@ -153,6 +162,7 @@ function PaymentForm() {
                       ? "processing"
                       : "none",
               );
+              setPaymentDetails(matchingEnrollment?.payment || null);
             })(),
           );
         }
@@ -225,14 +235,20 @@ function PaymentForm() {
   const isPending = courseStatus === "processing";
   const isActive = courseStatus === "active";
   const isRejected = courseStatus === "rejected";
+  const isPayPalRetry = isPending && paymentDetails?.paymentMethod === "paypal";
   const showStatusOnly =
-    !success && (isActive || isPending || (isRejected && showRejectedNotice));
+    !success &&
+    (isActive ||
+      (isPending && !isPayPalRetry) ||
+      (isRejected && showRejectedNotice));
 
   const statusLabel =
     courseStatus === "active"
       ? "Active access"
       : courseStatus === "processing"
-        ? "Pending approval"
+        ? isPayPalRetry
+          ? "PayPal checkout incomplete"
+          : "Pending approval"
         : courseStatus === "rejected"
           ? "Payment rejected"
           : "Receipt required";
@@ -289,7 +305,6 @@ function PaymentForm() {
 
   const startPayPalPayment = async () => {
     if (!course) return setError("Course details are still loading.");
-    if (!fullName.trim()) return setError("Please enter your full name.");
     setLoading(true);
     setError(null);
     try {
@@ -384,7 +399,7 @@ function PaymentForm() {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(212,168,67,0.18),transparent_32%),linear-gradient(135deg,var(--primary-dark),var(--primary),var(--primary-light))] px-3 py-8 sm:px-6 sm:py-12 lg:py-16">
+    <div className="relative flex min-h-[calc(100vh-64px)] items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(212,168,67,0.18),transparent_32%),linear-gradient(135deg,var(--primary-dark),var(--primary),var(--primary-light))] px-3 py-8 sm:px-6 sm:py-10 lg:py-12">
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-accent opacity-10 rounded-full blur-3xl animate-pulse"></div>
@@ -415,93 +430,105 @@ function PaymentForm() {
                 </svg>
               </div>
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-accent/80">
-                Secure enrollment
+                Secure checkout • ደህንነቱ የተጠበቀ
               </p>
               <h1 className="mb-2 text-2xl font-bold text-white sm:text-3xl">
-                Complete Payment
+                {paymentType === "diaspora"
+                  ? "Secure PayPal checkout"
+                  : "Choose how to pay"}
               </h1>
               <p className="mx-auto max-w-md text-sm leading-6 text-white/65 sm:text-base">
-                Choose a payment method to unlock your learning journey.
+                {paymentType === "diaspora"
+                  ? "Pay with PayPal or card • በ PayPal ወይም ካርድ ይክፈሉ"
+                  : "Select a payment method • የክፍያ መንገድ ይምረጡ"}
               </p>
-              <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
-                <span className="flex items-center gap-2 text-accent">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] text-primary-dark">
-                    1
-                  </span>{" "}
-                  Method
-                </span>
-                <span className="h-px w-8 bg-white/15" />
-                <span
-                  className={step === "type-selection" ? "" : "text-accent"}
-                >
-                  <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">
-                    2
+              {paymentType !== "diaspora" && (
+                <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                  <span className="flex items-center gap-2 text-accent">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] text-primary-dark">
+                      1
+                    </span>{" "}
+                    Payment method
                   </span>
-                  Details
-                </span>
-                <span className="h-px w-8 bg-white/15" />
-                <span className="hidden sm:inline">
-                  <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">
-                    3
+                  <span className="h-px w-8 bg-white/15" />
+                  <span
+                    className={step === "type-selection" ? "" : "text-accent"}
+                  >
+                    <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">
+                      2
+                    </span>
+                    Your details
                   </span>
-                  Confirmation
-                </span>
-              </div>
-            </div>
-
-            {/* Course info card */}
-            <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.06] p-4 shadow-lg shadow-black/10 backdrop-blur sm:p-6">
-              <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="mb-1 text-sm uppercase tracking-wider text-accent">
-                    Course Details
-                  </p>
-                  <p className="break-words text-lg font-bold text-white">
-                    {courseLabel}
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex rounded-full px-4 py-2 text-xs font-bold ${statusColor}`}
-                >
-                  {statusLabel}
-                </span>
-              </div>
-              <div className="mb-4 flex items-end justify-between gap-4 border-b border-white/10 pb-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-white/45">
-                  Enrollment total
-                </span>
-                <span className="text-xl font-bold text-accent sm:text-2xl">
-                  {(course?.currency || "ETB") + " " + (course?.price ?? "—")}
-                </span>
-              </div>
-              <p className="text-sm leading-relaxed text-white/70">
-                {courseStatus === "active"
-                  ? "🎉 You already have access to this course. Continue learning from your dashboard."
-                  : courseStatus === "processing"
-                    ? "⏳ Your receipt is under review. Admin approval is required before course access becomes active."
-                    : courseStatus === "rejected"
-                      ? "Unfortunately, your submitted payment receipt was rejected by our team. Please upload a new receipt or contact support for assistance."
-                      : queryUserId
-                        ? "📋 Complete payment for your new registration by uploading a receipt."
-                        : "🔒 Select a payment method, upload your receipt, and our admin team will review it."}
-              </p>
-              {(courseStatus === "active" ||
-                courseStatus === "processing" ||
-                courseStatus === "rejected") && (
-                <div className="mt-4 rounded-lg border border-secondary/15 bg-primary-dark/60 p-4">
-                  <p className="font-semibold text-accent mb-2">
-                    Current course status
-                  </p>
-                  <p className="text-sm text-white/70">
-                    {courseStatus === "active"
-                      ? "✅ You have active access to this course. Open the course page to continue learning immediately."
-                      : courseStatus === "processing"
-                        ? "⏱️ Your receipt submission is pending review. Admin approval is required before course access becomes active."
-                        : "❌ Your payment receipt was rejected. Upload a new receipt to continue or contact support if you need help."}
-                  </p>
+                  <span className="h-px w-8 bg-white/15" />
+                  <span className="hidden sm:inline">
+                    <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[10px]">
+                      3
+                    </span>
+                    Receipt
+                  </span>
                 </div>
               )}
             </div>
+
+            {/* Local payment status and receipt context */}
+            {paymentType !== "diaspora" && (
+              <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.06] p-4 shadow-lg shadow-black/10 backdrop-blur sm:p-6">
+                <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="mb-1 text-sm uppercase tracking-wider text-accent">
+                      Your enrollment
+                    </p>
+                    <p className="break-words text-lg font-bold text-white">
+                      {courseLabel}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex rounded-full px-4 py-2 text-xs font-bold ${statusColor}`}
+                  >
+                    {statusLabel}
+                  </span>
+                </div>
+                <div className="mb-4 flex items-end justify-between gap-4 border-b border-white/10 pb-4">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-white/45">
+                    Amount to pay
+                  </span>
+                  <span className="text-xl font-bold text-accent sm:text-2xl">
+                    {(course?.currency || "ETB") + " " + (course?.price ?? "—")}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-white/70">
+                  {courseStatus === "active"
+                    ? "🎉 You already have access to this course. Continue learning from your dashboard."
+                    : courseStatus === "processing"
+                      ? isPayPalRetry
+                        ? "Your previous PayPal checkout was not completed. Start a new checkout to try again."
+                        : "⏳ Your receipt is under review. Admin approval is required before course access becomes active."
+                      : courseStatus === "rejected"
+                        ? "Unfortunately, your submitted payment receipt was rejected by our team. Please upload a new receipt or contact support for assistance."
+                        : queryUserId
+                          ? "📋 Complete payment for your new registration by uploading a receipt."
+                          : "🔒 Select a payment method, upload your receipt, and our admin team will review it."}
+                </p>
+                {(courseStatus === "active" ||
+                  courseStatus === "processing" ||
+                  courseStatus === "rejected") && (
+                  <div className="mt-4 rounded-lg border border-secondary/15 bg-primary-dark/60 p-4">
+                    <p className="font-semibold text-accent mb-2">
+                      Current course status
+                    </p>
+                    <p className="text-sm text-white/70">
+                      {courseStatus === "active"
+                        ? "✅ You have active access to this course. Open the course page to continue learning immediately."
+                        : courseStatus === "processing"
+                          ? isPayPalRetry
+                            ? "PayPal did not complete the previous checkout. You can start a new payment attempt below."
+                            : "⏱️ Your receipt submission is pending review. Admin approval is required before course access becomes active."
+                          : "❌ Your payment receipt was rejected. Upload a new receipt to continue or contact support if you need help."}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
@@ -764,12 +791,11 @@ function PaymentForm() {
           <div className="space-y-6">
             <div className="text-center mb-8">
               <p className="text-slate-100 text-2xl font-semibold sm:text-3xl">
-                Choose your payment channel
+                Select a payment method
               </p>
               <p className="mx-auto mt-3 max-w-2xl text-slate-400 sm:text-base leading-7">
-                Select the most convenient payment route for your location, then
-                upload your receipt for verification. The process is secure,
-                fast, and handled by our team.
+                You can pay locally with Telebirr or CBE Birr, or continue to
+                PayPal for an international card payment.
               </p>
             </div>
 
@@ -791,16 +817,16 @@ function PaymentForm() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-white">
-                      Local Payment
+                      Telebirr or CBE Birr
                     </h3>
                     <p className="mt-2 text-sm text-slate-400">
-                      Pay within Ethiopia using Telebirr or CBE Birr.
+                      Local payment with receipt upload
                     </p>
                   </div>
                 </div>
 
                 <span className="mt-6 inline-flex items-center justify-between text-sm font-semibold text-accent">
-                  Continue with local payment{" "}
+                  Pay locally{" "}
                   <span className="text-lg transition-transform group-hover:translate-x-1">
                     →
                   </span>
@@ -824,16 +850,16 @@ function PaymentForm() {
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-white">
-                      Diaspora Payment
+                      PayPal or card
                     </h3>
                     <p className="mt-2 text-sm text-slate-400">
-                      Pay internationally using PayPal or Credit Card.
+                      International checkout with PayPal
                     </p>
                   </div>
                 </div>
 
                 <span className="mt-6 inline-flex items-center justify-between text-sm font-semibold text-blue-200">
-                  Continue with international payment{" "}
+                  Continue to PayPal{" "}
                   <span className="text-lg transition-transform group-hover:translate-x-1">
                     →
                   </span>
@@ -847,7 +873,7 @@ function PaymentForm() {
                 onClick={() => router.push(redirectTo as string)}
                 className="w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-6 py-3 text-sm font-semibold text-slate-300 transition duration-200 hover:bg-slate-800"
               >
-                Cancel
+                Back to course
               </button>
             </div>
           </div>
@@ -857,7 +883,7 @@ function PaymentForm() {
             {paymentType === "local" && (
               <div className="space-y-4">
                 <p className="text-slate-300 text-sm font-semibold">
-                  💳 Select Payment Method
+                  Choose your local payment method
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
@@ -872,7 +898,7 @@ function PaymentForm() {
                       <span className="text-lg">📱</span> Telebirr
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Scan QR or send to number
+                      Scan QR or send the amount
                     </p>
                   </button>
                   <button
@@ -887,7 +913,7 @@ function PaymentForm() {
                       <span className="text-lg">🏦</span> CBE Birr
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Bank transfer payment
+                      Transfer using CBE Birr
                     </p>
                   </button>
                 </div>
@@ -900,7 +926,7 @@ function PaymentForm() {
                         <span className="text-2xl">💰</span> Pay with Telebirr
                       </p>
                       <p className="text-slate-300 text-sm mt-2">
-                        Scan the Telebirr QR or send to phone number:{" "}
+                        Scan the QR code or send the exact amount to:{" "}
                         <span className="font-mono font-bold text-accent">
                           +2519XXXXXXX
                         </span>
@@ -930,7 +956,7 @@ function PaymentForm() {
                         <span className="text-2xl">🏦</span> Pay with CBE Birr
                       </p>
                       <p className="text-slate-300 text-sm mt-2">
-                        Bank account details:
+                        Send the exact amount to this account:
                       </p>
                       <div className="mt-3 space-y-2 text-sm text-slate-200">
                         <p>
@@ -968,60 +994,144 @@ function PaymentForm() {
 
             {/* Global users go directly to the PayPal checkout page. */}
             {paymentType === "diaspora" && (
-              <div className="rounded-2xl border border-blue-400/40 bg-blue-950/30 p-6">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
-                  Secure global checkout
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-white">
-                  Pay securely with PayPal
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Continue to PayPal to complete your international payment.
-                  Your course access opens automatically after PayPal confirms
-                  the payment.
-                </p>
-                <p className="mt-4 text-lg font-bold text-accent">
-                  USD{" "}
-                  {course?.price ? (course.price * 0.012).toFixed(2) : "0.00"}
-                </p>
+              <div className="overflow-hidden rounded-3xl border border-blue-300/30 bg-gradient-to-br from-blue-950 via-slate-950 to-slate-900 shadow-2xl shadow-blue-950/30">
+                <div className="border-b border-white/10 px-5 py-5 sm:px-7">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0070ba] text-xl font-black italic text-white shadow-lg shadow-blue-950/40">
+                        P
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-white">PayPal</p>
+                        <p className="text-xs text-blue-200/70">
+                          Global payment • ዓለም አቀፍ ክፍያ
+                        </p>
+                      </div>
+                    </div>
+                    <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300">
+                      Secure checkout
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-6 px-5 py-6 sm:px-7 sm:py-8">
+                  <div>
+                    <p className="text-sm text-slate-400">You are paying</p>
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      {course?.title || "Selected course"}
+                    </p>
+                  </div>
+
+                  <div className="flex items-end justify-between gap-4 rounded-2xl border border-blue-300/20 bg-blue-400/[0.08] p-5">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200/70">
+                        Total today • ዛሬ የሚከፈል
+                      </p>
+                      <p className="mt-2 text-sm text-slate-400">
+                        Converted from ETB
+                      </p>
+                    </div>
+                    <p className="text-3xl font-bold tracking-tight text-white">
+                      USD{" "}
+                      {course?.price
+                        ? (course.price * 0.012).toFixed(2)
+                        : "0.00"}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-300">✓</span> No receipt •
+                      ደረሰኝ የለም
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-300">✓</span> PayPal or card
+                      • ካርድ
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-300">✓</span> Encrypted
+                      payment
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="rounded-xl border border-red-400/30 bg-red-950/50 p-3 text-sm text-red-200">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={startPayPalPayment}
+                    disabled={loading || courseStatus !== "none"}
+                    className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#ffc439] px-5 py-4 text-base font-bold text-[#142c48] shadow-lg shadow-blue-950/30 transition hover:-translate-y-0.5 hover:bg-[#ffcf55] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#142c48] border-t-transparent" />
+                        Opening PayPal...
+                      </>
+                    ) : (
+                      <span className="leading-5">
+                        Continue to PayPal
+                        <span className="block text-xs font-semibold opacity-70">
+                          ወደ PayPal ይቀጥሉ
+                        </span>
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentType(null);
+                      setStep("type-selection");
+                      setError(null);
+                    }}
+                    className="w-full text-center text-sm font-semibold text-blue-200/80 transition hover:text-white"
+                  >
+                    Back to payment methods
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* Contact Details Form */}
-            <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-slate-600">
-              <p className="text-slate-300 text-sm mb-4 flex items-center gap-2">
-                <span className="text-lg">📋</span> Step 2: Confirm your contact
-                details for verification
-              </p>
-              <div className="grid gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-accent mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none transition-colors text-sm"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-accent mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="text"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none transition-colors text-sm"
-                    placeholder="Enter your phone number"
-                  />
+            {/* Contact details are needed only for local receipt payments. */}
+            {paymentType === "local" && (
+              <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-slate-600">
+                <p className="text-slate-300 text-sm mb-4 flex items-center gap-2">
+                  <span className="text-lg">📋</span> Confirm your details
+                </p>
+                <div className="grid gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-accent mb-2">
+                      Full name
+                    </label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none transition-colors text-sm"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-accent mb-2">
+                      Phone number
+                    </label>
+                    <input
+                      type="text"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="w-full rounded-lg border-2 border-slate-600 bg-slate-900 px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none transition-colors text-sm"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {error && (
+            {paymentType === "local" && error && (
               <div className="p-4 rounded-lg bg-red-900/30 border border-red-700/50 text-red-300 text-sm flex items-start gap-3">
                 <svg
                   className="w-5 h-5 flex-shrink-0 mt-0.5"
@@ -1038,27 +1148,29 @@ function PaymentForm() {
               </div>
             )}
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={handleContinue}
-                disabled={loading || courseStatus !== "none"}
-                className="flex-1 rounded-lg bg-gradient-to-r from-accent to-secondary px-5 py-3 text-primary-dark transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/30 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
-              >
-                {paymentType === "diaspora"
-                  ? "Continue to PayPal"
-                  : "Continue to Receipt Upload"}
-              </button>
-              <button
-                onClick={() => {
-                  setPaymentType(null);
-                  setStep("type-selection");
-                  setError(null);
-                }}
-                className="rounded-lg border border-white/20 px-5 py-3 text-white/75 transition-all duration-300 hover:border-secondary hover:bg-white/10 font-semibold"
-              >
-                Back to Payment Type
-              </button>
-            </div>
+            {paymentType === "local" && (
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={handleContinue}
+                  disabled={loading || courseStatus !== "none"}
+                  className="flex-1 rounded-lg bg-gradient-to-r from-accent to-secondary px-5 py-3 text-primary-dark transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/30 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
+                >
+                  {paymentType === "diaspora"
+                    ? "Continue securely to PayPal"
+                    : "Continue to receipt upload"}
+                </button>
+                <button
+                  onClick={() => {
+                    setPaymentType(null);
+                    setStep("type-selection");
+                    setError(null);
+                  }}
+                  className="rounded-lg border border-white/20 px-5 py-3 text-white/75 transition-all duration-300 hover:border-secondary hover:bg-white/10 font-semibold"
+                >
+                  Change payment method
+                </button>
+              </div>
+            )}
           </div>
         ) : step === "receipt" ? (
           <div className="space-y-5 animate-fadeIn">
@@ -1066,10 +1178,10 @@ function PaymentForm() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-slate-400 text-xs font-semibold uppercase tracking-[0.24em]">
-                    STEP 3 • Upload receipt
+                    STEP 3 • Receipt upload
                   </p>
                   <h3 className="mt-2 text-xl font-semibold text-white sm:text-3xl">
-                    Finalize your payment verification
+                    Send your payment receipt
                   </h3>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-accent sm:px-4 sm:text-xs">
@@ -1079,9 +1191,9 @@ function PaymentForm() {
               </div>
 
               <p className="mt-4 max-w-2xl text-sm leading-6 text-white/65 sm:text-base sm:leading-7">
-                Upload your payment receipt so our team can verify the
-                transaction details. Make sure the receipt clearly shows the
-                date, amount, and reference.
+                Add a clear screenshot or photo of your receipt. It should show
+                the date, amount, and transaction reference so our team can
+                review it quickly.
               </p>
 
               <div className="mt-6">
@@ -1110,10 +1222,10 @@ function PaymentForm() {
                     />
                   </svg>
                   <p className="text-base font-semibold text-white sm:text-lg">
-                    Click to upload or drag and drop your receipt
+                    Add receipt image
                   </p>
                   <p className="mt-2 text-sm text-slate-400">
-                    PNG, JPG, GIF • up to 5MB
+                    PNG, JPG, or GIF • up to 5MB
                   </p>
                 </label>
               </div>
@@ -1131,7 +1243,7 @@ function PaymentForm() {
                     </div>
                     <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/30 px-3 py-2 text-emerald-200 text-xs font-semibold">
                       <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      Receipt selected
+                      Ready to send
                     </div>
                   </div>
                   <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
@@ -1185,7 +1297,7 @@ function PaymentForm() {
                 ) : (
                   <>
                     <span className="text-lg">🚀</span>
-                    Send payment receipt
+                    Submit receipt for review
                   </>
                 )}
               </button>

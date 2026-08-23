@@ -157,6 +157,32 @@ export class PaymentService {
       if (error) throw new Error("Failed to create enrollment");
       enrollment = data;
     }
+    const { data: processingPayments } = await supabaseAdmin!
+      .from("Payment")
+      .select("id")
+      .eq("enrollmentId", enrollment.id)
+      .eq("status", "processing")
+      .order("createdAt", { ascending: false });
+
+    if (processingPayments?.length) {
+      const { error: retiredPaymentsError } = await supabaseAdmin!
+        .from("Payment")
+        .update({
+          status: "rejected",
+          paypalStatus: "REPLACED",
+          rejectedAt: new Date().toISOString(),
+          rejectionReason:
+            "This PayPal checkout was replaced by a new payment attempt.",
+          updatedAt: new Date().toISOString(),
+        })
+        .in(
+          "id",
+          processingPayments.map((payment) => payment.id),
+        )
+        .eq("status", "processing");
+      if (retiredPaymentsError)
+        throw new Error("Failed to reset PayPal payment");
+    }
     const paypalOrder = await PayPalService.getInstance().createOrder({
       amount: params.amount,
       currency: "USD",
