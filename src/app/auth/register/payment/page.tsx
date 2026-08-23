@@ -18,9 +18,6 @@ function PaymentForm() {
   const [localChannel, setLocalChannel] = useState<"telebirr" | "cbbirr">(
     "telebirr",
   );
-  const [diasporaChannel, setDiasporaChannel] = useState<
-    "paypal" | "creditcard"
-  >("paypal");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -357,7 +354,7 @@ function PaymentForm() {
     setLoading(true);
     setError(null);
     try {
-      const channel = paymentType === "local" ? localChannel : diasporaChannel;
+      const channel = localChannel;
       const base64 = await readFileAsDataUrl(file);
       const res = await fetch(`/api/registrations/${resolvedUserId}/receipt`, {
         method: "POST",
@@ -926,114 +923,24 @@ function PaymentForm() {
               </div>
             )}
 
-            {/* Payment Methods for Diaspora */}
+            {/* Global users go directly to the PayPal checkout page. */}
             {paymentType === "diaspora" && (
-              <div className="space-y-4">
-                <p className="text-slate-300 text-sm font-semibold">
-                  💳 Select Payment Method
+              <div className="rounded-2xl border border-blue-400/40 bg-blue-950/30 p-6">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
+                  Secure global checkout
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setDiasporaChannel("paypal")}
-                    className={`p-5 rounded-3xl border-2 transition-all duration-200 text-left ${
-                      diasporaChannel === "paypal"
-                        ? "border-accent bg-accent/10"
-                        : "border-slate-600 bg-slate-800/50 hover:border-slate-500"
-                    }`}
-                  >
-                    <p className="font-bold text-white flex items-center gap-2">
-                      <span className="text-lg">🌐</span> PayPal
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      PayPal payment method
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDiasporaChannel("creditcard")}
-                    className={`p-5 rounded-3xl border-2 transition-all duration-200 text-left ${
-                      diasporaChannel === "creditcard"
-                        ? "border-accent bg-accent/10"
-                        : "border-slate-600 bg-slate-800/50 hover:border-slate-500"
-                    }`}
-                  >
-                    <p className="font-bold text-white flex items-center gap-2">
-                      <span className="text-lg">💳</span> Credit Card
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      International credit card
-                    </p>
-                  </button>
-                </div>
-
-                {/* Display Selected Diaspora Payment Method */}
-                <div className="p-6 border border-slate-600 rounded-2xl bg-slate-800/50 backdrop-blur">
-                  {diasporaChannel === "paypal" ? (
-                    <div key="paypal-details">
-                      <p className="font-bold text-accent mb-2 flex items-center gap-2">
-                        <span className="text-2xl">🌐</span> Pay with PayPal
-                      </p>
-                      <p className="text-slate-300 text-sm mt-2">
-                        Send payment to:{" "}
-                        <span className="font-mono font-bold text-accent">
-                          payments@example.com
-                        </span>
-                      </p>
-                      <p className="mt-3 text-sm text-slate-200">
-                        <span className="font-semibold text-accent">
-                          Amount:
-                        </span>{" "}
-                        <span className="text-lg font-bold">
-                          {(course?.currency || "USD") +
-                            " " +
-                            (course?.price
-                              ? (course.price * 0.012).toFixed(2)
-                              : "0")}
-                        </span>
-                      </p>
-                      <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-slate-600 inline-block">
-                        <Image
-                          src="/paypal qrcode.png"
-                          alt="paypal-qr"
-                          width={192}
-                          height={192}
-                          className="object-contain"
-                          unoptimized
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div key="creditcard-details">
-                      <p className="font-bold text-accent mb-2 flex items-center gap-2">
-                        <span className="text-2xl">💳</span> Pay with Credit
-                        Card
-                      </p>
-                      <p className="text-slate-300 text-sm mt-2">
-                        You will be redirected to our secure payment gateway to
-                        complete your credit card transaction.
-                      </p>
-                      <p className="mt-4 text-sm text-slate-200">
-                        <span className="font-semibold text-accent">
-                          Amount:
-                        </span>{" "}
-                        <span className="text-lg font-bold">
-                          {(course?.currency || "USD") +
-                            " " +
-                            (course?.price
-                              ? (course.price * 0.012).toFixed(2)
-                              : "0")}
-                        </span>
-                      </p>
-                      <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-slate-600">
-                        <p className="text-slate-400 text-sm">
-                          🔒 All credit card transactions are secured and
-                          encrypted for your protection.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <h3 className="mt-2 text-2xl font-bold text-white">
+                  Pay securely with PayPal
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  Continue to PayPal to complete your international payment.
+                  Your course access opens automatically after PayPal confirms
+                  the payment.
+                </p>
+                <p className="mt-4 text-lg font-bold text-accent">
+                  USD{" "}
+                  {course?.price ? (course.price * 0.012).toFixed(2) : "0.00"}
+                </p>
               </div>
             )}
 
