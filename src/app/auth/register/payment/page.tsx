@@ -171,10 +171,10 @@ function PaymentForm() {
   if (loadingUser) {
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-primary-dark via-primary to-primary-light">
-        <div className="w-full max-w-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-700">
+        <div className="w-full max-w-2xl rounded-3xl border border-secondary/25 bg-primary/95 p-8 shadow-2xl shadow-primary-dark/30">
           <div className="flex flex-col items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent mb-4"></div>
-            <p className="text-slate-300 text-lg">Loading payment details...</p>
+            <p className="text-white/80 text-lg">Loading payment details...</p>
           </div>
         </div>
       </div>
@@ -184,7 +184,7 @@ function PaymentForm() {
   if (!resolvedUserId) {
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-primary-dark via-primary to-primary-light">
-        <div className="w-full max-w-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-700">
+        <div className="w-full max-w-2xl rounded-3xl border border-secondary/25 bg-primary/95 p-8 shadow-2xl shadow-primary-dark/30">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-red-900/30 border border-red-700 rounded-full mb-4">
               <svg
@@ -204,7 +204,7 @@ function PaymentForm() {
             <h2 className="text-2xl font-bold text-red-400 mb-2">
               Authentication Required
             </h2>
-            <p className="text-slate-300 mb-6">
+            <p className="text-white/75 mb-6">
               Please log in to your account to access the payment page.
             </p>
             <button
@@ -384,7 +384,7 @@ function PaymentForm() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-primary-dark via-primary to-primary-light">
+    <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(212,168,67,0.18),transparent_32%),linear-gradient(135deg,var(--primary-dark),var(--primary),var(--primary-light))] px-3 py-8 sm:px-6 sm:py-12 lg:py-16">
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-accent opacity-10 rounded-full blur-3xl animate-pulse"></div>
@@ -394,12 +394,12 @@ function PaymentForm() {
         ></div>
       </div>
 
-      <div className="w-full max-w-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-700 relative z-10">
+      <div className="relative z-10 w-full max-w-3xl rounded-3xl border border-secondary/30 bg-primary/95 p-4 shadow-2xl shadow-primary-dark/40 sm:p-7 lg:p-9">
         {!success && !showStatusOnly && (
           <>
             {/* Header with icon */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent to-secondary rounded-full mb-4">
+            <div className="mb-7 text-center sm:mb-8">
+              <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-accent to-secondary sm:h-16 sm:w-16">
                 <svg
                   className="w-8 h-8 text-white"
                   fill="none"
@@ -414,22 +414,24 @@ function PaymentForm() {
                   />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent mb-2">
+              <h1 className="mb-2 text-2xl font-bold text-accent sm:text-3xl">
                 Complete Payment
               </h1>
-              <p className="text-slate-300">
+              <p className="text-white/75">
                 Secure payment to unlock your learning journey
               </p>
             </div>
 
             {/* Course info card */}
-            <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 p-6 mb-6 backdrop-blur">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <div>
-                  <p className="text-slate-400 text-sm uppercase tracking-wider mb-1">
+            <div className="mb-6 rounded-2xl border border-secondary/20 bg-white/[0.07] p-4 backdrop-blur sm:p-6">
+              <div className="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="mb-1 text-sm uppercase tracking-wider text-accent">
                     Course Details
                   </p>
-                  <p className="font-bold text-white text-lg">{courseLabel}</p>
+                  <p className="break-words text-lg font-bold text-white">
+                    {courseLabel}
+                  </p>
                 </div>
                 <span
                   className={`inline-flex rounded-full px-4 py-2 text-xs font-bold ${statusColor}`}
@@ -437,7 +439,7 @@ function PaymentForm() {
                   {statusLabel}
                 </span>
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed text-white/70">
                 {courseStatus === "active"
                   ? "🎉 You already have access to this course. Continue learning from your dashboard."
                   : courseStatus === "processing"
@@ -451,11 +453,11 @@ function PaymentForm() {
               {(courseStatus === "active" ||
                 courseStatus === "processing" ||
                 courseStatus === "rejected") && (
-                <div className="mt-4 rounded-lg bg-slate-900 p-4 border border-slate-600">
+                <div className="mt-4 rounded-lg border border-secondary/15 bg-primary-dark/60 p-4">
                   <p className="font-semibold text-accent mb-2">
                     Current course status
                   </p>
-                  <p className="text-slate-300 text-sm">
+                  <p className="text-sm text-white/70">
                     {courseStatus === "active"
                       ? "✅ You have active access to this course. Open the course page to continue learning immediately."
                       : courseStatus === "processing"
@@ -469,10 +471,10 @@ function PaymentForm() {
         )}
 
         {success ? (
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 border border-emerald-700 p-8 backdrop-blur animate-fadeIn">
+          <div className="animate-fadeIn rounded-3xl border border-secondary/30 bg-gradient-to-br from-primary-light via-primary to-primary-dark p-4 shadow-xl shadow-primary-dark/30 sm:p-8">
             {/* Success Icon */}
             <div className="text-center mb-6">
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-bounce">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-secondary to-accent text-primary-dark shadow-lg shadow-secondary/30 animate-bounce">
                 <svg
                   className="w-10 h-10"
                   fill="currentColor"
@@ -481,42 +483,42 @@ function PaymentForm() {
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-emerald-100 mb-1">
+              <h2 className="mb-1 text-2xl font-bold text-white">
                 🎉 Receipt Submitted Successfully!
               </h2>
-              <p className="text-emerald-200/80 text-sm">
+              <p className="text-white/70 text-sm">
                 Your payment receipt has been received and is being processed.
               </p>
             </div>
 
             {/* Payment Summary Card */}
-            <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 p-6 mb-6 space-y-4">
+            <div className="mb-6 space-y-4 rounded-2xl border border-secondary/20 bg-white/[0.07] p-4 sm:p-6">
               <p className="text-accent font-semibold text-sm uppercase tracking-wider mb-3">
                 📄 Payment Summary
               </p>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-600/50">
+              <div className="flex flex-col gap-1 border-b border-white/10 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-400 text-sm">👤 Student Name</span>
                 <span className="text-white font-semibold text-sm text-right">
                   {fullName || profile?.fullName || "—"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-600/50">
+              <div className="flex flex-col gap-1 border-b border-white/10 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-400 text-sm">📚 Course</span>
                 <span className="text-white font-semibold text-sm text-right">
                   {course?.title || "Selected Course"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-600/50">
+              <div className="flex flex-col gap-1 border-b border-white/10 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-400 text-sm">💰 Amount Paid</span>
                 <span className="text-accent font-bold text-lg">
                   {(course?.currency || "ETB") + " " + (course?.price ?? "—")}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2">
+              <div className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-slate-400 text-sm">📊 Status</span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-900/40 border border-amber-600/50 text-amber-300 text-xs font-semibold">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -526,8 +528,8 @@ function PaymentForm() {
             </div>
 
             {/* Next Steps */}
-            <div className="rounded-2xl bg-gradient-to-br from-blue-950 to-slate-800 border border-blue-700/50 p-6 mb-6">
-              <p className="text-blue-300 font-semibold text-sm mb-3 flex items-center gap-2">
+            <div className="mb-6 rounded-2xl border border-secondary/20 bg-primary-dark/60 p-4 sm:p-6">
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-accent">
                 <span className="text-lg">👣</span> Next Steps
               </p>
               <ul className="space-y-3">
@@ -567,18 +569,18 @@ function PaymentForm() {
             </div>
 
             {/* Waiting Message */}
-            <div className="text-center mb-6 p-4 rounded-xl bg-slate-800/50 border border-slate-600">
-              <p className="text-slate-300 text-sm leading-relaxed">
+            <div className="mb-6 rounded-xl border border-secondary/20 bg-white/[0.05] p-3 text-center sm:p-4">
+              <p className="text-sm leading-relaxed text-white/70">
                 ⏳ Please wait while we verify your payment. You will be
                 notified once your enrollment is confirmed. If you have any
                 questions, please contact our support team.
               </p>
             </div>
 
-            <div className="flex justify-center gap-3 flex-wrap">
+            <div className="flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
               <button
                 onClick={() => router.push(redirectTo as string)}
-                className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full font-semibold hover:shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-300"
+                className="w-full rounded-lg bg-gradient-to-r from-secondary to-accent px-6 py-3 font-semibold text-primary-dark transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-secondary/30 sm:w-auto"
               >
                 ← Back to Dashboard
               </button>
@@ -590,7 +592,7 @@ function PaymentForm() {
                   setPaymentType(null);
                   setMessage(null);
                 }}
-                className="px-6 py-3 border-2 border-emerald-500 text-emerald-300 rounded-full font-semibold hover:bg-emerald-500/10 transition-all duration-300"
+                className="w-full rounded-lg border border-secondary/60 px-6 py-3 font-semibold text-accent transition-all duration-300 hover:bg-secondary/10 sm:w-auto"
               >
                 Submit Another Receipt
               </button>
@@ -995,11 +997,11 @@ function PaymentForm() {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={handleContinue}
                 disabled={loading || courseStatus !== "none"}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-accent to-secondary text-slate-900 rounded-lg hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                className="flex-1 rounded-lg bg-gradient-to-r from-accent to-secondary px-5 py-3 text-primary-dark transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/30 disabled:cursor-not-allowed disabled:opacity-50 font-bold"
               >
                 {paymentType === "diaspora"
                   ? "Continue to PayPal"
@@ -1011,7 +1013,7 @@ function PaymentForm() {
                   setStep("type-selection");
                   setError(null);
                 }}
-                className="px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 transition-all duration-300 font-semibold"
+                className="rounded-lg border border-white/20 px-5 py-3 text-white/75 transition-all duration-300 hover:border-secondary hover:bg-white/10 font-semibold"
               >
                 Back to Payment Type
               </button>
@@ -1019,23 +1021,23 @@ function PaymentForm() {
           </div>
         ) : step === "receipt" ? (
           <div className="space-y-5 animate-fadeIn">
-            <div className="rounded-[32px] border border-slate-700 bg-slate-950/95 p-6 shadow-2xl shadow-slate-950/20 ring-1 ring-slate-800">
+            <div className="rounded-3xl border border-secondary/20 bg-primary-dark/70 p-4 shadow-2xl shadow-primary-dark/20 ring-1 ring-white/5 sm:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-slate-400 text-xs font-semibold uppercase tracking-[0.24em]">
                     STEP 3 • Upload receipt
                   </p>
-                  <h3 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+                  <h3 className="mt-2 text-xl font-semibold text-white sm:text-3xl">
                     Finalize your payment verification
                   </h3>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+                <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-accent sm:px-4 sm:text-xs">
                   <span className="h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
                   Secure upload
                 </div>
               </div>
 
-              <p className="mt-4 max-w-2xl text-slate-400 leading-7">
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-white/65 sm:text-base sm:leading-7">
                 Upload your payment receipt so our team can verify the
                 transaction details. Make sure the receipt clearly shows the
                 date, amount, and reference.
@@ -1051,10 +1053,10 @@ function PaymentForm() {
                 />
                 <label
                   htmlFor="file-input"
-                  className="group block rounded-[28px] border border-slate-700 bg-slate-900/95 px-5 py-10 text-center transition duration-200 hover:border-accent hover:bg-slate-900 shadow-xl shadow-slate-950/20 cursor-pointer"
+                  className="group block cursor-pointer rounded-3xl border border-white/15 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-primary-dark/20 transition duration-200 hover:border-accent hover:bg-white/[0.08] sm:px-5 sm:py-10"
                 >
                   <svg
-                    className="mx-auto h-14 w-14 text-slate-400 transition duration-200 group-hover:text-accent mb-4"
+                    className="mx-auto mb-4 h-12 w-12 text-white/45 transition duration-200 group-hover:text-accent sm:h-14 sm:w-14"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1066,7 +1068,7 @@ function PaymentForm() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-base font-semibold text-white sm:text-lg">
                     Click to upload or drag and drop your receipt
                   </p>
                   <p className="mt-2 text-sm text-slate-400">
@@ -1076,7 +1078,7 @@ function PaymentForm() {
               </div>
 
               {file && (
-                <div className="mt-6 rounded-[28px] border border-slate-700 bg-slate-900/95 p-4 shadow-inner shadow-slate-950/20">
+                <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-inner shadow-primary-dark/20 sm:p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-slate-200 font-semibold truncate">
